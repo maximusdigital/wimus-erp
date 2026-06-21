@@ -1,0 +1,9 @@
+# WIMUS ERP – Supabase CLI Konfiguration
+# Self-hosted Instanz: https://supa.m81s.de
+# Migrations werden über `supabase db push --db-url ...` eingespielt.
+
+project_id = "wimus-erp"
+
+[db]
+# Postgres-Major-Version der self-hosted Instanz ggf. anpassen.
+major_version = 15
