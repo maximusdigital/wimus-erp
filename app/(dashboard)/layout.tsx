@@ -36,18 +36,23 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  // Dev-Vorschau: Auth-Guard überspringen (NUR in Entwicklung + explizit aktiviert).
+  const previewNoAuth =
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1";
+
+  if (!user && !previewNoAuth) {
     redirect("/login");
   }
 
   const mandanten = await getUserMandanten();
   const activeMandant = await getActiveMandant(mandanten);
 
-  const email = user.email ?? "";
+  const email = user?.email ?? "vorschau@wimus.de";
   const name =
-    (user.user_metadata?.name as string | undefined)?.trim() ||
+    (user?.user_metadata?.name as string | undefined)?.trim() ||
     email.split("@")[0] ||
-    "Benutzer";
+    "Vorschau";
   const sidebarUser = buildUser(email, name);
 
   return (

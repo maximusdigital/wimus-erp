@@ -50,7 +50,13 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!user && !isPublicPath(pathname)) {
+  // Dev-Vorschau: Auth-Guard überspringen (NUR in Entwicklung + explizit aktiviert).
+  // Start mit:  NEXT_PUBLIC_PREVIEW_NO_AUTH=1 npm run dev
+  const previewNoAuth =
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1"
+
+  if (!user && !previewNoAuth && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)
