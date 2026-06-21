@@ -55,9 +55,12 @@ export const KONTAKT_TYP_VARIANT: Record<
 export const ANREDEN = ["Herr", "Frau", "Divers"] as const
 
 /** Anzeigename: Firma oder Vor-/Nachname, Fallback E-Mail. */
-export function kontaktName(
-  k: Pick<Kontakt, "firma" | "vorname" | "nachname" | "email">
-): string {
+export function kontaktName(k: {
+  firma: string | null
+  vorname: string | null
+  nachname: string | null
+  email?: string | null
+}): string {
   const person = [k.vorname, k.nachname].filter(Boolean).join(" ").trim()
   return k.firma || person || k.email || "Kontakt"
 }
