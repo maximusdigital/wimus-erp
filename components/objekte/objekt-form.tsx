@@ -9,6 +9,7 @@ import {
   objektFormSchema,
   type ObjektFormValues,
 } from "@/lib/validations/objekt"
+import type { Objekt } from "@/types/objekt"
 import {
   HALTESTRATEGIEN,
   HALTESTRATEGIE_LABELS,
@@ -36,39 +37,69 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-export function ObjektForm() {
+const EMPTY_VALUES: ObjektFormValues = {
+  kuerzel: "",
+  bezeichnung: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+  objekttyp: "",
+  haltestrategie: "",
+  status: "ist",
+  baujahr: "",
+  wohnflaeche_qm: "",
+  marktwert_sprengnetter: "",
+  marktwert_pricehubble: "",
+  nutzen_lasten_datum: "",
+  notartermin_datum: "",
+  notiz: "",
+}
+
+function toFormValues(o: Objekt): ObjektFormValues {
+  const s = (v: string | null) => v ?? ""
+  const n = (v: number | null) => (v == null ? "" : String(v))
+  const d = (v: string | null) => (v ? v.slice(0, 10) : "")
+  return {
+    kuerzel: o.kuerzel,
+    bezeichnung: s(o.bezeichnung),
+    strasse: s(o.strasse),
+    hausnummer: s(o.hausnummer),
+    plz: s(o.plz),
+    ort: s(o.ort),
+    objekttyp: s(o.objekttyp),
+    haltestrategie: s(o.haltestrategie),
+    status: o.status as ObjektFormValues["status"],
+    baujahr: n(o.baujahr),
+    wohnflaeche_qm: n(o.wohnflaeche_qm),
+    marktwert_sprengnetter: n(o.marktwert_sprengnetter),
+    marktwert_pricehubble: n(o.marktwert_pricehubble),
+    nutzen_lasten_datum: d(o.nutzen_lasten_datum),
+    notartermin_datum: d(o.notartermin_datum),
+    notiz: s(o.notiz),
+  }
+}
+
+export function ObjektForm({ objekt }: { objekt?: Objekt }) {
   const router = useRouter()
+  const isEdit = Boolean(objekt)
   const [serverError, setServerError] = useState<string | null>(null)
 
   const form = useForm<ObjektFormValues>({
     resolver: zodResolver(objektFormSchema),
-    defaultValues: {
-      kuerzel: "",
-      bezeichnung: "",
-      strasse: "",
-      hausnummer: "",
-      plz: "",
-      ort: "",
-      objekttyp: "",
-      haltestrategie: "",
-      status: "ist",
-      baujahr: "",
-      wohnflaeche_qm: "",
-      marktwert_sprengnetter: "",
-      marktwert_pricehubble: "",
-      nutzen_lasten_datum: "",
-      notartermin_datum: "",
-      notiz: "",
-    },
+    defaultValues: objekt ? toFormValues(objekt) : EMPTY_VALUES,
   })
 
   async function onSubmit(values: ObjektFormValues) {
     setServerError(null)
-    const res = await fetch("/api/objekte", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    })
+    const res = await fetch(
+      isEdit ? `/api/objekte/${objekt!.id}` : "/api/objekte",
+      {
+        method: isEdit ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      }
+    )
 
     if (!res.ok) {
       const body = await res.json().catch(() => null)
@@ -80,7 +111,7 @@ export function ObjektForm() {
       return
     }
 
-    router.push("/objekte")
+    router.push(isEdit ? `/objekte/${objekt!.id}` : "/objekte")
     router.refresh()
   }
 
@@ -361,7 +392,11 @@ export function ObjektForm() {
             Abbrechen
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Speichern…" : "Objekt anlegen"}
+            {form.formState.isSubmitting
+              ? "Speichern…"
+              : isEdit
+                ? "Änderungen speichern"
+                : "Objekt anlegen"}
           </Button>
         </div>
       </form>

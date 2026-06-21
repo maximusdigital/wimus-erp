@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Building2 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,8 +15,9 @@ export function ObjektKarte({ objekt }: { objekt: ObjektMitEinheiten }) {
   const einheiten = objekt.einheiten?.[0]?.count ?? 0
 
   return (
-    <Card>
-      <CardContent className="flex items-start gap-3 p-4">
+    <Link href={`/objekte/${objekt.id}`} className="block">
+      <Card className="transition-colors hover:bg-muted/50">
+        <CardContent className="flex items-start gap-3 p-4">
         <div className="flex aspect-square size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <Building2 className="size-5" />
         </div>
@@ -44,7 +46,8 @@ export function ObjektKarte({ objekt }: { objekt: ObjektMitEinheiten }) {
             </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

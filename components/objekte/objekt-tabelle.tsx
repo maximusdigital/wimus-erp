@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -32,9 +34,20 @@ export function ObjektTabelle({ objekte }: { objekte: ObjektMitEinheiten[] }) {
         </TableHeader>
         <TableBody>
           {objekte.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell className="font-medium">{o.kuerzel}</TableCell>
-              <TableCell>{o.bezeichnung ?? "–"}</TableCell>
+            <TableRow key={o.id} className="hover:bg-muted/50">
+              <TableCell className="font-medium">
+                <Link
+                  href={`/objekte/${o.id}`}
+                  className="hover:underline"
+                >
+                  {o.kuerzel}
+                </Link>
+              </TableCell>
+              <TableCell>
+                <Link href={`/objekte/${o.id}`} className="hover:underline">
+                  {o.bezeichnung ?? "–"}
+                </Link>
+              </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatAdresse(o)}
               </TableCell>

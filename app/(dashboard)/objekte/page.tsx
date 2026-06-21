@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Building2, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { DEMO_OBJEKTE } from "@/lib/dev/demo-objekte"
 import { Button } from "@/components/ui/button"
 import { ObjektKarte } from "@/components/objekte/objekt-karte"
 import { ObjektTabelle } from "@/components/objekte/objekt-tabelle"
@@ -10,55 +11,6 @@ import type { ObjektMitEinheiten } from "@/types/objekt"
 export const metadata = {
   title: "Objekte",
 }
-
-// Nur für die Dev-Vorschau (NEXT_PUBLIC_PREVIEW_NO_AUTH=1) – keine echten Daten.
-const DEMO_OBJEKTE: ObjektMitEinheiten[] = [
-  {
-    id: "demo-1",
-    kuerzel: "BHS16",
-    bezeichnung: "Bauhofstr. 16 – MFH 4WE 14Z",
-    strasse: "Bauhofstraße",
-    hausnummer: "16",
-    plz: "71640",
-    ort: "Ludwigsburg",
-    objekttyp: "MFH",
-    haltestrategie: "bestand",
-    status: "ist",
-    marktwert_sprengnetter: 1850000,
-    marktwert_pricehubble: null,
-    einheiten: [{ count: 4 }],
-  },
-  {
-    id: "demo-2",
-    kuerzel: "AS125",
-    bezeichnung: "Austraße 125 – MFH 4WE+2G",
-    strasse: "Austraße",
-    hausnummer: "125",
-    plz: "70599",
-    ort: "Stuttgart-Münster",
-    objekttyp: "MFH",
-    haltestrategie: "bestand",
-    status: "ist",
-    marktwert_sprengnetter: 1420000,
-    marktwert_pricehubble: null,
-    einheiten: [{ count: 6 }],
-  },
-  {
-    id: "demo-3",
-    kuerzel: "BS18A1",
-    bezeichnung: "Beilsteiner Str. 18A – R2R KZV",
-    strasse: "Beilsteiner Straße",
-    hausnummer: "18A",
-    plz: "70372",
-    ort: "Stuttgart",
-    objekttyp: "R2R-KZV",
-    haltestrategie: "r2r",
-    status: "akquise",
-    marktwert_sprengnetter: null,
-    marktwert_pricehubble: 540000,
-    einheiten: [{ count: 1 }],
-  },
-] as ObjektMitEinheiten[]
 
 export default async function ObjektePage() {
   const supabase = await createServerClient()
