@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarClock,
   ClipboardList,
+  DoorOpen,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -48,6 +49,7 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Objekte", href: "/objekte", icon: Building2 },
+  { title: "Einheiten", href: "/einheiten", icon: DoorOpen },
   { title: "Kontakte", href: "/kontakte", icon: Users },
   { title: "Verträge", href: "/vertraege", icon: FileText },
   { title: "Vorgänge", href: "/vorgaenge", icon: ClipboardList, badge: "17" },

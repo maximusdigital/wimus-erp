@@ -120,7 +120,17 @@ export default async function ObjektDetailPage({
                   objekt.wohnflaeche_qm ? `${objekt.wohnflaeche_qm} m²` : null
                 }
               />
-              <Field label="Einheiten" value={einheiten} />
+              <Field
+                label="Einheiten"
+                value={
+                  <Link
+                    href={`/einheiten?objekt=${objekt.id}`}
+                    className="hover:underline"
+                  >
+                    {einheiten} anzeigen
+                  </Link>
+                }
+              />
               <Field
                 label="Adresse"
                 value={formatAdresse(objekt)}
