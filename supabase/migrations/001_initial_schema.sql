@@ -14,6 +14,10 @@
 -- ---------------------------------------------------------------------
 create extension if not exists "pgcrypto";  -- gen_random_uuid()
 
+-- Funktionsrümpfe nicht sofort prüfen: current_user_mandanten() referenziert
+-- public.user_mandanten, das weiter unten erst angelegt wird.
+set check_function_bodies = off;
+
 -- ---------------------------------------------------------------------
 -- 0a. Helper: updated_at automatisch pflegen
 -- ---------------------------------------------------------------------
