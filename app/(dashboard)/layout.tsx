@@ -3,6 +3,7 @@ import { Bell, Plus, Search } from "lucide-react";
 
 import { createServerClient } from "@/lib/supabase/server";
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten";
+import { isPreviewNoAuth } from "@/lib/dev/preview";
 import { CrmSidebar, type SidebarUser } from "@/components/crm-sidebar";
 import { MandantProvider } from "@/components/providers/mandant-provider";
 import { Button } from "@/components/ui/button";
@@ -36,12 +37,8 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Dev-Vorschau: Auth-Guard überspringen (NUR in Entwicklung + explizit aktiviert).
-  const previewNoAuth =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1";
-
-  if (!user && !previewNoAuth) {
+  // Vorschau/Demo: Auth-Guard überspringen (nur wenn explizit aktiviert).
+  if (!user && !isPreviewNoAuth()) {
     redirect("/login");
   }
 

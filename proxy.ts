@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { isPreviewNoAuth } from '@/lib/dev/preview'
+
 /**
  * Next 16 Proxy (ehemals middleware).
  * Aktualisiert bei jeder Anfrage die Supabase-Session (Token-Refresh) und
@@ -50,13 +52,8 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Dev-Vorschau: Auth-Guard überspringen (NUR in Entwicklung + explizit aktiviert).
-  // Start mit:  NEXT_PUBLIC_PREVIEW_NO_AUTH=1 npm run dev
-  const previewNoAuth =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1"
-
-  if (!user && !previewNoAuth && !isPublicPath(pathname)) {
+  // Vorschau/Demo: Auth-Guard überspringen (nur wenn explizit aktiviert).
+  if (!user && !isPreviewNoAuth() && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)

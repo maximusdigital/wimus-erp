@@ -4,6 +4,7 @@ import { ChevronLeft, Pencil } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoObjekt } from "@/lib/dev/demo-objekte"
+import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,10 +42,7 @@ export default async function ObjektDetailPage({
 
   let objekt = data as ObjektMitEinheiten | null
 
-  const previewNoAuth =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1"
-  if (!objekt && previewNoAuth) {
+  if (!objekt && isPreviewNoAuth()) {
     objekt = findDemoObjekt(id) ?? null
   }
 

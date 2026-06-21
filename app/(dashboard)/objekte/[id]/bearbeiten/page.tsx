@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoObjekt } from "@/lib/dev/demo-objekte"
+import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { ObjektForm } from "@/components/objekte/objekt-form"
 import type { Objekt } from "@/types/objekt"
 
@@ -26,10 +27,7 @@ export default async function ObjektBearbeitenPage({
 
   let objekt = data as Objekt | null
 
-  const previewNoAuth =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1"
-  if (!objekt && previewNoAuth) {
+  if (!objekt && isPreviewNoAuth()) {
     objekt = (findDemoObjekt(id) as Objekt | undefined) ?? null
   }
 

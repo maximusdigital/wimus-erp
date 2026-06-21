@@ -3,6 +3,7 @@ import { Building2, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { DEMO_OBJEKTE } from "@/lib/dev/demo-objekte"
+import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Button } from "@/components/ui/button"
 import { ObjektKarte } from "@/components/objekte/objekt-karte"
 import { ObjektTabelle } from "@/components/objekte/objekt-tabelle"
@@ -21,11 +22,8 @@ export default async function ObjektePage() {
 
   let objekte = (data ?? []) as ObjektMitEinheiten[]
 
-  // Dev-Vorschau: Demo-Daten, damit die Liste ohne DB befüllt ist.
-  const previewNoAuth =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_PREVIEW_NO_AUTH === "1"
-  if (previewNoAuth && objekte.length === 0) {
+  // Vorschau/Demo: Demo-Daten, damit die Liste ohne DB befüllt ist.
+  if (isPreviewNoAuth() && objekte.length === 0) {
     objekte = DEMO_OBJEKTE
   }
 
