@@ -44,23 +44,26 @@ type NavItem = {
   href: string;
   icon: LucideIcon;
   badge?: string;
+  soon?: boolean;
 };
 
+// Phase 0 + 1: implementierte Seiten
 const mainNav: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Objekte", href: "/objekte", icon: Building2 },
   { title: "Einheiten", href: "/einheiten", icon: DoorOpen },
   { title: "Kontakte", href: "/kontakte", icon: Users },
   { title: "Verträge", href: "/vertraege", icon: FileText },
-  { title: "Vorgänge", href: "/vorgaenge", icon: ClipboardList, badge: "17" },
-  { title: "E-Mails", href: "/emails", icon: Mail, badge: "5" },
-  { title: "Finanzen", href: "/finanzen", icon: Wallet },
 ];
 
+// Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.
 const secondaryNav: NavItem[] = [
-  { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock },
-  { title: "Bestandsentwicklung", href: "/bestandsentwicklung", icon: TrendingUp },
-  { title: "Einstellungen", href: "/einstellungen", icon: Settings },
+  { title: "Vorgänge", href: "/vorgaenge", icon: ClipboardList, soon: true },
+  { title: "E-Mails", href: "/emails", icon: Mail, soon: true },
+  { title: "Finanzen", href: "/finanzen", icon: Wallet, soon: true },
+  { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock, soon: true },
+  { title: "Bestandsentwicklung", href: "/bestandsentwicklung", icon: TrendingUp, soon: true },
+  { title: "Einstellungen", href: "/einstellungen", icon: Settings, soon: true },
 ];
 
 function isActiveHref(pathname: string, href: string) {
@@ -78,14 +81,19 @@ function NavMenu({ items }: { items: NavItem[] }) {
         return (
           <SidebarMenuItem key={item.href}>
             <SidebarMenuButton
-              isActive={active}
-              tooltip={item.title}
-              render={<Link href={item.href} />}
+              isActive={item.soon ? false : active}
+              tooltip={item.soon ? `${item.title} (in Vorbereitung)` : item.title}
+              aria-disabled={item.soon || undefined}
+              render={item.soon ? <span /> : <Link href={item.href} />}
             >
               <item.icon />
               <span>{item.title}</span>
             </SidebarMenuButton>
-            {item.badge ? (
+            {item.soon ? (
+              <SidebarMenuBadge className="text-[0.6rem] uppercase tracking-wide text-sidebar-foreground/50">
+                bald
+              </SidebarMenuBadge>
+            ) : item.badge ? (
               <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
             ) : null}
           </SidebarMenuItem>
@@ -133,7 +141,7 @@ export function CrmSidebar({ user }: { user: SidebarUser }) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Weitere</SidebarGroupLabel>
+          <SidebarGroupLabel>Bald verfügbar</SidebarGroupLabel>
           <SidebarGroupContent>
             <NavMenu items={secondaryNav} />
           </SidebarGroupContent>

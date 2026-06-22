@@ -12,6 +12,24 @@ WIMUS ERP ist die digitale Schaltzentrale für die Württembergische Immobilien 
 
 ---
 
+## Datenmodell-Stand (v5)
+
+**Maßgebliche Spec:** `.docs/WIMUS_ERP_Uebergabedokument_v5.docx` (Version 5.0, Kap. 5). Bei mehreren Versionen immer die höchste lesen.
+
+- **Schema `wimus`** (search_path = `wimus, public`), Plural, kein Prefix
+- **Zieldatenmodell: 82 Tabellen** in 5 Gruppen (Kern · Verträge/Buchungen/Bank · Objekt-Details/Ausstattung/Zähler/Custom Fields · Steuer/AfA/Szenarien · Vorgänge/Workforce/Vertrieb)
+- Migration `supabase/migrations/002_vollstaendiges_schema.sql` legt das `wimus`-Schema **additiv** an (das bestehende `public`-CRUD bleibt unberührt). Anwendung über Supabase SQL-Editor (DB-Port bleibt geschlossen).
+- **Konventionen:** Adresse IMMER getrennt (`strasse, hausnummer, plz, stadt, stadtteil, land`) · Anrede `Herr/Frau/Firma/Keine` · `created_at`/`updated_at` auf allen Tabellen (Trigger) · `mandant_id` auf allen Kerntabellen · RLS `mandant_isolation` auf allen Tabellen · Aktenzeichen auto via DB-Trigger (`vorgaenge`) · 12 Seed-Rollen
+- **5 polymorphe Referenzen** (`bezug_typ` + `bezug_id`): `versorgervertraege`, `zaehler`, `custom_field_werte`, `objekt_emails`, `geraete`
+- **Versionierte Tabellen** (`gueltig_ab`): `einheit_hausregeln`, `einheit_sicherheit`, `gaestemappe_inhalte`
+- **Zwei PIN-Codes je Buchung:** `keybox_pin` (statisch, Hauszugang aus `einheiten.keybox_pin_statisch`) ≠ `apartment_pin` (TTLock, dynamisch je Buchung)
+
+**Neu seit Phase 1** (über die 4 CRUD-Entitäten hinaus): gaestemappe_inhalte, einheit_bettenstruktur, einheit_fotos, einheit_pois, einheit_sicherheit, stornierungsbedingungen, zertifikate_lizenzen, versorgervertraege, zaehler, zaehlerstaende, zaehler_umrechnungen, objekt_emails, custom_field_definitionen, custom_field_werte, intercompany, ma_profile, ma_verfuegbarkeit, objekt_zuweisungen, einsaetze, auftrag_zuweisungen, checklisten_vorlagen, checklisten_positionen, checklisten_ausfuehrungen, checklisten_ergebnisse, pipelines, pipeline_phasen, deals, vertriebspartner, maklervertraege, expose_varianten, interessenten, besichtigungen, provisionen, bewertungen, incident_reports, citytax_buchungen, nachrichten, vorlagen, filter_profile, geraete, wartungsintervalle, versicherungen.
+
+> Hinweis: v5 deklariert 82 Tabellen; der Fließtext spezifiziert ~40 mit Spalten (Gruppensummen ergeben 77). Migration 002 implementiert alle namentlich genannten Tabellen (76) vollständig mit FK + RLS + Indizes. Die genaue 82-Enumeration wird ergänzt, sobald die vollständige Tabellenliste vorliegt. **App-Cutover public→wimus ist ein separater, geplanter Schritt** – bis dahin läuft das CRUD weiter auf `public`.
+
+---
+
 ## Architekturprinzip: Schaltzentrale
 
 WIMUS ERP ist das Cockpit – keine Eigenentwicklung von Funktionalität die es als fertiges Open-Source-Modul gibt.

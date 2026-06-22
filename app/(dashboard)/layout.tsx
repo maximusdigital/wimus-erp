@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Bell, Plus, Search } from "lucide-react";
 
@@ -67,7 +68,7 @@ export default async function DashboardLayout({
               <Search className="pointer-events-none absolute left-2.5 size-4 text-muted-foreground" />
               <input
                 type="search"
-                placeholder="Objekte, Mieter oder Vorgänge suchen …"
+                placeholder="Objekte, Einheiten oder Kontakte suchen …"
                 className="h-8 w-full rounded-lg border border-input bg-background py-1 pr-3 pl-8 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 aria-label="Suche"
               />
@@ -80,9 +81,9 @@ export default async function DashboardLayout({
               >
                 <Bell />
               </Button>
-              <Button size="sm">
+              <Button size="sm" render={<Link href="/objekte/neu" />}>
                 <Plus />
-                <span className="hidden sm:inline">Neuer Vorgang</span>
+                <span className="hidden sm:inline">Neues Objekt</span>
               </Button>
             </div>
           </header>

@@ -1,177 +1,155 @@
+import Link from "next/link"
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Banknote,
   Building2,
-  CalendarClock,
-  CircleAlert,
-  CircleDollarSign,
-  ClipboardList,
+  DoorOpen,
   FileText,
-  Mail,
-  Receipt,
+  Plus,
   Users,
-  Wrench,
   type LucideIcon,
-} from "lucide-react";
+} from "lucide-react"
 
-import { Badge } from "@/components/ui/badge";
+import { createServerClient } from "@/lib/supabase/server"
+import { DEMO_OBJEKTE } from "@/lib/dev/demo-objekte"
+import { DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
+import { DEMO_KONTAKTE } from "@/lib/dev/demo-kontakte"
+import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
+import { isPreviewNoAuth } from "@/lib/dev/preview"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/card"
+import { formatDate, formatEUR } from "@/lib/utils/format"
+import { kontaktName } from "@/types/kontakt"
+import {
+  VERTRAGSART_LABELS,
+  VERTRAG_STATUS_LABELS,
+  VERTRAG_STATUS_VARIANT,
+  warmmiete,
+  type VertragMitRelationen,
+} from "@/types/vertrag"
 
-type Trend = "up" | "down";
+export const metadata = {
+  title: "Dashboard",
+}
+
+const VERTRAG_SELECT =
+  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
 
 type Kpi = {
-  label: string;
-  value: string;
-  hint: string;
-  delta: string;
-  trend: Trend;
-  positive: boolean;
-  icon: LucideIcon;
-};
+  label: string
+  value: number
+  hint: string
+  icon: LucideIcon
+  href: string
+}
 
-const kpis: Kpi[] = [
-  {
-    label: "Objekte",
-    value: "48",
-    hint: "324 Mieteinheiten gesamt",
-    delta: "+2",
-    trend: "up",
-    positive: true,
-    icon: Building2,
-  },
-  {
-    label: "Mieter",
-    value: "312",
-    hint: "96,3 % der Einheiten belegt",
-    delta: "+1,4 %",
-    trend: "up",
-    positive: true,
-    icon: Users,
-  },
-  {
-    label: "Offene Vorgänge",
-    value: "17",
-    hint: "4 davon überfällig",
-    delta: "+3",
-    trend: "up",
-    positive: false,
-    icon: ClipboardList,
-  },
-  {
-    label: "Offene Posten",
-    value: "24.850 €",
-    hint: "verteilt auf 8 Mietkonten",
-    delta: "−12,4 %",
-    trend: "down",
-    positive: true,
-    icon: CircleDollarSign,
-  },
-];
+async function ladeDashboardDaten() {
+  const supabase = await createServerClient()
 
-type Activity = {
-  title: string;
-  detail: string;
-  time: string;
-  category: string;
-  icon: LucideIcon;
-  accent: string;
-};
+  const [objekteRes, einheitenRes, kontakteRes, vertraegeRes, aktivRes, letzteRes] =
+    await Promise.all([
+      supabase.from("objekte").select("*", { count: "exact", head: true }),
+      supabase.from("einheiten").select("*", { count: "exact", head: true }),
+      supabase.from("kontakte").select("*", { count: "exact", head: true }),
+      supabase.from("vertraege").select("*", { count: "exact", head: true }),
+      supabase
+        .from("vertraege")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "aktiv"),
+      supabase
+        .from("vertraege")
+        .select(VERTRAG_SELECT)
+        .order("beginn", { nullsFirst: false })
+        .limit(5),
+    ])
 
-const activities: Activity[] = [
-  {
-    title: "Mietvertrag unterzeichnet",
-    detail: "Wohnung 4. OG · Lindenstraße 12, Hamburg",
-    time: "vor 12 Min.",
-    category: "Vertrag",
-    icon: FileText,
-    accent: "text-blue-600 dark:text-blue-400",
-  },
-  {
-    title: "Neue E-Mail von Familie Bergmann",
-    detail: "Heizung im Treppenhaus ausgefallen",
-    time: "vor 38 Min.",
-    category: "E-Mail",
-    icon: Mail,
-    accent: "text-violet-600 dark:text-violet-400",
-  },
-  {
-    title: "Zahlungseingang 1.240,00 €",
-    detail: "Miete Juni · M. Yılmaz, Goethestraße 7",
-    time: "vor 1 Std.",
-    category: "Finanzen",
-    icon: Banknote,
-    accent: "text-emerald-600 dark:text-emerald-400",
-  },
-  {
-    title: "Reparaturauftrag erstellt",
-    detail: "Aufzugsstörung · Goethestraße 7",
-    time: "vor 2 Std.",
-    category: "Vorgang",
-    icon: Wrench,
-    accent: "text-amber-600 dark:text-amber-400",
-  },
-  {
-    title: "Mahnung versendet",
-    detail: "Mietrückstand Wohnung 2. OG · Parkallee 5",
-    time: "vor 3 Std.",
-    category: "Mahnung",
-    icon: CircleAlert,
-    accent: "text-red-600 dark:text-red-400",
-  },
-  {
-    title: "Betriebskostenabrechnung freigegeben",
-    detail: "Abrechnungsjahr 2025 · Ringstraße 3",
-    time: "gestern, 16:42",
-    category: "Finanzen",
-    icon: Receipt,
-    accent: "text-emerald-600 dark:text-emerald-400",
-  },
-];
+  let objekteCount = objekteRes.count ?? 0
+  let einheitenCount = einheitenRes.count ?? 0
+  let kontakteCount = kontakteRes.count ?? 0
+  let vertraegeCount = vertraegeRes.count ?? 0
+  let aktivCount = aktivRes.count ?? 0
+  let letzteVertraege = (letzteRes.data ?? []) as unknown as VertragMitRelationen[]
 
-type Deadline = {
-  title: string;
-  detail: string;
-  date: string;
-  urgent?: boolean;
-};
+  // Vorschau/Demo: Kennzahlen aus Demo-Daten, damit das Dashboard ohne DB lebt.
+  if (isPreviewNoAuth() && objekteCount === 0 && vertraegeCount === 0) {
+    objekteCount = DEMO_OBJEKTE.length
+    einheitenCount = DEMO_EINHEITEN.length
+    kontakteCount = DEMO_KONTAKTE.length
+    vertraegeCount = DEMO_VERTRAEGE.length
+    aktivCount = DEMO_VERTRAEGE.filter((v) => v.status === "aktiv").length
+    letzteVertraege = DEMO_VERTRAEGE
+  }
 
-const deadlines: Deadline[] = [
-  {
-    title: "Eigentümerversammlung",
-    detail: "WEG Ringstraße 3",
-    date: "24. Juni",
-    urgent: true,
-  },
-  {
-    title: "Heizungswartung",
-    detail: "Lindenstraße 12",
-    date: "27. Juni",
-  },
-  {
-    title: "Mietvertrag läuft aus",
-    detail: "Wohnung 1. OG · Goethestraße 7",
-    date: "30. Juni",
-  },
-  {
-    title: "Frist Betriebskostenabrechnung",
-    detail: "Objekt Parkallee 5",
-    date: "03. Juli",
-  },
-  {
-    title: "Umsetzung WEG-Beschluss",
-    detail: "Fassadensanierung Ringstraße 3",
-    date: "08. Juli",
-  },
-];
+  // Sollmiete/Monat aus den aktiven (geladenen) Verträgen.
+  const sollmiete = letzteVertraege
+    .filter((v) => v.status === "aktiv")
+    .reduce((sum, v) => sum + (warmmiete(v) ?? 0), 0)
 
-export default function DashboardPage() {
+  return {
+    objekteCount,
+    einheitenCount,
+    kontakteCount,
+    vertraegeCount,
+    aktivCount,
+    letzteVertraege,
+    sollmiete,
+  }
+}
+
+export default async function DashboardPage() {
+  const {
+    objekteCount,
+    einheitenCount,
+    kontakteCount,
+    vertraegeCount,
+    aktivCount,
+    letzteVertraege,
+    sollmiete,
+  } = await ladeDashboardDaten()
+
+  const kpis: Kpi[] = [
+    {
+      label: "Objekte",
+      value: objekteCount,
+      hint: `${einheitenCount} Einheiten gesamt`,
+      icon: Building2,
+      href: "/objekte",
+    },
+    {
+      label: "Einheiten",
+      value: einheitenCount,
+      hint: "Wohnungen, Zimmer & Gewerbe",
+      icon: DoorOpen,
+      href: "/einheiten",
+    },
+    {
+      label: "Kontakte",
+      value: kontakteCount,
+      hint: "Mieter, Eigentümer & Dienstleister",
+      icon: Users,
+      href: "/kontakte",
+    },
+    {
+      label: "Verträge",
+      value: vertraegeCount,
+      hint: `${aktivCount} aktiv`,
+      icon: FileText,
+      href: "/vertraege",
+    },
+  ]
+
+  const schnellzugriff = [
+    { title: "Neues Objekt", href: "/objekte/neu", icon: Building2 },
+    { title: "Neue Einheit", href: "/einheiten/neu", icon: DoorOpen },
+    { title: "Neuer Kontakt", href: "/kontakte/neu", icon: Users },
+    { title: "Neuer Vertrag", href: "/vertraege/neu", icon: FileText },
+  ]
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
       <div className="flex flex-col gap-1">
@@ -179,40 +157,29 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-sm text-muted-foreground">
-          Überblick über Ihren Immobilienbestand – Stand 19. Juni 2026
+          Überblick über den Stammdatenbestand – Stand{" "}
+          {formatDate(new Date().toISOString())}
         </p>
       </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label}>
-            <CardHeader>
-              <CardDescription>{kpi.label}</CardDescription>
-              <CardTitle className="text-2xl tabular-nums">
-                {kpi.value}
-              </CardTitle>
-              <div className="col-start-2 row-span-2 row-start-1 flex size-9 items-center justify-center self-start rounded-lg bg-muted text-muted-foreground">
-                <kpi.icon className="size-4.5" />
-              </div>
-            </CardHeader>
-            <CardContent className="flex items-center gap-2 text-xs">
-              <span
-                className={`inline-flex items-center gap-0.5 font-medium ${
-                  kpi.positive
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {kpi.trend === "up" ? (
-                  <ArrowUpRight className="size-3.5" />
-                ) : (
-                  <ArrowDownRight className="size-3.5" />
-                )}
-                {kpi.delta}
-              </span>
-              <span className="text-muted-foreground">{kpi.hint}</span>
-            </CardContent>
-          </Card>
+          <Link key={kpi.label} href={kpi.href} className="group">
+            <Card className="h-full transition-colors group-hover:border-ring/60">
+              <CardHeader>
+                <CardDescription>{kpi.label}</CardDescription>
+                <CardTitle className="text-2xl tabular-nums">
+                  {kpi.value}
+                </CardTitle>
+                <div className="col-start-2 row-span-2 row-start-1 flex size-9 items-center justify-center self-start rounded-lg bg-muted text-muted-foreground">
+                  <kpi.icon className="size-4.5" />
+                </div>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                {kpi.hint}
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </section>
 
@@ -220,92 +187,105 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="grid gap-1">
-              <CardTitle>Letzte Aktivitäten</CardTitle>
+              <CardTitle>Letzte Verträge</CardTitle>
               <CardDescription>
-                Vorgänge und Buchungen der letzten 24 Stunden
+                {sollmiete > 0
+                  ? `Sollmiete (warm) der angezeigten aktiven Verträge: ${formatEUR(
+                      sollmiete
+                    )}/Monat`
+                  : "Zuletzt angelegte Mietverträge"}
               </CardDescription>
             </div>
-            <Badge variant="outline">Alle anzeigen</Badge>
+            <Button variant="outline" size="sm" render={<Link href="/vertraege" />}>
+              Alle anzeigen
+            </Button>
           </CardHeader>
           <CardContent className="flex flex-col">
-            {activities.map((activity, index) => (
-              <div
-                key={activity.title}
-                className={`flex items-start gap-3 py-3 ${
-                  index !== activities.length - 1 ? "border-b" : ""
-                }`}
-              >
-                <div
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-muted ${activity.accent}`}
+            {letzteVertraege.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <FileText className="size-5" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Noch keine Verträge erfasst.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={<Link href="/vertraege/neu" />}
                 >
-                  <activity.icon className="size-4.5" />
-                </div>
-                <div className="grid flex-1 gap-0.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium leading-tight">
-                      {activity.title}
-                    </p>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {activity.time}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {activity.detail}
-                  </p>
-                  <Badge
-                    variant="secondary"
-                    className="mt-1 w-fit text-[0.7rem]"
-                  >
-                    {activity.category}
-                  </Badge>
-                </div>
+                  <Plus />
+                  <span>Vertrag anlegen</span>
+                </Button>
               </div>
-            ))}
+            ) : (
+              letzteVertraege.map((v, index) => (
+                <Link
+                  key={v.id}
+                  href={`/vertraege/${v.id}`}
+                  className={`flex items-center gap-3 py-3 transition-colors hover:bg-muted/40 ${
+                    index !== letzteVertraege.length - 1 ? "border-b" : ""
+                  }`}
+                >
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <FileText className="size-4.5" />
+                  </div>
+                  <div className="grid flex-1 gap-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium leading-tight">
+                        {v.mieter ? kontaktName(v.mieter) : "Ohne Mieter"}
+                      </p>
+                      <span className="shrink-0 tabular-nums text-sm font-medium">
+                        {formatEUR(warmmiete(v))}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {v.objekt?.kuerzel ?? "–"}
+                      {v.einheit?.verwendungszweck_code
+                        ? ` · ${v.einheit.verwendungszweck_code}`
+                        : ""}
+                      {v.beginn ? ` · ab ${formatDate(v.beginn)}` : ""}
+                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      {v.vertragsart ? (
+                        <Badge variant="secondary" className="text-[0.7rem]">
+                          {VERTRAGSART_LABELS[v.vertragsart] ?? v.vertragsart}
+                        </Badge>
+                      ) : null}
+                      <Badge
+                        variant={VERTRAG_STATUS_VARIANT[v.status] ?? "secondary"}
+                        className="text-[0.7rem]"
+                      >
+                        {VERTRAG_STATUS_LABELS[v.status] ?? v.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-4.5 text-muted-foreground" />
-              Anstehende Fristen
-            </CardTitle>
-            <CardDescription>Termine der nächsten drei Wochen</CardDescription>
+            <CardTitle>Schnellzugriff</CardTitle>
+            <CardDescription>Stammdaten anlegen</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col">
-            {deadlines.map((deadline, index) => (
-              <div
-                key={deadline.title}
-                className={`flex items-center gap-3 py-3 ${
-                  index !== deadlines.length - 1 ? "border-b" : ""
-                }`}
+          <CardContent className="flex flex-col gap-2">
+            {schnellzugriff.map((item) => (
+              <Button
+                key={item.href}
+                variant="outline"
+                className="justify-start"
+                render={<Link href={item.href} />}
               >
-                <div className="flex w-11 shrink-0 flex-col items-center justify-center rounded-md border bg-muted/40 py-1 leading-none">
-                  <span className="text-sm font-semibold tabular-nums">
-                    {deadline.date.split(" ")[0]}
-                  </span>
-                  <span className="text-[0.65rem] text-muted-foreground">
-                    {deadline.date.split(" ")[1]}
-                  </span>
-                </div>
-                <div className="grid flex-1 gap-0.5">
-                  <p className="text-sm font-medium leading-tight">
-                    {deadline.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {deadline.detail}
-                  </p>
-                </div>
-                {deadline.urgent ? (
-                  <Badge variant="destructive" className="shrink-0">
-                    Dringend
-                  </Badge>
-                ) : null}
-              </div>
+                <item.icon />
+                <span>{item.title}</span>
+              </Button>
             ))}
           </CardContent>
         </Card>
       </section>
     </main>
-  );
+  )
 }
