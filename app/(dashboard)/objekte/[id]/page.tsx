@@ -1,21 +1,24 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Pencil } from "lucide-react"
+import { ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoObjekt } from "@/lib/dev/demo-objekte"
+import { DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteObjektButton } from "@/components/objekte/delete-objekt-button"
+import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
 import { formatAdresse, formatDate, formatEUR } from "@/lib/utils/format"
+import type { Einheit } from "@/types/einheit"
 import {
   HALTESTRATEGIE_LABELS,
   OBJEKTTYP_LABELS,
   OBJEKT_STATUS_LABELS,
   OBJEKT_STATUS_VARIANT,
-  type ObjektMitEinheiten,
+  type Objekt,
 } from "@/types/objekt"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -34,23 +37,30 @@ export default async function ObjektDetailPage({
 }) {
   const { id } = await params
   const supabase = await createServerClient()
-  const { data } = await supabase
-    .from("objekte")
-    .select("*, einheiten(count)")
-    .eq("id", id)
-    .maybeSingle()
+  const [objektRes, einheitenRes] = await Promise.all([
+    supabase.from("objekte").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("einheiten")
+      .select("*")
+      .eq("objekt_id", id)
+      .order("verwendungszweck_code", { nullsFirst: false }),
+  ])
 
-  let objekt = data as ObjektMitEinheiten | null
+  let objekt = objektRes.data as Objekt | null
+  let einheiten = (einheitenRes.data ?? []) as Einheit[]
 
   if (!objekt && isPreviewNoAuth()) {
     objekt = findDemoObjekt(id) ?? null
+  }
+  if (isPreviewNoAuth() && einheiten.length === 0) {
+    einheiten = DEMO_EINHEITEN.filter((e) => e.objekt_id === id) as Einheit[]
   }
 
   if (!objekt) {
     notFound()
   }
 
-  const einheiten = objekt.einheiten?.[0]?.count ?? 0
+  const einheitenCount = einheiten.length
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -120,17 +130,7 @@ export default async function ObjektDetailPage({
                   objekt.wohnflaeche_qm ? `${objekt.wohnflaeche_qm} m²` : null
                 }
               />
-              <Field
-                label="Einheiten"
-                value={
-                  <Link
-                    href={`/einheiten?objekt=${objekt.id}`}
-                    className="hover:underline"
-                  >
-                    {einheiten} anzeigen
-                  </Link>
-                }
-              />
+              <Field label="Einheiten" value={einheitenCount} />
               <Field
                 label="Adresse"
                 value={formatAdresse(objekt)}
@@ -193,6 +193,28 @@ export default async function ObjektDetailPage({
             </CardContent>
           </Card>
         ) : null}
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              Einheiten ({einheitenCount})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/einheiten/neu?objekt=${objekt.id}`} />}
+            >
+              <Plus />
+              <span>Neue Einheit</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <EinheitenListe
+              einheiten={einheiten}
+              emptyText="Noch keine Einheiten – lege die erste Einheit für dieses Objekt an."
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

@@ -1,18 +1,20 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Pencil } from "lucide-react"
+import { Building2, ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
-import { findDemoEinheit } from "@/lib/dev/demo-einheiten"
+import { findDemoEinheit, DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteEinheitButton } from "@/components/einheiten/delete-einheit-button"
+import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
 import {
   EINHEITSTYP_LABELS,
   EINHEIT_STATUS_LABELS,
   EINHEIT_STATUS_VARIANT,
+  type Einheit,
   type EinheitMitObjekt,
 } from "@/types/einheit"
 
@@ -46,6 +48,22 @@ export default async function EinheitDetailPage({
 
   if (!einheit) {
     notFound()
+  }
+
+  // Geschwister-Einheiten desselben Objekts (bidirektionale Navigation).
+  let geschwister: Einheit[] = []
+  if (einheit.objekt_id) {
+    const { data: geschwisterData } = await supabase
+      .from("einheiten")
+      .select("*")
+      .eq("objekt_id", einheit.objekt_id)
+      .order("verwendungszweck_code", { nullsFirst: false })
+    geschwister = (geschwisterData ?? []) as Einheit[]
+    if (isPreviewNoAuth() && geschwister.length === 0) {
+      geschwister = DEMO_EINHEITEN.filter(
+        (e) => e.objekt_id === einheit!.objekt_id
+      ) as Einheit[]
+    }
   }
 
   const titel =
@@ -133,6 +151,47 @@ export default async function EinheitDetailPage({
               />
               <Field label="Zimmer" value={einheit.zimmer_anzahl} />
             </dl>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              {einheit.objekte?.kuerzel
+                ? `Weitere Einheiten in ${einheit.objekte.kuerzel}`
+                : "Weitere Einheiten"}
+            </CardTitle>
+            {einheit.objekt_id ? (
+              <Button
+                variant="outline"
+                size="sm"
+                render={<Link href={`/einheiten/neu?objekt=${einheit.objekt_id}`} />}
+              >
+                <Plus />
+                <span>Neue Einheit</span>
+              </Button>
+            ) : null}
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {einheit.objekt_id ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2 w-fit"
+                render={<Link href={`/objekte/${einheit.objekt_id}`} />}
+              >
+                <Building2 />
+                <span>
+                  Zum Objekt{" "}
+                  {einheit.objekte?.kuerzel ? `${einheit.objekte.kuerzel}` : ""}
+                </span>
+              </Button>
+            ) : null}
+            <EinheitenListe
+              einheiten={geschwister}
+              currentId={einheit.id}
+              emptyText="Keine weiteren Einheiten in diesem Objekt."
+            />
           </CardContent>
         </Card>
       </div>
