@@ -11,8 +11,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteObjektButton } from "@/components/objekte/delete-objekt-button"
 import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
+import { VertraegeListe } from "@/components/vertraege/vertraege-liste"
 import { formatAdresse, formatDate, formatEUR } from "@/lib/utils/format"
+import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
 import type { Einheit } from "@/types/einheit"
+import type { VertragMitRelationen } from "@/types/vertrag"
+
+const VERTRAG_SELECT =
+  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
 import {
   HALTESTRATEGIE_LABELS,
   OBJEKTTYP_LABELS,
@@ -37,23 +43,32 @@ export default async function ObjektDetailPage({
 }) {
   const { id } = await params
   const supabase = await createServerClient()
-  const [objektRes, einheitenRes] = await Promise.all([
+  const [objektRes, einheitenRes, vertraegeRes] = await Promise.all([
     supabase.from("objekte").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("einheiten")
       .select("*")
       .eq("objekt_id", id)
       .order("verwendungszweck_code", { nullsFirst: false }),
+    supabase
+      .from("vertraege")
+      .select(VERTRAG_SELECT)
+      .eq("objekt_id", id)
+      .order("beginn", { nullsFirst: false }),
   ])
 
   let objekt = objektRes.data as Objekt | null
   let einheiten = (einheitenRes.data ?? []) as Einheit[]
+  let vertraege = (vertraegeRes.data ?? []) as unknown as VertragMitRelationen[]
 
   if (!objekt && isPreviewNoAuth()) {
     objekt = findDemoObjekt(id) ?? null
   }
   if (isPreviewNoAuth() && einheiten.length === 0) {
     einheiten = DEMO_EINHEITEN.filter((e) => e.objekt_id === id) as Einheit[]
+  }
+  if (isPreviewNoAuth() && vertraege.length === 0) {
+    vertraege = DEMO_VERTRAEGE.filter((v) => v.objekt_id === id)
   }
 
   if (!objekt) {
@@ -212,6 +227,29 @@ export default async function ObjektDetailPage({
             <EinheitenListe
               einheiten={einheiten}
               emptyText="Noch keine Einheiten – lege die erste Einheit für dieses Objekt an."
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              Verträge ({vertraege.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/vertraege/neu?objekt=${objekt.id}`} />}
+            >
+              <Plus />
+              <span>Neuer Vertrag</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <VertraegeListe
+              vertraege={vertraege}
+              kontext="objekt"
+              emptyText="Noch keine Verträge für dieses Objekt."
             />
           </CardContent>
         </Card>

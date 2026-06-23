@@ -38,14 +38,18 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-function emptyValues(objektId?: string): VertragFormValues {
+function emptyValues(prefill?: {
+  objektId?: string
+  einheitId?: string
+  mieterId?: string
+}): VertragFormValues {
   return {
     vertragsnummer: "",
     vertragsart: "",
     status: "entwurf",
-    objekt_id: objektId ?? "",
-    einheit_id: "",
-    mieter_id: "",
+    objekt_id: prefill?.objektId ?? "",
+    einheit_id: prefill?.einheitId ?? "",
+    mieter_id: prefill?.mieterId ?? "",
     beginn: "",
     ende: "",
     unbefristet: "ja",
@@ -85,20 +89,35 @@ export function VertragForm({
   einheiten,
   kontakte,
   defaultObjektId,
+  defaultEinheitId,
+  defaultMieterId,
 }: {
   vertrag?: Vertrag
   objekte: ObjektRef[]
   einheiten: EinheitRef[]
   kontakte: KontaktRef[]
   defaultObjektId?: string
+  defaultEinheitId?: string
+  defaultMieterId?: string
 }) {
   const router = useRouter()
   const isEdit = Boolean(vertrag)
   const [serverError, setServerError] = useState<string | null>(null)
 
+  // Objekt aus der vorausgewählten Einheit ableiten, damit der Einheiten-Filter passt.
+  const einheitObjektId = defaultEinheitId
+    ? einheiten.find((e) => e.id === defaultEinheitId)?.objekt_id
+    : undefined
+
   const form = useForm<VertragFormValues>({
     resolver: zodResolver(vertragFormSchema),
-    defaultValues: vertrag ? toFormValues(vertrag) : emptyValues(defaultObjektId),
+    defaultValues: vertrag
+      ? toFormValues(vertrag)
+      : emptyValues({
+          objektId: defaultObjektId ?? einheitObjektId,
+          einheitId: defaultEinheitId,
+          mieterId: defaultMieterId,
+        }),
   })
 
   const selectedObjekt = form.watch("objekt_id")

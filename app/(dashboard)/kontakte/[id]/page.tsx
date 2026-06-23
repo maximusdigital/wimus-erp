@@ -1,21 +1,27 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Pencil } from "lucide-react"
+import { ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoKontakt } from "@/lib/dev/demo-kontakte"
+import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteKontaktButton } from "@/components/kontakte/delete-kontakt-button"
+import { VertraegeListe } from "@/components/vertraege/vertraege-liste"
 import { formatAdresse, formatDate } from "@/lib/utils/format"
+import type { VertragMitRelationen } from "@/types/vertrag"
 import {
   KONTAKT_TYP_LABELS,
   KONTAKT_TYP_VARIANT,
   kontaktName,
   type Kontakt,
 } from "@/types/kontakt"
+
+const VERTRAG_SELECT =
+  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -47,6 +53,17 @@ export default async function KontaktDetailPage({
 
   if (!kontakt) {
     notFound()
+  }
+
+  // Verträge, in denen dieser Kontakt Mieter ist (bidirektionale Verlinkung).
+  const { data: vertraegeData } = await supabase
+    .from("vertraege")
+    .select(VERTRAG_SELECT)
+    .eq("mieter_id", id)
+    .order("beginn", { nullsFirst: false })
+  let vertraege = (vertraegeData ?? []) as unknown as VertragMitRelationen[]
+  if (isPreviewNoAuth() && vertraege.length === 0) {
+    vertraege = DEMO_VERTRAEGE.filter((v) => v.mieter_id === id)
   }
 
   const name = kontaktName(kontakt)
@@ -157,6 +174,29 @@ export default async function KontaktDetailPage({
             </CardContent>
           </Card>
         ) : null}
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              Verträge als Mieter ({vertraege.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/vertraege/neu?mieter=${kontakt.id}`} />}
+            >
+              <Plus />
+              <span>Neuer Vertrag</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <VertraegeListe
+              vertraege={vertraege}
+              kontext="mieter"
+              emptyText="Dieser Kontakt ist in keinem Vertrag als Mieter hinterlegt."
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

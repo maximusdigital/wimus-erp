@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteEinheitButton } from "@/components/einheiten/delete-einheit-button"
 import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
+import { VertraegeListe } from "@/components/vertraege/vertraege-liste"
+import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
+import type { VertragMitRelationen } from "@/types/vertrag"
 import {
   EINHEITSTYP_LABELS,
   EINHEIT_STATUS_LABELS,
@@ -17,6 +20,9 @@ import {
   type Einheit,
   type EinheitMitObjekt,
 } from "@/types/einheit"
+
+const VERTRAG_SELECT =
+  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -64,6 +70,17 @@ export default async function EinheitDetailPage({
         (e) => e.objekt_id === einheit!.objekt_id
       ) as Einheit[]
     }
+  }
+
+  // Verträge dieser Einheit (bidirektionale Verlinkung).
+  const { data: vertraegeData } = await supabase
+    .from("vertraege")
+    .select(VERTRAG_SELECT)
+    .eq("einheit_id", id)
+    .order("beginn", { nullsFirst: false })
+  let vertraege = (vertraegeData ?? []) as unknown as VertragMitRelationen[]
+  if (isPreviewNoAuth() && vertraege.length === 0) {
+    vertraege = DEMO_VERTRAEGE.filter((v) => v.einheit_id === id)
   }
 
   const titel =
@@ -191,6 +208,29 @@ export default async function EinheitDetailPage({
               einheiten={geschwister}
               currentId={einheit.id}
               emptyText="Keine weiteren Einheiten in diesem Objekt."
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              Verträge ({vertraege.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/vertraege/neu?einheit=${einheit.id}`} />}
+            >
+              <Plus />
+              <span>Neuer Vertrag</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <VertraegeListe
+              vertraege={vertraege}
+              kontext="einheit"
+              emptyText="Noch keine Verträge für diese Einheit."
             />
           </CardContent>
         </Card>

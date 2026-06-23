@@ -48,12 +48,12 @@ export type KontaktRef = {
 
 export const VERTRAGSARTEN = ["V01", "V02", "V03", "V04"] as const
 
-// Hinweis: Bedeutung der Vertragsarten ist eine sinnvolle Annahme – bei Bedarf anpassen.
+// Vertragsarten gem. Spec v5, Kap. 4.5.
 export const VERTRAGSART_LABELS: Record<string, string> = {
-  V01: "V01 – Wohnraum",
-  V02: "V02 – Gewerbe",
-  V03: "V03 – Stellplatz / Garage",
-  V04: "V04 – Möbliert / Zwischenmiete",
+  V01: "V01 – Standard (Wohnraum)",
+  V02: "V02 – Befristet",
+  V03: "V03 – KZV (7% USt, Beds24)",
+  V04: "V04 – Gewerbe",
 }
 
 export const VERTRAG_STATUS = [

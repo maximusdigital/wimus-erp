@@ -11,9 +11,9 @@ export const metadata = {
 export default async function NeuerVertragPage({
   searchParams,
 }: {
-  searchParams: Promise<{ objekt?: string }>
+  searchParams: Promise<{ objekt?: string; einheit?: string; mieter?: string }>
 }) {
-  const { objekt } = await searchParams
+  const { objekt, einheit, mieter } = await searchParams
   const { objekte, einheiten, kontakte } = await loadVertragOptions()
 
   return (
@@ -40,6 +40,8 @@ export default async function NeuerVertragPage({
           einheiten={einheiten}
           kontakte={kontakte}
           defaultObjektId={objekt}
+          defaultEinheitId={einheit}
+          defaultMieterId={mieter}
         />
       </div>
     </div>
