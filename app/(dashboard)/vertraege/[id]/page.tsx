@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Pencil } from "lucide-react"
+import { ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoVertrag } from "@/lib/dev/demo-vertraege"
@@ -18,6 +18,18 @@ import {
   warmmiete,
   type VertragMitRelationen,
 } from "@/types/vertrag"
+import {
+  MAHN_STATUS_LABELS,
+  MAHN_STATUS_VARIANT,
+  MAHN_STUFE_LABELS,
+  type Mahnung,
+} from "@/types/mahnung"
+import {
+  KAUTION_ANLAGE_ART_LABELS,
+  KAUTION_STATUS_LABELS,
+  KAUTION_STATUS_VARIANT,
+  type Kaution,
+} from "@/types/kaution"
 
 const SELECT =
   "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
@@ -53,6 +65,23 @@ export default async function VertragDetailPage({
   if (!vertrag) {
     notFound()
   }
+
+  // Zugehörige Finanzdatensätze laden (nicht in der Vorschau ohne DB).
+  const [{ data: mahnungenData }, { data: kautionData }] = await Promise.all([
+    supabase
+      .from("mahnungen")
+      .select("*")
+      .eq("vertrag_id", id)
+      .order("faellig_am", { ascending: false, nullsFirst: false }),
+    supabase
+      .from("kautionen")
+      .select("*")
+      .eq("vertrag_id", id)
+      .order("created_at", { ascending: false })
+      .maybeSingle(),
+  ])
+  const mahnungen = (mahnungenData ?? []) as Mahnung[]
+  const kaution = kautionData as Kaution | null
 
   const titel =
     vertrag.vertragsnummer ??
@@ -194,6 +223,124 @@ export default async function VertragDetailPage({
                 }
               />
             </dl>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle className="text-base">Kaution</CardTitle>
+            {!kaution ? (
+              <Button
+                variant="outline"
+                size="sm"
+                render={
+                  <Link
+                    href={`/finanzen/kautionen/neu?vertrag=${vertrag.id}`}
+                  />
+                }
+              >
+                <Plus />
+                <span>Neu</span>
+              </Button>
+            ) : null}
+          </CardHeader>
+          <CardContent>
+            {kaution ? (
+              <Link
+                href={`/finanzen/kautionen/${kaution.id}`}
+                className="block"
+              >
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <Field label="Betrag" value={formatEUR(kaution.betrag)} />
+                  <Field
+                    label="Anlageart"
+                    value={
+                      kaution.anlage_art
+                        ? (KAUTION_ANLAGE_ART_LABELS[kaution.anlage_art] ??
+                          kaution.anlage_art)
+                        : null
+                    }
+                  />
+                  <Field
+                    label="Status"
+                    value={
+                      <Badge
+                        variant={
+                          KAUTION_STATUS_VARIANT[kaution.status] ?? "secondary"
+                        }
+                      >
+                        {KAUTION_STATUS_LABELS[kaution.status] ?? kaution.status}
+                      </Badge>
+                    }
+                  />
+                  <Field label="Bank" value={kaution.bank} />
+                </dl>
+              </Link>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Keine Kaution hinterlegt.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle className="text-base">Mahnungen</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={
+                <Link href={`/finanzen/mahnungen/neu?vertrag=${vertrag.id}`} />
+              }
+            >
+              <Plus />
+              <span>Neu</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {mahnungen.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Keine Mahnungen vorhanden.
+              </p>
+            ) : (
+              <ul className="flex flex-col">
+                {mahnungen.map((m, index) => (
+                  <li key={m.id}>
+                    <Link
+                      href={`/finanzen/mahnungen/${m.id}`}
+                      className={`flex items-center gap-3 py-2.5 transition-colors hover:bg-muted/40 ${
+                        index !== mahnungen.length - 1 ? "border-b" : ""
+                      }`}
+                    >
+                      <div className="grid flex-1 gap-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium leading-tight">
+                            {MAHN_STUFE_LABELS[m.stufe] ?? `Stufe ${m.stufe}`}
+                          </span>
+                          <Badge
+                            variant={
+                              MAHN_STATUS_VARIANT[m.status] ?? "secondary"
+                            }
+                            className="shrink-0 text-[0.7rem]"
+                          >
+                            {MAHN_STATUS_LABELS[m.status] ?? m.status}
+                          </Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Fällig: {formatDate(m.faellig_am)}
+                        </span>
+                      </div>
+                      <span className="shrink-0 text-sm font-medium tabular-nums">
+                        {formatEUR(m.gesamt)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -54,13 +54,13 @@ const mainNav: NavItem[] = [
   { title: "Einheiten", href: "/einheiten", icon: DoorOpen },
   { title: "Kontakte", href: "/kontakte", icon: Users },
   { title: "Verträge", href: "/vertraege", icon: FileText },
+  { title: "Finanzen", href: "/finanzen", icon: Wallet },
 ];
 
 // Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.
 const secondaryNav: NavItem[] = [
   { title: "Vorgänge", href: "/vorgaenge", icon: ClipboardList, soon: true },
   { title: "E-Mails", href: "/emails", icon: Mail, soon: true },
-  { title: "Finanzen", href: "/finanzen", icon: Wallet, soon: true },
   { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock, soon: true },
   { title: "Bestandsentwicklung", href: "/bestandsentwicklung", icon: TrendingUp, soon: true },
   { title: "Einstellungen", href: "/einstellungen", icon: Settings, soon: true },
