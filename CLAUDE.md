@@ -392,10 +392,12 @@ CityTax:
 ## Entwicklungsplan (Phasen)
 
 ```
-Phase 0  Fundament          CLAUDE.md + Schema + Auth + Mandanten
-Phase 1  Core Immobilien    Objekte + Einheiten + Kontakte + Verträge
-Phase 2  Finanzen/Komm.     OP + Mahnwesen + Invoice Ninja + Zammad
-Phase 3  KZV Auto.          Beds24 + Nuki + Tuya + WhatsApp-Flow
+Phase 0  Fundament          CLAUDE.md + Schema + Auth + Mandanten          ✅ DONE
+Phase 1  Core Immobilien    Objekte + Einheiten + Kontakte + Verträge      ✅ DONE
+                            (bidirektionale Beziehungen + Detail-Listen)
+Phase 2  Finanzen/Komm.     Mahnwesen 5-stufig + Kautionen (nativ) ✅      🟡 TEILWEISE
+                            extern offen: OP/finAPI/CAMT, Invoice Ninja, Zammad
+Phase 3  KZV Auto.          Beds24 + Nuki/TTLock + Tuya + WhatsApp-Flow    🔵 IN ARBEIT
 Phase 4  Vorgänge/Projekte  P14 Vorgänge + Plantafel + OpenProject
 Phase 5  DMS & Dokumente    Paperless + Caya + DocuSeal + PWA Übergabe
 Phase 6  KI-Agenten         13 Agenten via n8n + Claude API
@@ -430,12 +432,22 @@ Phase 12 Telefon KI         Retell AI
 
 ---
 
-## Nächster Schritt: Phase 0
+## Aktueller Stand & nächste Schritte
 
-1. Diese CLAUDE.md ist bereits erstellt ✅
-2. Supabase Migration erstellen (`supabase/migrations/001_initial_schema.sql`)
-3. Auth-Setup (Supabase Auth + MFA)
-4. Mandanten-Context implementieren
-5. Layout fertigstellen
-6. Seed-Daten einspielen
+**Erledigt:** Phase 0 (Fundament) · Phase 1 (Objekte/Einheiten/Kontakte/Verträge inkl.
+bidirektionaler Zuordnung + Detail-Listen, V01–V04 gem. Spec) · Phase 2 nativer Teil
+(Mahnwesen 5-stufig + Kautionen, CRUD + Finanzen-Übersicht).
+
+**App läuft auf `public`** (Migration 001). Schema `wimus` (Migration 002, 76 Tabellen)
+ist additiv vorbereitet; Cutover public→wimus ist ein separater, geplanter Schritt.
+
+**In Arbeit – Phase 3 (KZV-Vollautomatisierung):**
+1. Buchungen-CRUD auf `public.buchungen_kzv` (Liste/Detail/Anlage/Bearbeiten)
+2. Verwendungszweck-Parser (`lib/utils/verwendungszweck.ts`) in der Buchungsmaske nutzen
+3. Beds24-Webhook-Skeleton (`app/api/webhooks/beds24/route.ts`): Signaturprüfung + Buchung anlegen
+4. Zwei PINs je Buchung: keybox_pin (statisch aus Einheit) ≠ apartment_pin (TTLock, dynamisch)
+5. CityTax (Stuttgart 3 €, Ludwigsburg 2 € / Person·Nacht), Navigation
+
+**Phase 2 extern offen** (Schaltzentrale-Prinzip, nicht nachbauen): OP/finAPI/CAMT.053,
+Invoice Ninja (Rechnungen/DATEV), Zammad (Unified Inbox), Kommunikationskanäle.
 
