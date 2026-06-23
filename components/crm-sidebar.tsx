@@ -9,6 +9,7 @@ import {
   ClipboardList,
   DoorOpen,
   FileText,
+  FolderArchive,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -60,6 +61,7 @@ const mainNav: NavItem[] = [
   { title: "Inventar", href: "/inventar", icon: Package },
   { title: "Buchungen", href: "/buchungen", icon: BedDouble },
   { title: "Finanzen", href: "/finanzen", icon: Wallet },
+  { title: "Dokumente", href: "/dokumente", icon: FolderArchive },
 ];
 
 // Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.
