@@ -10,21 +10,56 @@
 //   node --env-file=.env.local scripts/db-push.mjs schema
 //   node --env-file=.env.local scripts/db-push.mjs seed
 // =====================================================================
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import pg from 'pg'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
+const migrationsDir = join(root, 'supabase', 'migrations')
 
 const FILES = {
-  schema: join(root, 'supabase', 'migrations', '001_initial_schema.sql'),
+  schema: join(migrationsDir, '001_initial_schema.sql'),
   seed: join(root, 'supabase', 'seed.sql'),
 }
 
+/**
+ * Löst einen Schritt zu einer SQL-Datei auf:
+ *   - bekannte Aliase (schema, seed)
+ *   - exakter Dateiname / Pfad
+ *   - Präfix-Match in supabase/migrations (z.B. "003" → 003_kzv_felder.sql)
+ *   - "all" → alle Migrationen 0xx in Reihenfolge
+ */
+function resolveStep(step) {
+  if (FILES[step]) return [[step, FILES[step]]]
+  if (step === 'all') {
+    return readdirSync(migrationsDir)
+      .filter((f) => /^\d+.*\.sql$/.test(f))
+      .sort()
+      .map((f) => [f, join(migrationsDir, f)])
+  }
+  if (existsSync(step)) return [[step, step]]
+  const direct = join(migrationsDir, step.endsWith('.sql') ? step : `${step}.sql`)
+  if (existsSync(direct)) return [[step, direct]]
+  const match = readdirSync(migrationsDir)
+    .filter((f) => f.startsWith(step) && f.endsWith('.sql'))
+    .sort()
+  if (match.length > 0) return match.map((f) => [f, join(migrationsDir, f)])
+  return null
+}
+
 const arg = process.argv[2]
-const steps = arg ? [arg] : ['schema', 'seed']
+const requested = arg ? [arg] : ['schema', 'seed']
+const steps = []
+for (const s of requested) {
+  const resolved = resolveStep(s)
+  if (!resolved) {
+    console.error(`Unbekannter Schritt: ${s} (erlaubt: schema, seed, all, oder Migrationsname wie 003)`)
+    process.exit(1)
+  }
+  steps.push(...resolved)
+}
 
 let connectionString = process.env.DATABASE_URL
 if (!connectionString) {
@@ -83,12 +118,8 @@ async function report() {
 try {
   await client.connect()
   console.log('Verbunden mit Datenbank.')
-  for (const step of steps) {
-    if (!FILES[step]) {
-      console.error(`Unbekannter Schritt: ${step} (erlaubt: schema, seed)`)
-      process.exit(1)
-    }
-    await runFile(step, FILES[step])
+  for (const [label, path] of steps) {
+    await runFile(label, path)
   }
   await report()
 } catch (err) {
