@@ -399,8 +399,10 @@ Phase 2  Finanzen/Komm.     Mahnwesen 5-stufig + Kautionen (nativ) ✅      🟡
                             extern offen: OP/finAPI/CAMT, Invoice Ninja, Zammad
 Phase 3  KZV Auto.          Buchungen-CRUD + Beds24-Webhook (nativ) ✅      🟡 TEILWEISE
                             extern offen (n8n): TTLock/Nuki, Tuya, WhatsApp, Rechnung
-Phase 4  Vorgänge/Projekte  P14 Vorgänge + Plantafel + OpenProject
-Phase 5  DMS & Dokumente    Paperless + Caya + DocuSeal + PWA Übergabe
+Phase 4  Vorgänge/Projekte  Vorgänge P14 + Plantafel P15 + Asset-Register ✅  🟡 TEILWEISE
+                            extern offen: OpenProject; Wartungsfristen (Tabelle nur in wimus)
+Phase 5  DMS & Dokumente    Paperless-Client + Dokumente-Seite + DocuSeal-Stub ✅  🟡 TEILWEISE
+                            extern offen: Paperless-/DocuSeal-/Caya-Instanz + Token, PWA-Übergabe
 Phase 6  KI-Agenten         13 Agenten via n8n + Claude API
 Phase 7  Reporting/Bank     Dashboard + Selbstauskunft + Bank-PDF
 Phase 8  Akquise/Pipelines  4 Pipelines + DCF-Kalkulator + Grundriss-KI
@@ -435,24 +437,25 @@ Phase 12 Telefon KI         Retell AI
 
 ## Aktueller Stand & nächste Schritte
 
-**Erledigt:** Phase 0 (Fundament) · Phase 1 (Objekte/Einheiten/Kontakte/Verträge inkl.
-bidirektionaler Zuordnung + Detail-Listen, V01–V04 gem. Spec) · Phase 2 nativer Teil
-(Mahnwesen 5-stufig + Kautionen, CRUD + Finanzen-Übersicht).
+**Erledigt (nativer Teil):**
+- Phase 0 Fundament · Phase 1 Core Immobilien (Objekte/Einheiten/Kontakte/Verträge inkl.
+  bidirektionaler Zuordnung + Detail-Listen, V01–V04 gem. Spec)
+- Phase 2: Mahnwesen 5-stufig + Kautionen + Finanzen-Übersicht
+- Phase 3: Buchungen-CRUD (`public.buchungen_kzv`), Verwendungszweck-Parser + CityTax-Helfer,
+  zwei PINs (keybox statisch ≠ apartment dynamisch), Beds24-Webhook-Skeleton (timing-safe Secret + Upsert)
+- Phase 4: Vorgänge (P14) + Plantafel (P15, Kanban) + Asset-Register/Inventar
+- Phase 5: Paperless-ngx-Client (`lib/integrations/paperless.ts`) + `/dokumente` + DocuSeal-Stub
 
 **App läuft auf `public`** (Migration 001). Schema `wimus` (Migration 002, 76 Tabellen)
 ist additiv vorbereitet; Cutover public→wimus ist ein separater, geplanter Schritt.
+Migration 003 (KZV-Felder) ist eingespielt.
 
-**Phase 3 nativer Teil erledigt:** Buchungen-CRUD auf `public.buchungen_kzv`,
-Verwendungszweck-Parser + CityTax-Helfer, zwei PINs (keybox statisch ≠ apartment dynamisch),
-Beds24-Webhook-Skeleton (Secret-Prüfung + idempotenter Upsert via Admin-Client).
-
-> ⚠️ **Migration 003 muss eingespielt werden** (`supabase/migrations/003_kzv_felder.sql`,
-> Supabase SQL-Editor) – sonst fehlen die neuen Spalten (Keybox an einheiten;
-> apartment_pin/keybox_pin/ust_prozent/gaestemappe_token an buchungen_kzv) und Inserts schlagen fehl.
-
-**Extern offen** (Schaltzentrale-Prinzip, nicht nachbauen):
+**Extern offen** (Schaltzentrale-Prinzip, nicht nachbauen – via n8n/API + Credentials):
 - Phase 2: OP/finAPI/CAMT.053, Invoice Ninja (Rechnungen/DATEV), Zammad (Unified Inbox), Kommunikationskanäle
-- Phase 3: TTLock/Nuki (Apartment-PIN), Tuya (Heizung), WhatsApp (GreenAPI), Rechnung – via n8n nachgelagert
+- Phase 3: TTLock/Nuki (Apartment-PIN), Tuya (Heizung), WhatsApp (GreenAPI), Rechnung
+- Phase 4: OpenProject; Wartungsfristen (Tabelle nur im wimus-Schema)
+- Phase 5: Paperless-/DocuSeal-/Caya-Instanz + Token setzen (PAPERLESS_URL/PAPERLESS_TOKEN); PWA-Übergabe
 
-**Nächste sinnvolle Phase:** Phase 4 (Vorgänge P14 + Plantafel) oder Cutover-Vorbereitung public→wimus.
+**Nächste sinnvolle Phase:** Phase 6 (KI-Agenten via n8n + Claude API), Phase 7 (Reporting/Bank),
+oder Cutover-Vorbereitung public→wimus.
 
