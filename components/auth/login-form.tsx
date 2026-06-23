@@ -129,6 +129,7 @@ export function LoginForm() {
         <CardContent>
           <Form {...mfaForm}>
             <form
+              method="post"
               onSubmit={mfaForm.handleSubmit(onMfa)}
               className="flex flex-col gap-4"
             >
@@ -180,6 +181,7 @@ export function LoginForm() {
       <CardContent>
         <Form {...loginForm}>
           <form
+            method="post"
             onSubmit={loginForm.handleSubmit(onLogin)}
             className="flex flex-col gap-4"
           >
