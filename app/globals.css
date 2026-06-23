@@ -48,6 +48,24 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* WIMUS Markenfarben (Design System 40, V100) – ergaenzen die Shadcn-Graustufen,
+   ueberschreiben sie nicht. Quelle der Wahrheit fuer primary/secondary/teal/
+   success/danger/warning. Tailwind v4 CSS-first, kein tailwind.config.ts. */
+@theme {
+  --color-primary: #1F4E5F;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #2E75B6;
+  --color-secondary-foreground: #FFFFFF;
+  --color-teal: #0D7680;
+  --color-teal-foreground: #FFFFFF;
+  --color-success: #2E7D32;
+  --color-success-foreground: #FFFFFF;
+  --color-danger: #C62828;
+  --color-danger-foreground: #FFFFFF;
+  --color-warning: #F59E0B;
+  --color-warning-foreground: #1A1A1A;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
