@@ -6,6 +6,10 @@ import { createServerClient } from "@/lib/supabase/server"
 import { findDemoEinheit } from "@/lib/dev/demo-einheiten"
 import { DEMO_OBJEKTE } from "@/lib/dev/demo-objekte"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
+import {
+  buildVertragOptionen,
+  loadVertragZuordnungen,
+} from "@/lib/vertrag-zuordnung"
 import { EinheitForm } from "@/components/einheiten/einheit-form"
 import type { Einheit, ObjektOption } from "@/types/einheit"
 
@@ -46,6 +50,9 @@ export default async function EinheitBearbeitenPage({
     notFound()
   }
 
+  const { options: vertraege, selectedIds: selectedVertragIds } =
+    buildVertragOptionen(await loadVertragZuordnungen(), "einheit_id", einheit.id)
+
   const titel = einheit.verwendungszweck_code ?? einheit.bezeichnung ?? "Einheit"
 
   return (
@@ -67,7 +74,12 @@ export default async function EinheitBearbeitenPage({
       </div>
 
       <div className="max-w-4xl">
-        <EinheitForm einheit={einheit} objekte={objekte} />
+        <EinheitForm
+          einheit={einheit}
+          objekte={objekte}
+          vertraege={vertraege}
+          selectedVertragIds={selectedVertragIds}
+        />
       </div>
     </div>
   )

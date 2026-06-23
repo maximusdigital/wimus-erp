@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { einheitInsertSchema } from "@/lib/validations/einheit"
+import { readIdList, reconcileVertragRelation } from "@/lib/relations"
 
 type Context = { params: Promise<{ id: string }> }
 
@@ -28,6 +29,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   const supabase = await createServerClient()
 
   const json = await request.json().catch(() => null)
+  const vertragIds = readIdList(json, "vertrag_ids")
   const parsed = einheitInsertSchema.safeParse(json)
   if (!parsed.success) {
     return NextResponse.json(
@@ -51,6 +53,19 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   if (!data) {
     return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 })
   }
+
+  if (vertragIds) {
+    const relError = await reconcileVertragRelation(
+      supabase,
+      "einheit_id",
+      id,
+      vertragIds
+    )
+    if (relError) {
+      return NextResponse.json({ error: relError }, { status: 500 })
+    }
+  }
+
   return NextResponse.json(data)
 }
 

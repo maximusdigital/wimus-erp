@@ -4,6 +4,10 @@ import { ChevronLeft } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { DEMO_OBJEKTE } from "@/lib/dev/demo-objekte"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
+import {
+  buildVertragOptionen,
+  loadVertragZuordnungen,
+} from "@/lib/vertrag-zuordnung"
 import { EinheitForm } from "@/components/einheiten/einheit-form"
 import type { ObjektOption } from "@/types/einheit"
 
@@ -32,6 +36,11 @@ export default async function NeueEinheitPage({
     }))
   }
 
+  const { options: vertraege } = buildVertragOptionen(
+    await loadVertragZuordnungen(),
+    "einheit_id"
+  )
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <div>
@@ -51,7 +60,11 @@ export default async function NeueEinheitPage({
       </div>
 
       <div className="max-w-4xl">
-        <EinheitForm objekte={objekte} defaultObjektId={objekt} />
+        <EinheitForm
+          objekte={objekte}
+          defaultObjektId={objekt}
+          vertraege={vertraege}
+        />
       </div>
     </div>
   )

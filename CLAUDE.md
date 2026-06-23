@@ -10,6 +10,12 @@ WIMUS ERP ist die digitale Schaltzentrale für die Württembergische Immobilien 
 **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS + Shadcn/UI + Supabase (self-hosted)  
 **Live:** erp.m81s.de | Supabase: supa.m81s.de | Repo: github.com/maximusdigital/wimus-erp
 
+
+
+## Arbeitsweise
+- Keine Rückfragen stellen. Bei Unklarheiten sinnvolle Standardannahme treffen,
+  umsetzen und die Annahme kurz dokumentieren.    Dann gilt es für jede Session in diesem Projekt automatisch.
+
 ---
 
 ## Datenmodell-Stand (v5)

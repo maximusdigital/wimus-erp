@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { einheitInsertSchema } from "@/lib/validations/einheit"
+import { readIdList, reconcileVertragRelation } from "@/lib/relations"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   const json = await request.json().catch(() => null)
+  const vertragIds = readIdList(json, "vertrag_ids")
   const parsed = einheitInsertSchema.safeParse(json)
   if (!parsed.success) {
     return NextResponse.json(
@@ -56,5 +58,18 @@ export async function POST(request: NextRequest) {
     const status = error.code === "23505" ? 409 : 500
     return NextResponse.json({ error: error.message }, { status })
   }
+
+  if (vertragIds) {
+    const relError = await reconcileVertragRelation(
+      supabase,
+      "einheit_id",
+      data.id,
+      vertragIds
+    )
+    if (relError) {
+      return NextResponse.json({ error: relError }, { status: 500 })
+    }
+  }
+
   return NextResponse.json(data, { status: 201 })
 }

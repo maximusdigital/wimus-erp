@@ -36,6 +36,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { ZuordnungFeld } from "@/components/shared/zuordnung-feld"
+import type { MultiSelectOption } from "@/components/shared/multi-select-list"
+
+/** Einheit-Kurzinfo zur Zuordnung im Objekt-Formular. */
+export type EinheitZuordnung = {
+  id: string
+  objekt_id: string | null
+  label: string
+  objektKuerzel: string | null
+}
 
 const EMPTY_VALUES: ObjektFormValues = {
   kuerzel: "",
@@ -80,10 +90,38 @@ function toFormValues(o: Objekt): ObjektFormValues {
   }
 }
 
-export function ObjektForm({ objekt }: { objekt?: Objekt }) {
+export function ObjektForm({
+  objekt,
+  einheiten = [],
+  vertraege = [],
+  selectedVertragIds = [],
+}: {
+  objekt?: Objekt
+  einheiten?: EinheitZuordnung[]
+  vertraege?: MultiSelectOption[]
+  selectedVertragIds?: string[]
+}) {
   const router = useRouter()
   const isEdit = Boolean(objekt)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [vertragIds, setVertragIds] = useState<string[]>(selectedVertragIds)
+
+  // Aktuell diesem Objekt zugeordnete Einheiten sind vorausgewählt und gesperrt
+  // (objekt_id ist Pflicht – Abwählen würde die Einheit verwaisen lassen; das
+  // Umhängen erfolgt über die Einheit selbst bzw. über ein anderes Objekt).
+  const lockedIds = objekt
+    ? einheiten.filter((e) => e.objekt_id === objekt.id).map((e) => e.id)
+    : []
+  const [einheitIds, setEinheitIds] = useState<string[]>(lockedIds)
+
+  const einheitOptionen: MultiSelectOption[] = einheiten.map((e) => {
+    const locked = lockedIds.includes(e.id)
+    const fremd =
+      !locked && e.objekt_id && e.objektKuerzel
+        ? `aktuell: ${e.objektKuerzel}`
+        : undefined
+    return { value: e.id, label: e.label, hint: fremd, locked }
+  })
 
   const form = useForm<ObjektFormValues>({
     resolver: zodResolver(objektFormSchema),
@@ -92,12 +130,14 @@ export function ObjektForm({ objekt }: { objekt?: Objekt }) {
 
   async function onSubmit(values: ObjektFormValues) {
     setServerError(null)
+    // Gesperrte (bereits zugeordnete) immer mitsenden + neu gewählte.
+    const einheit_ids = Array.from(new Set([...lockedIds, ...einheitIds]))
     const res = await fetch(
       isEdit ? `/api/objekte/${objekt!.id}` : "/api/objekte",
       {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, einheit_ids, vertrag_ids: vertragIds }),
       }
     )
 
@@ -377,6 +417,28 @@ export function ObjektForm({ objekt }: { objekt?: Objekt }) {
             </FormItem>
           )}
         />
+
+        {einheiten.length > 0 ? (
+          <ZuordnungFeld
+            label="Einheiten zuordnen"
+            options={einheitOptionen}
+            value={einheitIds}
+            onChange={setEinheitIds}
+            emptyText="Keine Einheiten vorhanden."
+            beschreibung="Ausgewählte Einheiten werden diesem Objekt zugeordnet (ggf. von einem anderen Objekt hierher verschoben). Bereits zugeordnete Einheiten sind gesperrt – zum Lösen die Einheit einem anderen Objekt zuweisen."
+          />
+        ) : null}
+
+        {vertraege.length > 0 ? (
+          <ZuordnungFeld
+            label="Verträge zuordnen"
+            options={vertraege}
+            value={vertragIds}
+            onChange={setVertragIds}
+            emptyText="Keine Verträge vorhanden."
+            beschreibung="Welche Verträge gehören zu diesem Objekt. Abwählen löst die Zuordnung."
+          />
+        ) : null}
 
         {serverError ? (
           <p className="text-destructive text-sm">{serverError}</p>

@@ -34,6 +34,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { ZuordnungFeld } from "@/components/shared/zuordnung-feld"
+import type { MultiSelectOption } from "@/components/shared/multi-select-list"
 
 function emptyValues(objektId?: string): EinheitFormValues {
   return {
@@ -69,14 +71,19 @@ export function EinheitForm({
   einheit,
   objekte,
   defaultObjektId,
+  vertraege = [],
+  selectedVertragIds = [],
 }: {
   einheit?: Einheit
   objekte: ObjektOption[]
   defaultObjektId?: string
+  vertraege?: MultiSelectOption[]
+  selectedVertragIds?: string[]
 }) {
   const router = useRouter()
   const isEdit = Boolean(einheit)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [vertragIds, setVertragIds] = useState<string[]>(selectedVertragIds)
 
   const form = useForm<EinheitFormValues>({
     resolver: zodResolver(einheitFormSchema),
@@ -90,7 +97,7 @@ export function EinheitForm({
       {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, vertrag_ids: vertragIds }),
       }
     )
 
@@ -275,6 +282,17 @@ export function EinheitForm({
             )}
           />
         </div>
+
+        {vertraege.length > 0 ? (
+          <ZuordnungFeld
+            label="Verträge zuordnen"
+            options={vertraege}
+            value={vertragIds}
+            onChange={setVertragIds}
+            emptyText="Keine Verträge vorhanden."
+            beschreibung="Welche Verträge gehören zu dieser Einheit. Abwählen löst die Zuordnung."
+          />
+        ) : null}
 
         {serverError ? (
           <p className="text-destructive text-sm">{serverError}</p>

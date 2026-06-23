@@ -5,6 +5,11 @@ import { ChevronLeft } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoObjekt } from "@/lib/dev/demo-objekte"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
+import { loadEinheitZuordnungen } from "@/lib/einheit-zuordnung"
+import {
+  buildVertragOptionen,
+  loadVertragZuordnungen,
+} from "@/lib/vertrag-zuordnung"
 import { ObjektForm } from "@/components/objekte/objekt-form"
 import type { Objekt } from "@/types/objekt"
 
@@ -35,6 +40,11 @@ export default async function ObjektBearbeitenPage({
     notFound()
   }
 
+  const einheiten = await loadEinheitZuordnungen()
+  const alleVertraege = await loadVertragZuordnungen()
+  const { options: vertraege, selectedIds: selectedVertragIds } =
+    buildVertragOptionen(alleVertraege, "objekt_id", objekt.id)
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <div>
@@ -54,7 +64,12 @@ export default async function ObjektBearbeitenPage({
       </div>
 
       <div className="max-w-4xl">
-        <ObjektForm objekt={objekt} />
+        <ObjektForm
+          objekt={objekt}
+          einheiten={einheiten}
+          vertraege={vertraege}
+          selectedVertragIds={selectedVertragIds}
+        />
       </div>
     </div>
   )

@@ -5,6 +5,10 @@ import { ChevronLeft } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoKontakt } from "@/lib/dev/demo-kontakte"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
+import {
+  buildVertragOptionen,
+  loadVertragZuordnungen,
+} from "@/lib/vertrag-zuordnung"
 import { KontaktForm } from "@/components/kontakte/kontakt-form"
 import { kontaktName, type Kontakt } from "@/types/kontakt"
 
@@ -35,6 +39,9 @@ export default async function KontaktBearbeitenPage({
     notFound()
   }
 
+  const { options: vertraege, selectedIds: selectedVertragIds } =
+    buildVertragOptionen(await loadVertragZuordnungen(), "mieter_id", kontakt.id)
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <div>
@@ -54,7 +61,11 @@ export default async function KontaktBearbeitenPage({
       </div>
 
       <div className="max-w-4xl">
-        <KontaktForm kontakt={kontakt} />
+        <KontaktForm
+          kontakt={kontakt}
+          vertraege={vertraege}
+          selectedVertragIds={selectedVertragIds}
+        />
       </div>
     </div>
   )

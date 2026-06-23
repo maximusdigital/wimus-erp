@@ -1,0 +1,2630 @@
+
+WIMUS ERP
+Projekt-Übergabedokument – Version 5.0
+Prozesse P01–P61 · Datenmodell 82 Tabellen · Architektur · Entwicklungsplan
+Württembergische Immobilien Management und Service GmbH (WIMUS)
+WIMUS Hausverwaltung  ·  ALFA CAMPUS  ·  ALFA APARTMENTS  ·  ALFA DEVELOPMENT
+Stand: 22. Juni 2026
+
+1. Leitprinzip & Architektur
+1.1 Credo
+Effizienz vor Bürokratie. WIMUS ERP ist eine Schaltzentrale – keine Eigenentwicklung von Funktionalität die es als fertiges Open-Source-Modul gibt.
+WIMUS ERP = Cockpit/Schaltzentrale (Next.js + Supabase)
+Fertige Open-Source-Module werden über API angebunden – nie nachgebaut
+Pflichtfelder auf Minimum · Standardwerte vorausfüllen · max. 2 Klicks
+KI übernimmt Erfassungsarbeit (OCR, Vorschläge) → Mensch bestätigt, korrigiert, entscheidet
+Mobile-first von Anfang an – jede Komponente responsive
+Lieber 80% automatisch korrekt als 100% manuell perfekt
+
+1.2 Technischer Stack (IST-Stand)
+Schicht
+ | Technologie
+ | Status
+ | 
+Frontend
+ | Next.js 16 (App Router), TypeScript, Tailwind, Shadcn/UI
+ | ✅ erp.m81s.de
+ | 
+Datenbank
+ | Supabase self-hosted (PostgreSQL + RLS)
+ | ✅ supa.m81s.de
+ | 
+Dev-Container
+ | claude-dev (Node 22, SSH, Claude Code v2.1.5)
+ | ✅ Coolify
+ | 
+Repo
+ | github.com/maximusdigital/wimus-erp
+ | ✅ Aktiv
+ | 
+Automatisierung
+ | n8n self-hosted
+ | ✅ Produktiv
+ | 
+Projektmanagement
+ | Plane self-hosted
+ | ✅ plane.m80s.de
+ | 
+CRM
+ | amoCRM
+ | ✅ Produktiv
+ | 
+PMS/Channel
+ | Beds24 + Pricelabs
+ | ✅ Webhook aktiv
+ | 
+
+1.3 Entwicklungsstand
+Phase 0 (Auth, Mandanten, Layout) – ✅ abgeschlossen
+Phase 1 (Objekte, Einheiten, Kontakte, Verträge, Dashboard) – ✅ abgeschlossen
+Phase 2+ – in Entwicklung
+
+2. Portfolio IST-Stand (Juni 2026)
+Kennzahl
+ | Wert
+ | 
+Eigentümer
+ | Dipl.-Kfm. Maxim Moser, §34c GewO, aktiv seit 2007
+ | 
+Standorte
+ | Stuttgart, Ludwigsburg, Esslingen, Kornwestheim, Leonberg
+ | 
+Gesamteinheiten
+ | 27 (26 WE + 4 GE), davon 2 R2R
+ | 
+Wohnfläche
+ | 2.363 m² WF, 385 m² NF, 2.291 m² Grundstück
+ | 
+Brutto-Jahresmiete IST
+ | 957.160 EUR (2025)
+ | 
+Marktwert Portfolio
+ | 6.943.000 EUR (Sprengnetter/Pricehubble)
+ | 
+Gesamtvaluta
+ | 2.760.167 EUR | EK implizit: ~4,18 Mio EUR
+ | 
+Kapitaldienstrate
+ | 13.160 EUR/Monat | Auslastung 46,5%
+ | 
+z.v.E. geschätzt
+ | 325.033 EUR | Ø-Steuersatz 37,73%
+ | 
+ALFA CAMPUS
+ | 56 Einheiten, 130.513 EUR p.a., WG/Studenten
+ | 
+ALFA APARTMENTS
+ | 26 Einheiten, 614.022 EUR p.a., KZV 30–600 EUR/Nacht
+ | 
+
+Kürzel
+ | Adresse
+ | Typ
+ | Status
+ | Markt EUR
+ | ME p.a. EUR
+ | 
+IS17
+ | Ihmlingstr. 17, S-Bad Cannstatt
+ | EW
+ | IST
+ | 318.000
+ | 83.011
+ | 
+LS17
+ | Ihmlingstr. 17, Stuttgart
+ | EW
+ | IST
+ | 408.000
+ | 161.805
+ | 
+THS97
+ | Taubenheimstr. 97, S-Bad Cannstatt
+ | EW
+ | VERKAUF
+ | 177.000
+ | 16.950
+ | 
+HS4
+ | Hauffstr. 4, Esslingen
+ | EW
+ | VERKAUF
+ | 162.000
+ | 37.451
+ | 
+AS125
+ | Austraße 125, S-Münster
+ | MFH 4WE+2GE
+ | IST
+ | 810.000
+ | 171.242
+ | 
+BHS16
+ | Bauhofstr. 16, Ludwigsburg
+ | MFH 4WE 14Zi
+ | IST
+ | 855.000
+ | 95.528
+ | 
+SS25
+ | Sirnauer Str. 25, Esslingen
+ | MFH 3WE+GE
+ | VERKAUF
+ | 540.000
+ | 49.495
+ | 
+MS13
+ | Murrstr. 13, Kornwestheim
+ | MFH 3WE+GA
+ | IST
+ | 1.500.000
+ | 28.284
+ | 
+SG10
+ | Spreuergasse 10, S-Bad Cannstatt
+ | MFH 3WE
+ | IST
+ | 873.000
+ | 40.056
+ | 
+BS21A
+ | Bietigheimer Str. 21A, S-Zuffenhausen
+ | EFH
+ | IST
+ | 1.300.000
+ | 136.704
+ | 
+BS18A1
+ | Beilsteiner Str. 18A, Stuttgart
+ | R2R KZV
+ | IST
+ | –
+ | 102.195
+ | 
+BS5A2
+ | Beilsteiner Str. 5A2, Kornwestheim
+ | R2R KZV
+ | IST
+ | –
+ | 34.439
+ | 
+
+3. Gesellschaftsstruktur & Steueroptimierung
+3.1 Zielstruktur
+Maxim Moser privat: Bestandsobjekte, 10-Jahres-Frist §23 EStG, 3-Objekt-Grenze
+WIMUS GmbH (operativ): Hausverwaltung §34c, ALFA DEVELOPMENT, Kleinprojekte, Dienstleistungen an vvGmbH
+vvGmbH (vermögensverwaltend): Bestandsobjekte langfristig, KZV-Betrieb, 15% KSt + Soli
+
+3.2 Kritische Fristen – Pflicht-Tracking im ERP
+Frist/Grenze
+ | Inhalt
+ | ERP-Aktion
+ | 
+3-Objekt-Grenze
+ | Max. 3 Verkäufe in 5 Jahren privat → sonst gewerblicher Grundstückshandel
+ | Zähler + Warnung bei Annäherung
+ | 
+10-Jahres-Frist §23 EStG
+ | Verkauf < 10J = steuerpflichtiger Spekulationsgewinn
+ | Ampel je Objekt
+ | 
+§6b EStG-Rücklage
+ | Reinvestitionsfrist 4 Jahre (6J bei Neubau), nur Betriebsvermögen
+ | Frist-Tracker je Rücklage
+ | 
+15%-Grenze §6 Abs.1 Nr.1a
+ | Renovierungskosten Jahre 1–3 max. 15% der AfA-Bemessungsgrundlage
+ | Ampel je Objekt, kumuliert
+ | 
+Nutzen-Lasten-Übergang
+ | Start der 3-Jahres-Frist – NICHT Notartermin!
+ | Separates Pflichtfeld je Objekt
+ | 
+Intercompany §42 AO
+ | Rechnungsstellungs-Timing → Ertragsperiode (Fremdvergleich)
+ | Leistungsdatum vs. Rechnungsdatum
+ | 
+AfA-Optimierung KPA/RND
+ | Gutachten für höhere AfA-Bemessungsgrundlage
+ | Potenzial-Anzeige je Objekt
+ | 
+§558 Miete BW
+ | Kappungsgrenze 15% in 3 Jahren (nicht 20%!)
+ | Ampel je Einheit
+ | 
+AG-Streitwert
+ | Ab 01.01.2026: bis 10.000 EUR kein Anwaltszwang
+ | Automatische Prüfung bei Rechtsfall
+ | 
+
+4. Vollständige Prozessliste P01–P61
+4.1 Objekterwerb
+P01 Objektankauf + P01a DCF-Kalkulation (Kaufpreis, NK, AfA-Basis, 15%-Grenze-Warnfeld, Kennzahlen: Brutto-/Nettorendite, KPF, Cashflow)
+P01b Finanzierung (EK, 2 Darlehen, Zins/Tilgung/Annuität, Zinsbindung, Ersatztilgung ETF/Bausparen, BelA Ist/Soll)
+P01c Grundbuch/Sicherungsrechte (Abt. I/II/III, Grundschuld, Zweckerklärung, Bürgschaft, Abtretung Mieteinnahmen)
+P01d Phasenmodell bei Entwicklung (je Phase: Einheiten-Mix, Ertragsrechnung, GuV, Rendite – konsolidiert)
+P02 Objektanmietung R2R + P02b Pachtmodelle (Anlaufzeit, Fest/Umsatzpacht, Optionsrechte, Zuschüsse, Zweckentfremdungsgenehmigung)
+P21b KPA/RND-Optimierung (Kaufpreisaufteilungs-Gutachten, Restnutzungsdauer-Gutachten, Finanzamt-Einreichung)
+P42 Steuerliche Strukturierung · P42b Intercompany-Fristenoptimierung · P42c 15%-Grenze-Optimierung
+P49 Gesellschaftsstruktur & ALFA DEVELOPMENT (Haltestrategie, Durchreichen, §6b)
+P48b Bank-Reporting/Bonitätsnachweis · P48c Bank-Präsentation Ein-Klick-PDF
+
+4.2 Objektentwicklung
+P03 Objektentwicklung: HOAI-Phasen LPH 1–9, Gewerke-Gantt, DIN 276 KG 100–700, Nachkalkulation Soll/Ist
+P13 Zählermanagement + P13b Turnusablesung (Zeitreihen, Interpolation, Anomalie-Erkennung)
+P33 Objekt-Onboarding · P38 Quartalsbegehung · P39 Außenanlagenpflege (Winterdienst Nachweispflicht)
+P41 Asset-Register (Möbel/Werkzeug/Lager/Fahrzeuge, QR-Code) · P41b Werkzeugverwaltung (Entnahme/Rückgabe)
+P46 Projektabwicklung (Plantafel, Aufmaß mobil, Nachkalkulation, Regiebericht)
+P53 Grundrissoptimierung KI (3→4 Zimmer, Durchgangszimmer, ROI je Variante, Claude Vision)
+P54 HOAI/Ausschreibung/BKI-Kostendaten (LV-Erstellung, Preisspiegel, Plausibilitätscheck)
+
+4.3 Marketing & Akquise
+P16 Marketing & Inserate (IS24, Kleinanzeigen, WG-Gesucht, HousingAnywhere, OTAs, eigene Websites)
+P36 Revenue Management (KZV Dynamic Pricing Pricelabs, LZV Mietspiegel/VPI, Event-Radar Ticketmaster API)
+P12 Akquise Neueigentümer (Pipeline A) · P45 Tippgeber & Provisionen (alle Modelle)
+P55 Digitale Aushänge je Objekt · P58 Vertriebsmanagement (Maklerverträge §34c, Exposé-Varianten, Cost-per-Lead)
+
+4.4 Bewerberauswahl
+P17 Bewerberauswahl (Bonität, Schufa, Einkommens-OCR, KdU-Check SGB II/XII, Scoring Grün/Gelb/Rot, DSGVO-Löschfrist)
+
+4.5 Vertragsschluss
+V01 Standard · V02 Befristet · V03 KZV (7% USt, Beds24) · V04 Gewerbe · DocuSeal · Widerrufsbelehrung 14 Tage
+
+4.6 Einzug
+Digitale Übergabe LZV (PWA, offline, Kamera, OCR Zählerstände, Signatur-Pad → Paperless)
+B05 Vermieterbescheinigung §19 BMG · P26 Schlüssel/Zugangsverwaltung · P27 Kautionsverwaltung
+
+4.7 Laufendes Mietverhältnis
+P06/P07 KZV Zero-Touch: Beds24→n8n→TTLock→Tuya→WhatsApp→Rechnung
+P08 WEG-Verwaltung (Hausgeld, Wirtschaftsplan, Eigentümerversammlung, Beschluss-Sammlung, Umlaufbeschluss online)
+P09 Betriebskosten & Abrechnung · P10 Mahnwesen 5-stufig · P10b OP-Management (finAPI/CAMT.053)
+P11 Unified Inbox (E-Mail, SMS, WhatsApp, Telefon via Zammad) · P14 Vorgangsmanagement · P15 Plantafel
+P22 Versicherungsmanagement · P24 Dienstleister · P25 Compliance & Prüfpflichten · P31 Wartungsmanagement
+P34 Notfall · P37 Rechts-Management (Recht Mike Skill) · P40 Verwaltungsvertrag · P47 Digitales Unternehmen
+P50 Mietentwicklung §558/§559 (BW Kappungsgrenze 15%!) · P50b Sofagespräch §557
+P51 Entmietung (sanft/hart) · P52 KI-Rechtsabwicklung intern (AG < 10.000 EUR ab 01.01.2026)
+
+4.8 Vertragsbeendigung
+Kündigung, MAV01–MAV03 (Ablöse 3–6 Monatsmieten) · Digitale Übergabe Auszug · P27 Kautionsabrechnung
+
+4.9 KZV – Vollautomatischer Lifecycle
+Beds24-Webhook → n8n: Buchung, Gästeprofil, TTLock-Code (dynamisch), Tuya-Szene, WhatsApp-Bestätigung
+Reinigung: Fotos Vorher/Nachher, Inventarcheck, Schaden → Vorgang → Schadensabwicklung gestaffelt
+CityTax: Stuttgart 3 EUR / Ludwigsburg 2 EUR (Person/Nacht), manuelle Quartalsexport-Datei
+Digitaler Meldeschein (Beherbergungspflicht, Reisepassnummer → DSGVO-Löschkonzept)
+
+4.10 Querschnittsprozesse
+P18 DATEV-Export · P19 USt-Voranmeldung · P20 Jahresabschluss · P21 AfA-Verwaltung
+P23 Eigentümerreporting · P28 HR (ABS-RZ, Kimai, urlaubsverwaltung) · P29 DMS ★
+P48 Reporting (Bank, GoBD) · P56 Steuerberater-Zugang · P57 CSV Import/Export
+
+4.11 Neue Prozesse P58–P61
+P58 Vertriebsmanagement (Kanalverwaltung, Maklerverträge §34c, Exposé-Varianten je Kanal, Interessenten-Tracking DSGVO, Cost-per-Lead)
+P59 Mobiles Workforce-Management:
+Checklisten-Builder: Schritttypen foto_ki/foto/checkbox/text/zahl/sprache, Turnus-Logik, KI-Prüfkriterien, max_versuche
+MA-App PWA (offline): Antippen + Fotografieren + Sprechen (Whisper DE/EN/RU)
+Rekursiver KI-Prüf-Loop (max. 3 Versuche, Sofort-Feedback, Eskalation)
+Manager-Cockpit Echtzeit: alle Einsätze, Fortschritt, Direktkontakt
+P60 Workforce-Analytics & Make-or-Buy (Vollkostenvergleich intern/extern, Break-Even, TZ-Verwaltung)
+P61 Qualitätskontrolle & Schadensabwicklung (Bewertungsmanagement, Incident Report, Prozess-Bibliothek)
+
+5. Datenmodell – 82 Tabellen (Schema: wimus)
+Legende / Konventionen
+ | 
+🟡 PK = Primärschlüssel (UUID DEFAULT gen_random_uuid())  |  🟢 FK = Fremdschlüssel
+ | 
+Alle Tabellen: created_at / updated_at TIMESTAMPTZ  ·  mandant_id FK auf allen Kerntabellen
+ | 
+Adresse IMMER getrennt: strasse, hausnummer, plz, stadt, stadtteil, land  ·  Anrede: Herr/Frau/Firma/Keine
+ | 
+RLS mandant_isolation Policy auf allen Tabellen  ·  0 FK-Fehler (vollständig geprüft)
+ | 
+
+5.1 Gruppe 1: Kern-Entitäten (13 Tabellen)
+
+mandanten
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+
+ | kuerzel
+ | VARCHAR(10) · UNIQUE
+ | 
+
+ | name
+ | VARCHAR(255)
+ | 
+
+ | rechtsform
+ | VARCHAR(50)
+ | 
+
+ | strasse / hausnummer
+ | VARCHAR
+ | 
+
+ | plz / stadt / land
+ | VARCHAR
+ | 
+
+ | iban / datev_mandant_nr
+ | VARCHAR
+ | 
+
+ | ci_farbe_primary
+ | VARCHAR(7)
+ | 
+
+ | logo_url
+ | VARCHAR(500)
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | gesellschaften
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | name
+ | VARCHAR(255)
+ | 
+
+ | kuerzel
+ | VARCHAR(10)
+ | 
+
+ | typ
+ | ENUM · privat/operativ/vvGmbH/GbR
+ | 
+
+ | versteuerungsart
+ | VARCHAR(50)
+ | 
+
+ | ust_id / steuernummer
+ | VARCHAR
+ | 
+ | 
+ | 
+
+objekte
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | gesellschaft_id
+ | UUID FK
+ | 
+
+ | kuerzel
+ | VARCHAR(20)
+ | 
+
+ | strasse / hausnummer
+ | VARCHAR
+ | 
+
+ | plz / stadt / stadtteil / land
+ | VARCHAR
+ | 
+
+ | latitude / longitude
+ | DECIMAL · GPS
+ | 
+
+ | typ / baujahr / status
+ | VARCHAR/INT
+ | 
+
+ | haltestrategie
+ | VARCHAR(50)
+ | 
+
+ | nutzen_lasten_datum
+ | DATE · ≠ notartermin!
+ | 
+
+ | notartermin_datum
+ | DATE
+ | 
+
+ | marktwert_sprengnetter
+ | DECIMAL(15,2)
+ | 
+
+ | marktwert_pricehubble
+ | DECIMAL(15,2)
+ | 
+
+ | zweckentfremdung_nr
+ | VARCHAR(100)
+ | 
+
+ | zweckentfremdung_bis
+ | DATE
+ | 
+ | 
+ | einheiten
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | objekt_id
+ | UUID FK
+ | 
+
+ | kuerzel / bezeichnung
+ | VARCHAR
+ | 
+
+ | typ / lage
+ | VARCHAR
+ | 
+
+ | flaeche
+ | DECIMAL(8,2)
+ | 
+
+ | zimmer / schlafzimmer / baeder
+ | INT
+ | 
+
+ | max_personen
+ | INT
+ | 
+
+ | verwendungszweck_code
+ | VARCHAR(50)
+ | 
+
+ | etage_beschreibung
+ | VARCHAR(255)
+ | 
+
+ | keybox_vorhanden
+ | BOOLEAN
+ | 
+
+ | keybox_standort
+ | VARCHAR(255)
+ | 
+
+ | keybox_pin_statisch
+ | VARCHAR(20) · Hauszugang, statisch!
+ | 
+
+ | anleitung_url
+ | VARCHAR(500)
+ | 
+
+ | gaestemappe_url_slug
+ | VARCHAR(100)
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | 
+
+kontakte
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | firma_id
+ | UUID FK · → kontakte (self-ref)
+ | 
+
+ | kontakt_typ
+ | ENUM · person/firma
+ | 
+
+ | anrede
+ | ENUM · Herr/Frau/Firma/Keine
+ | 
+
+ | vorname / nachname
+ | VARCHAR
+ | 
+
+ | firmenname / rechtsform
+ | VARCHAR
+ | 
+
+ | strasse / hausnummer
+ | VARCHAR
+ | 
+
+ | plz / stadt / land
+ | VARCHAR
+ | 
+
+ | email / telefon_mobil
+ | VARCHAR
+ | 
+
+ | iban / bic
+ | VARCHAR
+ | 
+
+ | debitor_nr / kreditor_nr
+ | VARCHAR(20)
+ | 
+
+ | zahlungsziel_tage
+ | INT
+ | 
+
+ | ist_mieter / ist_eigentuemer
+ | BOOLEAN
+ | 
+
+ | ist_dienstleister / ist_makler
+ | BOOLEAN
+ | 
+
+ | ist_tippgeber / ist_bank
+ | BOOLEAN
+ | 
+
+ | dsgvo_datenweitergabe
+ | BOOLEAN · Pflicht!
+ | 
+
+ | sprache / aktiv
+ | VARCHAR/BOOLEAN
+ | 
+ | 
+ | benutzer
+ | 
+PK
+ | id
+ | UUID PK · = Supabase Auth UUID
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | email
+ | VARCHAR UNIQUE
+ | 
+
+ | vorname / nachname
+ | VARCHAR
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+
+ | mfa_aktiv
+ | BOOLEAN
+ | 
+
+ | letzter_login
+ | TIMESTAMPTZ
+ | 
+ | 
+ | 
+
+Beziehungen – Gruppe 1
+Von
+ | Beziehung
+ | Zu
+ | Bedeutung
+ | 
+mandanten
+ | 1:N
+ | gesellschaften
+ | Ein Mandant betreibt mehrere Gesellschaften
+ | 
+mandanten
+ | 1:N
+ | objekte
+ | Ein Mandant verwaltet mehrere Objekte
+ | 
+mandanten
+ | 1:N
+ | kontakte
+ | Alle Kontakte gehören zu einem Mandanten
+ | 
+gesellschaften
+ | 1:N
+ | objekte
+ | Eine Gesellschaft besitzt mehrere Objekte
+ | 
+objekte
+ | 1:N
+ | einheiten
+ | Ein Objekt enthält mehrere Einheiten
+ | 
+kontakte
+ | 1:N (self)
+ | kontakte
+ | Firma → Ansprechpartner via firma_id
+ | 
+
+5.2 Gruppe 2: Verträge, Buchungen, Bankkonten (13 Tabellen)
+
+mietvertraege
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+FK
+ | mieter_id
+ | UUID FK · → kontakte
+ | 
+
+ | vertragstyp
+ | ENUM · V01/V02/V03/V04
+ | 
+
+ | mietbeginn / mietende
+ | DATE
+ | 
+
+ | grundmiete
+ | DECIMAL(10,2)
+ | 
+
+ | bk_pauschale
+ | DECIMAL(10,2)
+ | 
+
+ | heizkosten_pauschale
+ | DECIMAL(10,2)
+ | 
+
+ | strompauschale
+ | DECIMAL(10,2)
+ | 
+
+ | faelligkeitsregel
+ | VARCHAR(50)
+ | 
+
+ | kdu_relevant
+ | BOOLEAN
+ | 
+
+ | kuendigungsausschluss_bis
+ | DATE
+ | 
+
+ | widerrufs_frist
+ | DATE
+ | 
+
+ | staffel_config
+ | JSONB
+ | 
+
+ | aktenzeichen
+ | VARCHAR(50) · auto Trigger
+ | 
+FK
+ | paperless_id
+ | VARCHAR(100)
+ | 
+
+ | status
+ | VARCHAR(20)
+ | 
+ | 
+ | buchungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+FK
+ | gast_id
+ | UUID FK · → kontakte
+ | 
+
+ | checkin / checkout
+ | TIMESTAMPTZ
+ | 
+
+ | personen
+ | INT
+ | 
+
+ | betrag_brutto
+ | DECIMAL(10,2)
+ | 
+
+ | ust_prozent
+ | DECIMAL(5,2) · default 7.00
+ | 
+FK
+ | kanal / beds24_id
+ | VARCHAR
+ | 
+
+ | apartment_pin
+ | VARCHAR(20) · TTLock, DYNAMISCH!
+ | 
+
+ | keybox_pin
+ | VARCHAR(20) · STATISCH aus Einheit
+ | 
+
+ | tuya_szene
+ | VARCHAR(100)
+ | 
+
+ | gaestemappe_token
+ | UUID · für URL
+ | 
+
+ | meldeschein_reisepass
+ | VARCHAR(50)
+ | 
+
+ | citytax_betrag
+ | DECIMAL(10,2)
+ | 
+
+ | status / aktenzeichen
+ | VARCHAR
+ | 
+ | 
+ | kautionen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | mietvertrag_id
+ | UUID FK
+ | 
+FK
+ | bankkonto_id
+ | UUID FK
+ | 
+
+ | betrag
+ | DECIMAL(10,2)
+ | 
+
+ | anlage_art
+ | VARCHAR(50)
+ | 
+
+ | zinssatz
+ | DECIMAL(5,4)
+ | 
+
+ | zinsen_kumuliert
+ | DECIMAL(10,2)
+ | 
+
+ | status
+ | VARCHAR(20)
+ | 
+
+ | rueckzahlung_datum
+ | DATE
+ | 
+ | 
+
+mahnungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | mietvertrag_id
+ | UUID FK
+ | 
+
+ | stufe
+ | INT · 1–5
+ | 
+
+ | hauptforderung
+ | DECIMAL(10,2)
+ | 
+
+ | zinsen / gebuehren
+ | DECIMAL(10,2)
+ | 
+
+ | gesamtforderung
+ | DECIMAL(10,2)
+ | 
+
+ | faellig_am
+ | DATE
+ | 
+
+ | mahngericht_az
+ | VARCHAR(100)
+ | 
+
+ | status / aktenzeichen
+ | VARCHAR
+ | 
+ | 
+ | bankkonten
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | bezeichnung
+ | VARCHAR(100)
+ | 
+
+ | kontoinhaber
+ | VARCHAR(255)
+ | 
+
+ | bank / iban / bic
+ | VARCHAR
+ | 
+
+ | kontotyp
+ | VARCHAR(50)
+ | 
+FK
+ | finapi_account_id
+ | VARCHAR(100)
+ | 
+
+ | saldo_aktuell
+ | DECIMAL(15,2)
+ | 
+
+ | ist_hauptkonto
+ | BOOLEAN
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | sepa_mandate
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | kontakt_id
+ | UUID FK
+ | 
+FK
+ | bankkonto_id
+ | UUID FK
+ | 
+
+ | mandatsreferenz
+ | VARCHAR UNIQUE
+ | 
+FK
+ | glaeubiger_id
+ | VARCHAR(100)
+ | 
+
+ | mandatstyp
+ | ENUM · einmalig/wiederkehrend
+ | 
+
+ | ausgestellt_am / widerruf_am
+ | DATE
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+
+Beziehungen – Gruppe 2
+Von
+ | Beziehung
+ | Zu
+ | Bedeutung
+ | 
+einheiten
+ | 1:N
+ | mietvertraege
+ | Eine Einheit hat mehrere Verträge (historisch)
+ | 
+kontakte
+ | 1:N
+ | mietvertraege
+ | Ein Kontakt ist Mieter mehrerer Verträge
+ | 
+mietvertraege
+ | 1:1
+ | kautionen
+ | Vertrag hat eine Kaution
+ | 
+mietvertraege
+ | 1:N
+ | mahnungen
+ | Vertrag hat mehrere Mahnungen
+ | 
+einheiten
+ | 1:N
+ | buchungen
+ | KZV: Einheit hat viele Buchungen
+ | 
+kontakte
+ | 1:N
+ | buchungen
+ | Gast hat mehrere Buchungen
+ | 
+bankkonten
+ | 1:N
+ | kautionen
+ | Kautionskonto je Kaution
+ | 
+kontakte
+ | 1:N
+ | sepa_mandate
+ | Kontakt erteilt Lastschriftmandat
+ | 
+
+5.3 Gruppe 3: Objekt-Details, Ausstattung, Zähler, Custom Fields (19 Tabellen)
+
+Ausstattung
+ausstattungs_kategorien
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | name
+ | VARCHAR(100)
+ | 
+
+ | reihenfolge
+ | INT
+ | 
+ | 
+ | ausstattungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | kategorie_id
+ | UUID FK
+ | 
+
+ | name
+ | VARCHAR(255)
+ | 
+
+ | icon
+ | VARCHAR(100)
+ | 
+FK
+ | airbnb_id / booking_id
+ | VARCHAR(50)
+ | 
+
+ | ist_standard
+ | BOOLEAN
+ | 
+ | 
+ | einheit_ausstattungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+FK
+ | ausstattung_id
+ | UUID FK
+ | 
+
+ | vorhanden
+ | BOOLEAN
+ | 
+
+ | notiz
+ | VARCHAR(500)
+ | 
+
+ | gegen_aufpreis / auf_anfrage
+ | BOOLEAN
+ | 
+ | 
+
+Einheit-Details (alle versioniert via gueltig_ab)
+einheit_hausregeln
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+
+ | sprache
+ | VARCHAR(5)
+ | 
+
+ | haustiere_erlaubt
+ | BOOLEAN
+ | 
+
+ | rauchen_erlaubt
+ | BOOLEAN
+ | 
+
+ | check_in_von / check_in_bis
+ | TIME
+ | 
+
+ | check_out_bis
+ | TIME
+ | 
+
+ | ruhezeiten_von / ruhezeiten_bis
+ | TIME
+ | 
+
+ | max_gaeste
+ | INT
+ | 
+
+ | rauch_strafe
+ | DECIMAL(10,2)
+ | 
+
+ | muell_strafe
+ | DECIMAL(10,2)
+ | 
+
+ | unautorisiert_preis
+ | DECIMAL(10,2)
+ | 
+
+ | gueltig_ab
+ | DATE · VERSIONIERUNG!
+ | 
+ | 
+ | gaestemappe_inhalte
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+
+ | sprache
+ | VARCHAR(5) · de/en/ru
+ | 
+
+ | checkin_system_text
+ | TEXT
+ | 
+
+ | checkin_anleitung
+ | TEXT
+ | 
+
+ | parken_text / parken_maps_url
+ | TEXT/VARCHAR
+ | 
+
+ | notruf_polizei / notruf_feuerwehr
+ | VARCHAR(20)
+ | 
+
+ | wifi_ssid
+ | VARCHAR(100)
+ | 
+
+ | wifi_passwort
+ | TEXT · verschlüsselt
+ | 
+
+ | hausregeln_text
+ | TEXT
+ | 
+
+ | sonstige_infos
+ | TEXT
+ | 
+
+ | gueltig_ab
+ | DATE
+ | 
+ | 
+ | einheit_sicherheit
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+
+ | rauchmelder
+ | BOOLEAN
+ | 
+
+ | kohlenmonoxidmelder
+ | BOOLEAN
+ | 
+
+ | feuerlöscher
+ | BOOLEAN
+ | 
+
+ | ueberwachungskamera
+ | BOOLEAN
+ | 
+
+ | kamera_beschreibung
+ | TEXT
+ | 
+
+ | aufzug_vorhanden
+ | BOOLEAN
+ | 
+
+ | barrierefrei
+ | BOOLEAN
+ | 
+
+ | parkplatz_beschreibung
+ | TEXT
+ | 
+
+ | gueltig_ab
+ | DATE
+ | 
+ | 
+
+Gästemappe – Template-Variablen
+Variable
+ | Quelle
+ | Beispiel
+ | 
+{{GAST_NAME}}
+ | buchungen → kontakte.nachname
+ | SCHRAND KLAUS
+ | 
+{{PIN}}
+ | buchungen.apartment_pin (TTLock, dynamisch)
+ | 921883
+ | 
+{{KEYBOX_PIN}}
+ | buchungen.keybox_pin ← einheiten.keybox_pin_statisch
+ | 2606
+ | 
+{{CHECKIN_DATUM}} / {{CHECKOUT_DATUM}}
+ | buchungen.checkin / .checkout
+ | 17.05.2026 / 30.06.2026
+ | 
+{{CHECKOUT_BIS}}
+ | einheit_hausregeln.check_out_bis
+ | 10:00 Uhr
+ | 
+{{GEBAEUDENAME}} / {{ETAGE}}
+ | einheiten.bezeichnung / .lage
+ | ALFA AS125 / 2.OG
+ | 
+{{EINHEIT_LABEL}}
+ | einheiten.kuerzel
+ | AS125A2
+ | 
+{{WIFI_SSID}} / {{WIFI_PASS}}
+ | gaestemappe_inhalte.wifi_ssid / .wifi_passwort
+ | AlfaWLAN / ***
+ | 
+{{MAPS_URL}}
+ | gaestemappe_inhalte.parken_maps_url
+ | maps.app.goo.gl/...
+ | 
+{{WHATSAPP}} / {{EMAIL}}
+ | mandanten → kommunikationskanaele
+ | +49 7154 18936115
+ | 
+
+Zähler & Versorger
+versorgervertraege
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | bezug_typ
+ | ENUM · objekt/einheit
+ | 
+FK
+ | bezug_id
+ | UUID · polymorphisch!
+ | 
+
+ | kategorie
+ | ENUM · strom/gas/wasser/...
+ | 
+
+ | anbieter
+ | VARCHAR(255)
+ | 
+FK
+ | vertragspartner_id
+ | UUID FK · → kontakte
+ | 
+
+ | kundennummer / vertragsnummer
+ | VARCHAR
+ | 
+
+ | vertragsbeginn / vertragsende
+ | DATE
+ | 
+
+ | preis_monatlich
+ | DECIMAL(10,2)
+ | 
+
+ | status
+ | VARCHAR(20)
+ | 
+ | 
+ | zaehler
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | bezug_typ
+ | ENUM · objekt/einheit
+ | 
+FK
+ | bezug_id
+ | UUID · polymorphisch!
+ | 
+FK
+ | versorgervertrag_id
+ | UUID FK
+ | 
+
+ | typ
+ | ENUM · strom/gas/wasser/waerme
+ | 
+
+ | zaehlernummer
+ | VARCHAR(100)
+ | 
+
+ | einbauort
+ | VARCHAR(255)
+ | 
+
+ | eichpflicht_bis
+ | DATE
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | zaehlerstaende
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | zaehler_id
+ | UUID FK
+ | 
+
+ | stand
+ | DECIMAL(12,4)
+ | 
+
+ | einheit
+ | ENUM · kWh/m³/MWh/GJ
+ | 
+
+ | ablesedatum
+ | DATE
+ | 
+
+ | ableseart
+ | ENUM · manuell/funk/foto/api
+ | 
+
+ | foto_url
+ | VARCHAR(500)
+ | 
+FK
+ | abgelesen_von
+ | UUID FK · → kontakte
+ | 
+
+ | ist_schaetzwert
+ | BOOLEAN
+ | 
+
+ | validiert
+ | BOOLEAN
+ | 
+ | 
+
+INDEX(zaehler_id, ablesedatum) → schnelle Zeitreihen. Interpolation bei ist_schaetzwert=true. Anomalie: +80% vs. Ø → Alert.
+
+Custom Fields – generisches Erweiterungssystem
+custom_field_definitionen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | bezug_typ
+ | ENUM · objekt/einheit/kontakt/buchung/mietvertrag/vorgang
+ | 
+
+ | feldname / feldschluessel
+ | VARCHAR(100)
+ | 
+
+ | feldtyp
+ | ENUM · text/zahl/datum/bool/url/email/auswahl/textarea
+ | 
+
+ | pflichtfeld
+ | BOOLEAN
+ | 
+
+ | auswahl_optionen
+ | JSONB
+ | 
+
+ | reihenfolge / gruppe
+ | INT / VARCHAR
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | custom_field_werte
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | definition_id
+ | UUID FK
+ | 
+
+ | bezug_typ
+ | VARCHAR(20)
+ | 
+FK
+ | bezug_id
+ | UUID · polymorphisch!
+ | 
+
+ | wert
+ | TEXT · alles als Text, Typ via Definition
+ | 
+ | 
+ | 
+
+Beziehungen – Gruppe 3
+Von
+ | Beziehung
+ | Zu
+ | Bedeutung
+ | 
+ausstattungs_kategorien
+ | 1:N
+ | ausstattungen
+ | Kategorien-Bibliothek
+ | 
+ausstattungen
+ | N:M via
+ | einheit_ausstattungen
+ | Einheit ↔ Ausstattung (mit Zusatzinfos)
+ | 
+einheiten
+ | 1:N
+ | einheit_hausregeln
+ | Je Sprache, versioniert via gueltig_ab
+ | 
+einheiten
+ | 1:N
+ | gaestemappe_inhalte
+ | Je Sprache (de/en/ru) + Version
+ | 
+versorgervertraege
+ | 1:N
+ | zaehler
+ | Ein Vertrag hat mehrere Zähler
+ | 
+zaehler
+ | 1:N
+ | zaehlerstaende
+ | Zeitreihe mit INDEX(zaehler_id, ablesedatum)
+ | 
+zaehler
+ | 1:N
+ | zaehler_umrechnungen
+ | m³→kWh je Gültigkeitszeitraum
+ | 
+custom_field_definitionen
+ | 1:N
+ | custom_field_werte
+ | Manager definiert Felder ohne Entwickler
+ | 
+
+5.4 Gruppe 4: Steuer, AfA & Szenarien (11 Tabellen)
+
+afa_stamm
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | objekt_id
+ | UUID FK UNIQUE · 1:1 zu objekte
+ | 
+
+ | kaufpreis_gesamt
+ | DECIMAL(15,2)
+ | 
+
+ | grundstuecksanteil_pct
+ | DECIMAL(5,2)
+ | 
+
+ | grundstuecksanteil_eur
+ | DECIMAL(15,2)
+ | 
+
+ | gebaeudeanteil_eur
+ | DECIMAL(15,2)
+ | 
+
+ | afa_bemessungsgrundlage
+ | DECIMAL(15,2)
+ | 
+
+ | afa_satz_standard
+ | DECIMAL(5,4) · default 2%
+ | 
+
+ | afa_satz_optimiert
+ | DECIMAL(5,4)
+ | 
+
+ | afa_satz_aktiv
+ | DECIMAL(5,4)
+ | 
+
+ | rnd_gutachten / kpa_gutachten
+ | BOOLEAN
+ | 
+ | 
+ | afa_buchungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | objekt_id
+ | UUID FK
+ | 
+FK
+ | afa_stamm_id
+ | UUID FK
+ | 
+FK
+ | szenario_id
+ | UUID FK
+ | 
+
+ | wirtschaftsjahr
+ | INT
+ | 
+
+ | afa_betrag
+ | DECIMAL(15,2)
+ | 
+
+ | restbuchwert_anfang
+ | DECIMAL(15,2)
+ | 
+
+ | restbuchwert_ende
+ | DECIMAL(15,2)
+ | 
+
+ | ist_oder_plan
+ | ENUM · IST/PLAN
+ | 
+ | 
+ | renovierungskosten
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | objekt_id
+ | UUID FK
+ | 
+
+ | massnahme
+ | VARCHAR(255)
+ | 
+
+ | kosten_netto
+ | DECIMAL(10,2)
+ | 
+
+ | leistungsdatum / rechnungsdatum
+ | DATE
+ | 
+
+ | innerhalb_3j_frist
+ | BOOLEAN
+ | 
+
+ | zaehlt_zur_grenze
+ | BOOLEAN · 15%-Grenze §6!
+ | 
+ | 
+
+veraeusserungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id / objekt_id
+ | UUID FK
+ | 
+FK
+ | gesellschaft_id
+ | UUID FK
+ | 
+
+ | datum / preis
+ | DATE/DECIMAL
+ | 
+
+ | haltedauer_jahre
+ | DECIMAL(5,2)
+ | 
+
+ | steuerfrei_10j
+ | BOOLEAN
+ | 
+FK
+ | paperless_id
+ | VARCHAR(100)
+ | 
+ | 
+ | reinvestitionsruecklagen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | gesellschaft_id
+ | UUID FK
+ | 
+FK
+ | gebildet_aus_verkauf_id
+ | UUID FK · → veraeusserungen
+ | 
+FK
+ | uebertragen_auf_objekt_id
+ | UUID FK · → objekte
+ | 
+
+ | betrag
+ | DECIMAL(15,2)
+ | 
+
+ | gebildet_am
+ | DATE
+ | 
+
+ | frist_regulaer
+ | DATE · 4 Jahre
+ | 
+
+ | frist_neubau
+ | DATE · 6 Jahre
+ | 
+
+ | status
+ | VARCHAR(20)
+ | 
+ | 
+ | intercompany
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | leistende_gesellschaft_id
+ | UUID FK
+ | 
+FK
+ | empfangende_gesellschaft_id
+ | UUID FK
+ | 
+
+ | leistungsdatum
+ | DATE
+ | 
+
+ | rechnungsdatum
+ | DATE
+ | 
+
+ | betrag / leistungsart
+ | DECIMAL/TEXT
+ | 
+
+ | fremdvergleich_ok
+ | BOOLEAN
+ | 
+
+ | verzoegerungsgrund
+ | TEXT
+ | 
+ | 
+
+Beziehungen – Gruppe 4
+Von
+ | Beziehung
+ | Zu
+ | Bedeutung
+ | 
+objekte
+ | 1:1
+ | afa_stamm
+ | Jedes Objekt hat genau einen AfA-Stamm
+ | 
+afa_stamm
+ | 1:N
+ | afa_buchungen
+ | Jährliche AfA IST und PLAN
+ | 
+szenarien
+ | 1:N
+ | afa_buchungen
+ | Simulierte Szenarien
+ | 
+objekte
+ | 1:N
+ | renovierungskosten
+ | 15%-Grenze kumuliert ab nutzen_lasten_datum
+ | 
+veraeusserungen
+ | 1:N
+ | reinvestitionsruecklagen
+ | §6b-Rücklage aus Verkaufsgewinn
+ | 
+gesellschaften
+ | N (leistend)
+ | intercompany
+ | §42 AO: Timing Leistung vs. Rechnung
+ | 
+gesellschaften
+ | N (empfangend)
+ | intercompany
+ | Empfangende Gesellschaft
+ | 
+
+5.5 Gruppe 5: Vorgänge, Workforce, Vertrieb (21 Tabellen)
+
+Vorgänge & Checklisten
+vorgaenge
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | objekt_id
+ | UUID FK
+ | 
+FK
+ | einheit_id
+ | UUID FK
+ | 
+FK
+ | gemeldet_von
+ | UUID FK · → kontakte
+ | 
+FK
+ | handwerker_id
+ | UUID FK · → kontakte
+ | 
+
+ | typ
+ | VARCHAR(50)
+ | 
+
+ | prioritaet
+ | ENUM · notfall/hoch/normal/niedrig
+ | 
+
+ | status
+ | VARCHAR(30)
+ | 
+
+ | kostentraeger
+ | VARCHAR(50)
+ | 
+
+ | kosten_geschaetzt / kosten_ist
+ | DECIMAL
+ | 
+
+ | leistungsdatum
+ | DATE
+ | 
+
+ | aktenzeichen
+ | VARCHAR(50) · AUTO via Trigger!
+ | 
+FK
+ | lfd_nr / paperless_id
+ | INT/VARCHAR
+ | 
+ | 
+ | checklisten_vorlagen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | name
+ | VARCHAR(255)
+ | 
+
+ | gilt_fuer_typ
+ | VARCHAR(50)
+ | 
+
+ | sprache
+ | VARCHAR(5)
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | checklisten_positionen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | vorlage_id
+ | UUID FK
+ | 
+
+ | block_nr / position_nr
+ | INT
+ | 
+
+ | bezeichnung
+ | VARCHAR(255)
+ | 
+
+ | typ
+ | ENUM · foto_ki/foto/checkbox/text/zahl/sprache
+ | 
+
+ | haeufigkeit
+ | ENUM · immer/turnus/buchungen
+ | 
+
+ | turnus_tage
+ | INT
+ | 
+
+ | vorgabe_foto_url
+ | VARCHAR(500)
+ | 
+
+ | ki_kriterien
+ | TEXT
+ | 
+
+ | ki_schwellenwert
+ | DECIMAL(4,2) · default 0.75
+ | 
+
+ | max_versuche
+ | INT · default 3
+ | 
+ | 
+
+Workforce
+ma_profile
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | kontakt_id
+ | UUID FK · → kontakte
+ | 
+
+ | typ
+ | ENUM · intern/extern
+ | 
+
+ | stundenlohn_brutto
+ | DECIMAL(8,2)
+ | 
+
+ | ag_sv_pct
+ | DECIMAL(5,2) · default 21%
+ | 
+
+ | urlaubstage
+ | INT
+ | 
+
+ | bereich / qualifikationen
+ | VARCHAR/JSONB
+ | 
+
+ | score_aktuell
+ | INT
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | einsaetze
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | vorgang_id
+ | UUID FK
+ | 
+FK
+ | ma_id
+ | UUID FK · → ma_profile
+ | 
+
+ | geplant_start / geplant_ende
+ | TIMESTAMPTZ
+ | 
+
+ | ist_start / ist_ende
+ | TIMESTAMPTZ
+ | 
+
+ | zeitvorgabe_ki_min
+ | INT
+ | 
+
+ | status
+ | VARCHAR(20)
+ | 
+
+ | score_beitrag
+ | INT
+ | 
+ | 
+ | objekt_zuweisungen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | objekt_id
+ | UUID FK
+ | 
+FK
+ | ma_id
+ | UUID FK · → ma_profile
+ | 
+
+ | bereich
+ | ENUM · reinigung/hausmeister/handwerk
+ | 
+
+ | rolle
+ | ENUM · primaer/vertretung/pool/ueberhang
+ | 
+
+ | prioritaet
+ | INT
+ | 
+
+ | gueltig_von / gueltig_bis
+ | DATE
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+
+Vertrieb & Pipeline
+pipelines
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+
+ | name
+ | VARCHAR(255)
+ | 
+
+ | bereich
+ | VARCHAR(50)
+ | 
+
+ | modus
+ | ENUM · auto/manuell/hybrid
+ | 
+
+ | aktiv
+ | BOOLEAN
+ | 
+ | 
+ | deals
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | pipeline_id
+ | UUID FK
+ | 
+FK
+ | phase_id
+ | UUID FK · → pipeline_phasen
+ | 
+FK
+ | kontakt_id
+ | UUID FK
+ | 
+FK
+ | einheit_id / objekt_id
+ | UUID FK
+ | 
+FK
+ | buchung_id
+ | UUID FK · KZV Auto-Pipeline!
+ | 
+
+ | kanal / wert
+ | VARCHAR/DECIMAL
+ | 
+FK
+ | zustaendig_id
+ | UUID FK · → benutzer
+ | 
+
+ | verlauf
+ | JSONB
+ | 
+ | 
+ | provisionen
+ | 
+PK
+ | id
+ | UUID PK
+ | 
+FK
+ | mandant_id
+ | UUID FK
+ | 
+FK
+ | partner_id
+ | UUID FK · → vertriebspartner
+ | 
+
+ | referenz_typ
+ | ENUM · deal/mietvertrag/buchung/verkauf
+ | 
+FK
+ | referenz_id
+ | UUID · polymorphisch!
+ | 
+
+ | betrag
+ | DECIMAL(10,2)
+ | 
+
+ | faelligkeit / status
+ | DATE/VARCHAR
+ | 
+ | 
+
+Beziehungen – Gruppe 5
+Von
+ | Beziehung
+ | Zu
+ | Bedeutung
+ | 
+vorgaenge
+ | 1:N
+ | einsaetze
+ | Vorgang hat mehrere MA-Einsätze
+ | 
+ma_profile
+ | 1:N
+ | einsaetze
+ | MA führt mehrere Einsätze aus
+ | 
+objekte
+ | N:M via
+ | objekt_zuweisungen
+ | Objekt ↔ MA (Pflege, Reinigung, Handwerk)
+ | 
+checklisten_vorlagen
+ | 1:N
+ | checklisten_positionen
+ | Vorlage enthält Positionen (mit KI-Kriterien)
+ | 
+checklisten_vorlagen
+ | 1:N
+ | checklisten_ausfuehrungen
+ | Jede Ausführung einer Checkliste
+ | 
+checklisten_ausfuehrungen
+ | 1:N
+ | checklisten_ergebnisse
+ | Ergebnisse je Position je Ausführung
+ | 
+pipelines
+ | 1:N
+ | pipeline_phasen
+ | Pipeline hat mehrere Phasen
+ | 
+pipelines
+ | 1:N
+ | deals
+ | Pipeline enthält Deals
+ | 
+buchungen
+ | 1:1
+ | deals
+ | KZV: Buchung = automatischer Deal (buchung_id)
+ | 
+provisionen
+ | N:1 polymorphisch
+ | deals/mietvertraege/buchungen/veraeusserungen
+ | Provision aus verschiedenen Abschlusstypen
+ | 
+
+5.6 Aktenzeichen-Generator (PostgreSQL Trigger)
+Automatisch bei INSERT in vorgaenge, wenn aktenzeichen IS NULL. Format: YYYY + mandant.kuerzel + objekt.kuerzel + einheit.kuerzel + LfdNr(2-stellig)
+
+Komponente
+ | Quelle
+ | Beispiel
+ | 
+YYYY
+ | EXTRACT(YEAR FROM NOW())
+ | 2025
+ | 
+mandant.kuerzel
+ | mandanten.kuerzel (frei definierbar)
+ | IS
+ | 
+objekt.kuerzel
+ | objekte.kuerzel (frei definierbar)
+ | 17
+ | 
+einheit.kuerzel
+ | einheiten.kuerzel (frei definierbar)
+ | A1
+ | 
+LfdNr (2-stellig)
+ | LPAD(lfd_nr::VARCHAR, 2, '0') – je Objekt/Jahr
+ | WH01
+ | 
+Ergebnis
+ | Zusammengesetzt
+ | 2025IS17A1WH01
+ | 
+
+5.7 Gesamt-Übersicht Datenmodell
+Kennzahl
+ | Wert
+ | 
+Tabellen gesamt
+ | 82
+ | 
+FK-Fehler
+ | 0 (alle Foreign Keys vollständig geprüft)
+ | 
+Polymorphische Referenzen
+ | 5: versorgervertraege, zaehler, custom_field_werte, objekt_emails, geraete (bezug_typ + bezug_id)
+ | 
+Versionierte Tabellen
+ | einheit_hausregeln, einheit_sicherheit, gaestemappe_inhalte (via gueltig_ab)
+ | 
+Zeitreihen-Index
+ | zaehlerstaende: INDEX(zaehler_id, ablesedatum)
+ | 
+Trigger
+ | 1 Aktenzeichen-Trigger (vorgaenge), 18 updated_at Trigger
+ | 
+RLS Policies
+ | mandant_isolation auf allen Kerntabellen
+ | 
+Seed-Rollen
+ | 12 Rollen (superadmin, steuerberater, mandant_admin, verwalter, buchhalter, hausmeister, reinigungskraft, aussendienst, lesezugriff, eigentuemer_portal, mieter_portal, gast_portal)
+ | 
+Kritisch: zwei PIN-Codes je Buchung
+ | keybox_pin (statisch, Hauszugang aus einheiten.keybox_pin_statisch) ≠ apartment_pin (TTLock, dynamisch generiert je Buchung)
+ | 
+DSGVO-kritisch
+ | buchungen.meldeschein_reisepass → Löschkonzept. kontakte.dsgvo_datenweitergabe Pflicht.
+ | 
+
+6. Technische Basis – 27 Module via API
+WIMUS ERP bindet fertige Module an, baut sie nicht nach.
+TB#
+ | Modul
+ | Tool
+ | Status
+ | 
+TB01
+ | Multi-Brand/Mandanten
+ | Supabase RLS + mandant_id
+ | Im Schema
+ | 
+TB02
+ | E-Mail IMAP/SMTP
+ | Je Mandant eigenes Postfach
+ | Zu konfigurieren
+ | 
+TB03
+ | SMS
+ | seven.io
+ | Zu integrieren
+ | 
+TB04
+ | WhatsApp
+ | GreenAPI
+ | Zu integrieren
+ | 
+TB05
+ | Automatisierung
+ | n8n self-hosted
+ | ✅ Produktiv
+ | 
+TB06
+ | KZV Channel/PMS
+ | Beds24 + Pricelabs
+ | ✅ Aktiv
+ | 
+TB07
+ | Zugänge
+ | TTLock G5-Gateway
+ | Hardware bestellt
+ | 
+TB08
+ | Bankanbindung
+ | finAPI / CAMT.053
+ | Zu integrieren
+ | 
+TB09
+ | Telefon
+ | sipgate
+ | Zu konfigurieren
+ | 
+TB10
+ | KI-Telefon Phase 2
+ | Retell AI
+ | Phase 12
+ | 
+TB11
+ | KI-Support-Layer
+ | Claude API (Anthropic)
+ | Zu integrieren
+ | 
+TB12
+ | Smart Home
+ | Tuya Cloud API
+ | Zu integrieren
+ | 
+TB13
+ | Dateispeicher/Kalender
+ | Nextcloud WebDAV/CalDAV
+ | ✅ Vorhanden
+ | 
+TB14
+ | DMS/OCR
+ | Paperless-ngx
+ | Coolify One-Click
+ | 
+TB15
+ | Unterschriften
+ | DocuSeal
+ | Coolify One-Click
+ | 
+TB16
+ | Rechnungen/DATEV
+ | Invoice Ninja SKR03
+ | Coolify One-Click
+ | 
+TB17
+ | Support/Ticketing
+ | Zammad (iFrame/SSO)
+ | Coolify One-Click
+ | 
+TB18
+ | Digitale Übergabe
+ | Eigene PWA (offline)
+ | Zu bauen
+ | 
+TB19
+ | Post digitalisieren
+ | Caya
+ | SaaS
+ | 
+TB20
+ | Lohnabrechnung
+ | ABS-RZ absPortal
+ | ✅ Im Einsatz
+ | 
+TB21
+ | Zeiterfassung
+ | Kimai (Coolify)
+ | Docker
+ | 
+TB22
+ | Urlaub/Abwesenheit
+ | urlaubsverwaltung.cloud
+ | Docker
+ | 
+TB23
+ | Bauprojekte/Gantt
+ | OpenProject Community
+ | Docker
+ | 
+TB24
+ | CRM/Pipeline
+ | amoCRM (bestehend)
+ | ✅ Produktiv
+ | 
+TB25
+ | Marktwert
+ | Sprengnetter/Pricehubble
+ | Manuell für MVP
+ | 
+TB26
+ | KI-OCR Dokumente
+ | Mistral OCR 3 (Batch $1/1000 Seiten)
+ | API
+ | 
+TB27
+ | KI-Vision
+ | Gemini Flash + Claude Sonnet Vision
+ | API
+ | 
+
+7. KI-Agenten (13 Agenten, n8n + Claude API)
+Eskalationsregel: Betrag >X EUR, rechtliche Sachverhalte, KI-Konfidenz <70%, unbekannte Situation → immer Mensch.
+#
+ | Agent
+ | Trigger
+ | Kernaufgabe
+ | 
+1
+ | Posteingang
+ | Neue Nachricht (alle Kanäle)
+ | Klassifizieren, zuordnen, Antwortvorschlag, Eskalation
+ | 
+2
+ | Buchungs-Agent KZV
+ | Beds24-Webhook
+ | Buchung, TTLock, Tuya, WhatsApp, Reinigung, Rechnung
+ | 
+3
+ | Mahnwesen
+ | Täglich / Fälligkeit
+ | Mahnstufe, Dokument, versenden, Mahnbescheid vorbereiten
+ | 
+4
+ | Dokument
+ | Neues Dok (Paperless/Caya)
+ | Typ, Metadaten, ablegen, Handwerkerrechnungen scannen
+ | 
+5
+ | Vorgänge
+ | Neue Schadensmeldung
+ | Priorität, Handwerker, Auftrag, Preisspiegel
+ | 
+6
+ | Bewerber
+ | Neue Mietbewerbung
+ | Vollständigkeit, Einkommen-OCR, KdU-Check, Scoring
+ | 
+7
+ | Wartung
+ | Täglich / Kalender
+ | Fristen (Rauchmelder/TÜV/Fahrzeuge), Vorgang
+ | 
+8
+ | Reporting
+ | Monatlich/Quartal
+ | Eigentümer-Report, Bank-Präsentation, GoBD-Paket
+ | 
+9
+ | Revenue
+ | Täglich 06:00
+ | KZV Pricelabs, LZV Mietspiegel, §558-Potenzial, Event-Radar
+ | 
+10
+ | Rechts (Recht Mike)
+ | Event-basiert + täglich
+ | Fristenüberwachung, BGH-Monitor, AG-Klageschrift
+ | 
+11
+ | FIBU/Mieteingang
+ | Täglich nach Bankimport
+ | finAPI/CAMT, OP-Abgleich, Mahnwesen-Trigger
+ | 
+12
+ | Grundriss
+ | Neues Objekt / Exposé
+ | Claude Vision: Zimmer-Splitting, Durchgangszimmer, ROI
+ | 
+13
+ | Rechtsabwicklung
+ | Rechtsfall eröffnet
+ | Mahnbescheid, Klageschrift AG (<10.000 EUR), Abmahnung
+ | 
+
+8. Entwicklungsplan mit Claude Code (12 Phasen)
+Phase 0 und Phase 1 sind abgeschlossen. MVP nach Phase 3 (~2 Wochen ab jetzt). Vollständig nach ~7–8 Wochen.
+Phase
+ | Inhalt
+ | Status / Dauer
+ | 
+0 – Fundament
+ | CLAUDE.md, vollständiges DB-Schema (1 Migration!), Auth + MFA, Mandanten-Switching, RLS, Seed-Daten
+ | ✅ DONE
+ | 
+1 – Core Immobilien
+ | Objekte, Einheiten, Kontakte, Verträge (V01–V04), Dashboard KPIs, echte Seed-Daten
+ | ✅ DONE
+ | 
+2 – Finanzen & Komm.
+ | OP-Management, CAMT/finAPI, Mahnwesen 5-stufig, Invoice Ninja, Zammad Unified Inbox, Kommunikationskanäle
+ | 2–3 Tage
+ | 
+3 – KZV Vollautom.
+ | Beds24-Webhook, TTLock-Code, Tuya, WhatsApp-Flow, Reinigungsauftrag, Rechnung 7% USt → MVP LIVE
+ | 2–3 Tage
+ | 
+4 – Vorgänge & Projekte
+ | Vorgangsmanagement P14, Plantafel P15, OpenProject, Asset-Register QR-Code, Wartungsfristen
+ | 2–3 Tage
+ | 
+5 – DMS & Dokumente
+ | Paperless-ngx API, Caya, DocuSeal-Signatur, Digitale Übergabe PWA (offline), DMS überall anhängbar
+ | 2–3 Tage
+ | 
+6 – KI-Agenten
+ | Agenten 1–13 via n8n + Claude API, Posteingang, Mahnwesen, FIBU, Revenue, Rechts-Agent
+ | 3–4 Tage
+ | 
+7 – Reporting & Bank
+ | Portfolio-Dashboard, Selbstauskunft IST Ein-Klick-PDF, Bank-Präsentation, DATEV-Export, GoBD-Paket
+ | 2–3 Tage
+ | 
+8 – Akquise & Pipelines
+ | 4 Pipelines Kanban (A–D), DCF-Kalkulator interaktiv, Phasenmodell, Grundriss-KI, Tippgeber-Provisionen
+ | 2–3 Tage
+ | 
+9 – HR & Zeiterfassung
+ | Kimai API, urlaubsverwaltung, MA-Profile, ABS-RZ CSV-Export, Fahrtenbuch
+ | 2–3 Tage
+ | 
+10 – Portale
+ | Mieter-Portal (Schadensmeldung/Dokumente), Eigentümer-Portal, KZV Gäste Self-Check-in
+ | 2–3 Tage
+ | 
+11 – Steuer & Compliance
+ | AfA-Verwaltung, KPA/RND-Tracking, Steuerfristen-Ampeln, DSGVO-Löschkonzept, §6b-Rücklage
+ | 2–3 Tage
+ | 
+12 – Telefon KI
+ | Retell AI Setup (je Marke, DE/EN/RU), Webhook→n8n→Vorgang/Lead, 24/7 Erreichbarkeit
+ | 2–3 Tage
+ | 
+
+9. Sicherheitskonzept & DSGVO
+Sofort / MVP-Pflicht
+RLS in Supabase von Tag 1 (mandant_id-Isolation auf Datenbankebene)
+MFA Pflicht alle internen User (Supabase Auth)
+Service-Role-Key nur serverseitig (nie im Frontend/Browser)
+Keine Secrets im Code/Repo (Coolify Environment Variables)
+TLS überall (Traefik SSL) · SSH Key-only, kein Passwort-Login, Fail2Ban
+Laufend
+Webhook-Signatur-Verifizierung (Beds24, GreenAPI, Forminator)
+Sensible Felder verschlüsselt (Ausweisnummern, Bankdaten – Supabase Vault/pgcrypto)
+3-2-1 Backup (3 Kopien, 2 Medien, 1 offsite) + regelmäßiger Restore-Test!
+Audit-Log unveränderlich · GoBD-Paket (GDPdU/IDEA-Export, Verfahrensdokumentation §147 AO)
+DSGVO
+AVV mit ALLEN Dienstleistern: Anthropic (Claude API!), Caya, GreenAPI, seven.io, Retell AI, Beds24
+Löschkonzept: Bewerber 6 Monate, Verträge 3J nach Ende, Buchungsbelege 10J (GoBD)
+dsgvo_datenweitergabe Pflichtfeld je Kontakt · Meldeschein Reisepass → Löschkonzept
+Incident Response: 72h-Meldepflicht an Aufsichtsbehörde bei Datenpanne!
+Steuerberater-Zugang: eigene Rolle, nur Buchungen/Belege – NICHT Mieterdaten
+
+10. Offene Punkte & Nächste Schritte
+Technisch offen
+iLoca-Evaluation vs. Beds24 (Demo-Call ausstehend – Vorteile: Reinigungsplan Plus, Meldeschein, DATEV nativ)
+TTLock G5-Gateway: Hardware bestellt, n8n-Integration noch offen
+Gästemappe eigene Lösung: gast.alfa-apartments.com/{TOKEN} – Smoobu ablösen (Next.js)
+Forminator-Formular: Smoobu-IDs durch Beds24-IDs ersetzen
+Mit Steuerberater/Notar
+SKR03-Kontenzuordnung je Buchungstyp (absichtlich offen gelassen)
+AfA-Sätze, Kaufpreisaufteilung-Methodik, USt-Details R2R
+Holding-Struktur WIMUS GmbH / vvGmbH – Umsetzung und Timing
+Scheinselbstständigkeits-Check für freiberufliche Mitarbeiter
+DSGVO / Compliance
+AVVs mit allen Dienstleistern abschließen (besonders: Anthropic Claude API, Caya, Retell AI)
+DSGVO-Verfahrensdokumentation erstellen (GoBD §147 AO)
+Zweckentfremdungsverbot KZV Stuttgart/Ludwigsburg prüfen
+Backup-Strategie dokumentieren + Restore-Test terminieren

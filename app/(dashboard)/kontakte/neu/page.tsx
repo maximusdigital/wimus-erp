@@ -1,13 +1,22 @@
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 
+import {
+  buildVertragOptionen,
+  loadVertragZuordnungen,
+} from "@/lib/vertrag-zuordnung"
 import { KontaktForm } from "@/components/kontakte/kontakt-form"
 
 export const metadata = {
   title: "Neuer Kontakt",
 }
 
-export default function NeuerKontaktPage() {
+export default async function NeuerKontaktPage() {
+  const { options: vertraege } = buildVertragOptionen(
+    await loadVertragZuordnungen(),
+    "mieter_id"
+  )
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <div>
@@ -27,7 +36,7 @@ export default function NeuerKontaktPage() {
       </div>
 
       <div className="max-w-4xl">
-        <KontaktForm />
+        <KontaktForm vertraege={vertraege} />
       </div>
     </div>
   )

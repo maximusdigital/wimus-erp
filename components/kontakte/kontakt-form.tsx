@@ -33,6 +33,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { ZuordnungFeld } from "@/components/shared/zuordnung-feld"
+import type { MultiSelectOption } from "@/components/shared/multi-select-list"
 
 const EMPTY_VALUES: KontaktFormValues = {
   typ: "mieter",
@@ -72,10 +74,19 @@ function toFormValues(k: Kontakt): KontaktFormValues {
   }
 }
 
-export function KontaktForm({ kontakt }: { kontakt?: Kontakt }) {
+export function KontaktForm({
+  kontakt,
+  vertraege = [],
+  selectedVertragIds = [],
+}: {
+  kontakt?: Kontakt
+  vertraege?: MultiSelectOption[]
+  selectedVertragIds?: string[]
+}) {
   const router = useRouter()
   const isEdit = Boolean(kontakt)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [vertragIds, setVertragIds] = useState<string[]>(selectedVertragIds)
 
   const form = useForm<KontaktFormValues>({
     resolver: zodResolver(kontaktFormSchema),
@@ -89,7 +100,7 @@ export function KontaktForm({ kontakt }: { kontakt?: Kontakt }) {
       {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, vertrag_ids: vertragIds }),
       }
     )
 
@@ -341,6 +352,17 @@ export function KontaktForm({ kontakt }: { kontakt?: Kontakt }) {
             </FormItem>
           )}
         />
+
+        {vertraege.length > 0 ? (
+          <ZuordnungFeld
+            label="Verträge zuordnen"
+            options={vertraege}
+            value={vertragIds}
+            onChange={setVertragIds}
+            emptyText="Keine Verträge vorhanden."
+            beschreibung="Verträge, bei denen dieser Kontakt Mieter ist. Abwählen löst die Zuordnung."
+          />
+        ) : null}
 
         {serverError ? (
           <p className="text-destructive text-sm">{serverError}</p>
