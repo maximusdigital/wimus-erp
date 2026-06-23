@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { KpiCard } from "@/components/ui/kpi-card"
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import {
@@ -165,20 +166,13 @@ export default async function DashboardPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
           <Link key={kpi.label} href={kpi.href} className="group">
-            <Card className="h-full transition-colors group-hover:border-ring/60">
-              <CardHeader>
-                <CardDescription>{kpi.label}</CardDescription>
-                <CardTitle className="text-2xl tabular-nums">
-                  {kpi.value}
-                </CardTitle>
-                <div className="col-start-2 row-span-2 row-start-1 flex size-9 items-center justify-center self-start rounded-lg bg-muted text-muted-foreground">
-                  <kpi.icon className="size-4.5" />
-                </div>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
-                {kpi.hint}
-              </CardContent>
-            </Card>
+            <KpiCard
+              label={kpi.label}
+              value={kpi.value}
+              hint={kpi.hint}
+              icon={kpi.icon}
+              className="h-full transition-shadow group-hover:shadow-md"
+            />
           </Link>
         ))}
       </section>

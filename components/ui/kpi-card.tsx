@@ -18,6 +18,7 @@ function KpiCard({
   value,
   icon: Icon,
   trend,
+  hint,
   className,
   ...props
 }: React.ComponentProps<typeof Card> & {
@@ -28,6 +29,8 @@ function KpiCard({
     direction: "up" | "down"
     value: string
   }
+  /** Optionale Zusatzzeile unter dem Label (z. B. "5 Einheiten gesamt"). */
+  hint?: React.ReactNode
 }) {
   const TrendIcon = trend?.direction === "down" ? ArrowDownRight : ArrowUpRight
 
@@ -61,6 +64,9 @@ function KpiCard({
               </span>
             ) : null}
           </div>
+          {hint ? (
+            <div className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</div>
+          ) : null}
         </div>
       </div>
     </Card>

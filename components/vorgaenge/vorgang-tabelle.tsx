@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
+import { PriorityBadge } from "@/components/ui/priority-badge"
 import {
   Table,
   TableBody,
@@ -13,7 +14,6 @@ import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
   VORGANG_PRIORITAET_LABELS,
-  VORGANG_PRIORITAET_VARIANT,
   VORGANG_STATUS_LABELS,
   VORGANG_STATUS_VARIANT,
   VORGANG_TYP_LABELS,
@@ -54,11 +54,9 @@ export function VorgangTabelle({
                 {v.typ ? (VORGANG_TYP_LABELS[v.typ] ?? v.typ) : "–"}
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={VORGANG_PRIORITAET_VARIANT[v.prioritaet] ?? "secondary"}
-                >
+                <PriorityBadge prioritaet={v.prioritaet}>
                   {VORGANG_PRIORITAET_LABELS[v.prioritaet] ?? v.prioritaet}
-                </Badge>
+                </PriorityBadge>
               </TableCell>
               <TableCell className="text-muted-foreground tabular-nums">
                 {formatDate(v.faellig_am)}

@@ -6,13 +6,13 @@ import { createServerClient } from "@/lib/supabase/server"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PriorityBadge } from "@/components/ui/priority-badge"
 import { DeleteVorgangButton } from "@/components/vorgaenge/delete-vorgang-button"
 import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
   VORGANG_KOSTENTRAEGER_LABELS,
   VORGANG_PRIORITAET_LABELS,
-  VORGANG_PRIORITAET_VARIANT,
   VORGANG_STATUS_LABELS,
   VORGANG_STATUS_VARIANT,
   VORGANG_TYP_LABELS,
@@ -73,14 +73,10 @@ export default async function VorgangDetailPage({
               >
                 {VORGANG_STATUS_LABELS[vorgang.status] ?? vorgang.status}
               </Badge>
-              <Badge
-                variant={
-                  VORGANG_PRIORITAET_VARIANT[vorgang.prioritaet] ?? "secondary"
-                }
-              >
+              <PriorityBadge prioritaet={vorgang.prioritaet}>
                 {VORGANG_PRIORITAET_LABELS[vorgang.prioritaet] ??
                   vorgang.prioritaet}
-              </Badge>
+              </PriorityBadge>
             </div>
             <p className="text-muted-foreground text-sm">
               {vorgang.typ
@@ -119,15 +115,10 @@ export default async function VorgangDetailPage({
               <Field
                 label="Priorität"
                 value={
-                  <Badge
-                    variant={
-                      VORGANG_PRIORITAET_VARIANT[vorgang.prioritaet] ??
-                      "secondary"
-                    }
-                  >
+                  <PriorityBadge prioritaet={vorgang.prioritaet}>
                     {VORGANG_PRIORITAET_LABELS[vorgang.prioritaet] ??
                       vorgang.prioritaet}
-                  </Badge>
+                  </PriorityBadge>
                 }
               />
               <Field

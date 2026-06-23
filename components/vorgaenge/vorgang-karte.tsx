@@ -2,12 +2,12 @@ import Link from "next/link"
 import { ClipboardList } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { PriorityBadge } from "@/components/ui/priority-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
   VORGANG_PRIORITAET_LABELS,
-  VORGANG_PRIORITAET_VARIANT,
   VORGANG_STATUS_LABELS,
   VORGANG_STATUS_VARIANT,
   VORGANG_TYP_LABELS,
@@ -45,15 +45,13 @@ export function VorgangKarte({ vorgang }: { vorgang: VorgangMitRelationen }) {
                 : ""}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              <Badge
-                variant={
-                  VORGANG_PRIORITAET_VARIANT[vorgang.prioritaet] ?? "secondary"
-                }
+              <PriorityBadge
+                prioritaet={vorgang.prioritaet}
                 className="text-[0.7rem]"
               >
                 {VORGANG_PRIORITAET_LABELS[vorgang.prioritaet] ??
                   vorgang.prioritaet}
-              </Badge>
+              </PriorityBadge>
               {vorgang.faellig_am ? (
                 <span>Fällig: {formatDate(vorgang.faellig_am)}</span>
               ) : null}
