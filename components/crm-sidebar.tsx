@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Package,
   Settings,
   TrendingUp,
   Users,
@@ -56,6 +57,7 @@ const mainNav: NavItem[] = [
   { title: "Kontakte", href: "/kontakte", icon: Users },
   { title: "Verträge", href: "/vertraege", icon: FileText },
   { title: "Vorgänge", href: "/vorgaenge", icon: ClipboardList },
+  { title: "Inventar", href: "/inventar", icon: Package },
   { title: "Buchungen", href: "/buchungen", icon: BedDouble },
   { title: "Finanzen", href: "/finanzen", icon: Wallet },
 ];
