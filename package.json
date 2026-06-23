@@ -9,7 +9,12 @@
     "dev:clean": "node scripts/clean-dev.mjs",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -29,14 +34,23 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/ui": "^4.1.9",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "jsdom": "^29.1.1",
     "pg": "^8.22.0",
+    "supertest": "^7.2.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.9"
   }
 }
