@@ -21,6 +21,9 @@ export const einheitFormSchema = z.object({
   wohnflaeche_qm: numericString,
   zimmer_anzahl: numericString,
   etage: z.string().optional(),
+  keybox_pin_statisch: z.string().optional(),
+  keybox_standort: z.string().optional(),
+  max_personen: numericString,
 })
 
 export type EinheitFormValues = z.infer<typeof einheitFormSchema>
@@ -62,4 +65,7 @@ export const einheitInsertSchema = z.object({
   wohnflaeche_qm: numberOrNull,
   zimmer_anzahl: numberOrNull,
   etage: textOrNull,
+  keybox_pin_statisch: textOrNull,
+  keybox_standort: textOrNull,
+  max_personen: numberOrNull,
 })

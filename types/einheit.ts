@@ -14,6 +14,10 @@ export type Einheit = {
   zimmer_anzahl: number | null
   etage: string | null
   status: string
+  // KZV / Keybox (Migration 003)
+  keybox_pin_statisch: string | null
+  keybox_standort: string | null
+  max_personen: number | null
 }
 
 /** Einheit inkl. Objekt-Kurzinfo (Supabase: objekte(kuerzel, bezeichnung)). */

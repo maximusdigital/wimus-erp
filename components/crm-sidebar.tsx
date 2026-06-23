@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BedDouble,
   Building2,
   CalendarClock,
   ClipboardList,
@@ -54,6 +55,7 @@ const mainNav: NavItem[] = [
   { title: "Einheiten", href: "/einheiten", icon: DoorOpen },
   { title: "Kontakte", href: "/kontakte", icon: Users },
   { title: "Verträge", href: "/vertraege", icon: FileText },
+  { title: "Buchungen", href: "/buchungen", icon: BedDouble },
   { title: "Finanzen", href: "/finanzen", icon: Wallet },
 ];
 

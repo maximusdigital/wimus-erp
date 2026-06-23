@@ -48,6 +48,9 @@ function emptyValues(objektId?: string): EinheitFormValues {
     wohnflaeche_qm: "",
     zimmer_anzahl: "",
     etage: "",
+    keybox_pin_statisch: "",
+    keybox_standort: "",
+    max_personen: "",
   }
 }
 
@@ -64,6 +67,9 @@ function toFormValues(e: Einheit): EinheitFormValues {
     wohnflaeche_qm: n(e.wohnflaeche_qm),
     zimmer_anzahl: n(e.zimmer_anzahl),
     etage: s(e.etage),
+    keybox_pin_statisch: s(e.keybox_pin_statisch),
+    keybox_standort: s(e.keybox_standort),
+    max_personen: n(e.max_personen),
   }
 }
 
@@ -281,6 +287,59 @@ export function EinheitForm({
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-medium">Keybox &amp; KZV</h3>
+            <p className="text-muted-foreground text-xs">
+              Statischer Hauszugang. Der Keybox-PIN wird je Buchung übernommen
+              (≠ dynamischer Apartment-PIN).
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="keybox_pin_statisch"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Keybox-PIN (statisch)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="2606" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="keybox_standort"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Keybox-Standort</FormLabel>
+                  <FormControl>
+                    <Input placeholder="links neben Eingangstür" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="max_personen"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Max. Personen</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="1" placeholder="4" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {vertraege.length > 0 ? (

@@ -212,6 +212,26 @@ export default async function EinheitDetailPage({
           </CardContent>
         </Card>
 
+        {einheit.keybox_pin_statisch ||
+        einheit.keybox_standort ||
+        einheit.max_personen != null ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Keybox &amp; KZV</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <Field
+                  label="Keybox-PIN (statisch)"
+                  value={einheit.keybox_pin_statisch}
+                />
+                <Field label="Keybox-Standort" value={einheit.keybox_standort} />
+                <Field label="Max. Personen" value={einheit.max_personen} />
+              </dl>
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">
