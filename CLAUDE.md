@@ -397,7 +397,8 @@ Phase 1  Core Immobilien    Objekte + Einheiten + Kontakte + Verträge      ✅ 
                             (bidirektionale Beziehungen + Detail-Listen)
 Phase 2  Finanzen/Komm.     Mahnwesen 5-stufig + Kautionen (nativ) ✅      🟡 TEILWEISE
                             extern offen: OP/finAPI/CAMT, Invoice Ninja, Zammad
-Phase 3  KZV Auto.          Beds24 + Nuki/TTLock + Tuya + WhatsApp-Flow    🔵 IN ARBEIT
+Phase 3  KZV Auto.          Buchungen-CRUD + Beds24-Webhook (nativ) ✅      🟡 TEILWEISE
+                            extern offen (n8n): TTLock/Nuki, Tuya, WhatsApp, Rechnung
 Phase 4  Vorgänge/Projekte  P14 Vorgänge + Plantafel + OpenProject
 Phase 5  DMS & Dokumente    Paperless + Caya + DocuSeal + PWA Übergabe
 Phase 6  KI-Agenten         13 Agenten via n8n + Claude API
@@ -441,13 +442,17 @@ bidirektionaler Zuordnung + Detail-Listen, V01–V04 gem. Spec) · Phase 2 nativ
 **App läuft auf `public`** (Migration 001). Schema `wimus` (Migration 002, 76 Tabellen)
 ist additiv vorbereitet; Cutover public→wimus ist ein separater, geplanter Schritt.
 
-**In Arbeit – Phase 3 (KZV-Vollautomatisierung):**
-1. Buchungen-CRUD auf `public.buchungen_kzv` (Liste/Detail/Anlage/Bearbeiten)
-2. Verwendungszweck-Parser (`lib/utils/verwendungszweck.ts`) in der Buchungsmaske nutzen
-3. Beds24-Webhook-Skeleton (`app/api/webhooks/beds24/route.ts`): Signaturprüfung + Buchung anlegen
-4. Zwei PINs je Buchung: keybox_pin (statisch aus Einheit) ≠ apartment_pin (TTLock, dynamisch)
-5. CityTax (Stuttgart 3 €, Ludwigsburg 2 € / Person·Nacht), Navigation
+**Phase 3 nativer Teil erledigt:** Buchungen-CRUD auf `public.buchungen_kzv`,
+Verwendungszweck-Parser + CityTax-Helfer, zwei PINs (keybox statisch ≠ apartment dynamisch),
+Beds24-Webhook-Skeleton (Secret-Prüfung + idempotenter Upsert via Admin-Client).
 
-**Phase 2 extern offen** (Schaltzentrale-Prinzip, nicht nachbauen): OP/finAPI/CAMT.053,
-Invoice Ninja (Rechnungen/DATEV), Zammad (Unified Inbox), Kommunikationskanäle.
+> ⚠️ **Migration 003 muss eingespielt werden** (`supabase/migrations/003_kzv_felder.sql`,
+> Supabase SQL-Editor) – sonst fehlen die neuen Spalten (Keybox an einheiten;
+> apartment_pin/keybox_pin/ust_prozent/gaestemappe_token an buchungen_kzv) und Inserts schlagen fehl.
+
+**Extern offen** (Schaltzentrale-Prinzip, nicht nachbauen):
+- Phase 2: OP/finAPI/CAMT.053, Invoice Ninja (Rechnungen/DATEV), Zammad (Unified Inbox), Kommunikationskanäle
+- Phase 3: TTLock/Nuki (Apartment-PIN), Tuya (Heizung), WhatsApp (GreenAPI), Rechnung – via n8n nachgelagert
+
+**Nächste sinnvolle Phase:** Phase 4 (Vorgänge P14 + Plantafel) oder Cutover-Vorbereitung public→wimus.
 
