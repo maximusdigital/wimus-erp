@@ -52,7 +52,8 @@ export const KONTAKT_TYP_VARIANT: Record<
   behoerde: "outline",
 }
 
-export const ANREDEN = ["Herr", "Frau", "Divers"] as const
+// Design System 40 / Datenmodell v5: Anrede ausschliesslich Herr/Frau/Firma/Keine.
+export const ANREDEN = ["Herr", "Frau", "Firma", "Keine"] as const
 
 /** Anzeigename: Firma oder Vor-/Nachname, Fallback E-Mail. */
 export function kontaktName(k: {

@@ -37,7 +37,9 @@ const PRIORITAET_LABEL: Record<Prioritaet, string> = {
 
 function normalize(value: string): Prioritaet {
   const v = value.trim().toLowerCase()
-  if (v === "notfall" || v === "hoch" || v === "normal" || v === "niedrig") return v
+  // Datenmodell nutzt "kritisch", Design System spricht von "notfall" – Alias.
+  if (v === "notfall" || v === "kritisch") return "notfall"
+  if (v === "hoch" || v === "normal" || v === "niedrig") return v
   return "normal"
 }
 
