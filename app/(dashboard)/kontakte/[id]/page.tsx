@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { findDemoKontakt } from "@/lib/dev/demo-kontakte"
 import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
+import { AddressBlock } from "@/components/ui/address-block"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -140,8 +141,19 @@ export default async function KontaktDetailPage({
                   ) : null
                 }
               />
-              <Field label="Adresse" value={formatAdresse(kontakt)} />
               <Field label="Ausweis-Nr." value={kontakt.ausweis_nr} />
+              <div className="col-span-2 space-y-0.5">
+                <dt className="text-muted-foreground text-xs">Adresse</dt>
+                <dd>
+                  <AddressBlock
+                    adresse={{
+                      strasse: kontakt.strasse,
+                      plz: kontakt.plz,
+                      stadt: kontakt.ort,
+                    }}
+                  />
+                </dd>
+              </div>
             </dl>
           </CardContent>
         </Card>

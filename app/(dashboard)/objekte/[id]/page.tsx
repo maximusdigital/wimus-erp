@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { findDemoObjekt } from "@/lib/dev/demo-objekte"
 import { DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
+import { AddressBlock } from "@/components/ui/address-block"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -158,10 +159,19 @@ export default async function ObjektDetailPage({
                 }
               />
               <Field label="Einheiten" value={einheitenCount} />
-              <Field
-                label="Adresse"
-                value={formatAdresse(objekt)}
-              />
+              <div className="col-span-2 space-y-0.5">
+                <dt className="text-muted-foreground text-xs">Adresse</dt>
+                <dd>
+                  <AddressBlock
+                    adresse={{
+                      strasse: objekt.strasse,
+                      hausnummer: objekt.hausnummer,
+                      plz: objekt.plz,
+                      stadt: objekt.ort,
+                    }}
+                  />
+                </dd>
+              </div>
             </dl>
           </CardContent>
         </Card>
