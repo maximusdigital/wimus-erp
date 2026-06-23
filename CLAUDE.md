@@ -181,6 +181,40 @@ CREATE POLICY "mandant_isolation" ON objekte
 
 ---
 
+## UI-Konventionen (Design System – nie abweichen)
+
+Design System: `.docs/20260623_WIMUS_IT_ERP_40_DesignSystem_Docs_V100.docx`
+Tokens: Tailwind v4 CSS-first in `app/globals.css` (`@theme`) – Quelle der
+Wahrheit, nie direkt Farben/Größen hardcoden. **Kein `tailwind.config.ts`**
+(v4 bleibt CSS-first), `tw-animate-css` statt `tailwindcss-animate`.
+
+WIMUS-Markenfarben (ergänzen die Shadcn-Graustufen, ersetzen sie nicht):
+`primary #1F4E5F · secondary #2E75B6 · teal #0D7680 · success #2E7D32 ·
+danger #C62828 · warning #F59E0B` (+ `*-foreground`).
+
+PFLICHT vor jedem Commit einer neuen Komponente:
+1. Nur Token-Farben (primary/secondary/teal/success/danger/warning/muted)
+2. Nur Inter als Font, nur definierte Größen (xs/sm/base/lg/xl/2xl/3xl)
+3. 4px Grid – kein p-5, p-7, p-9, p-11
+4. Labels IMMER über dem Input (nie Placeholder als Ersatz)
+5. Fehlertext IMMER unter dem Input (nie als Banner oben)
+6. Pflichtfeld * im Label (text-danger), HTML required ZUSÄTZLICH
+7. Adresse IMMER getrennt: strasse / hausnummer / plz / stadt / land
+8. Anrede: nur Herr / Frau / Firma / Keine
+9. Detailansicht: AktenzeichenBadge + DmsButton oben rechts
+10. Mobile 390px: prüfen ob Formular nutzbar
+
+Shadcn-Komponenten IMMER verwenden:
+Button, Input, Select, Dialog, Tabs, Table, Badge, Card, Sheet, Skeleton
+
+WIMUS Custom-Komponenten (`components/ui/`):
+AktenzeichenBadge, DmsButton, StatusBadge, PriorityBadge,
+KpiCard, AddressBlock, KiVorschlag, MobileCard, ZaehlerstandInput
+
+Konformität prüfbar via grep (Design System Kap. 8) + Playwright Mobile-Viewport.
+
+---
+
 ## Konventionen
 
 ### Dateinamen
