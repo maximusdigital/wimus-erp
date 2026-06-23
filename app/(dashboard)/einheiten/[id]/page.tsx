@@ -11,8 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteEinheitButton } from "@/components/einheiten/delete-einheit-button"
 import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
 import { VertraegeListe } from "@/components/vertraege/vertraege-liste"
+import { VorgaengeListe } from "@/components/vorgaenge/vorgaenge-liste"
 import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
 import type { VertragMitRelationen } from "@/types/vertrag"
+import type { VorgangMitRelationen } from "@/types/vorgang"
 import {
   EINHEITSTYP_LABELS,
   EINHEIT_STATUS_LABELS,
@@ -23,6 +25,8 @@ import {
 
 const VERTRAG_SELECT =
   "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+const VORGANG_SELECT =
+  "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -82,6 +86,15 @@ export default async function EinheitDetailPage({
   if (isPreviewNoAuth() && vertraege.length === 0) {
     vertraege = DEMO_VERTRAEGE.filter((v) => v.einheit_id === id)
   }
+
+  // Vorgänge dieser Einheit (bidirektionale Verlinkung).
+  const { data: vorgaengeData } = await supabase
+    .from("vorgaenge")
+    .select(VORGANG_SELECT)
+    .eq("einheit_id", id)
+    .order("faellig_am", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
+  const vorgaenge = (vorgaengeData ?? []) as unknown as VorgangMitRelationen[]
 
   const titel =
     einheit.verwendungszweck_code ?? einheit.bezeichnung ?? "Einheit"
@@ -251,6 +264,29 @@ export default async function EinheitDetailPage({
               vertraege={vertraege}
               kontext="einheit"
               emptyText="Noch keine Verträge für diese Einheit."
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              Vorgänge ({vorgaenge.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/vorgaenge/neu?einheit=${einheit.id}`} />}
+            >
+              <Plus />
+              <span>Neuer Vorgang</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <VorgaengeListe
+              vorgaenge={vorgaenge}
+              kontext="einheit"
+              emptyText="Noch keine Vorgänge für diese Einheit."
             />
           </CardContent>
         </Card>

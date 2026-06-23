@@ -12,13 +12,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteObjektButton } from "@/components/objekte/delete-objekt-button"
 import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
 import { VertraegeListe } from "@/components/vertraege/vertraege-liste"
+import { VorgaengeListe } from "@/components/vorgaenge/vorgaenge-liste"
 import { formatAdresse, formatDate, formatEUR } from "@/lib/utils/format"
 import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
 import type { Einheit } from "@/types/einheit"
 import type { VertragMitRelationen } from "@/types/vertrag"
-
-const VERTRAG_SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+import type { VorgangMitRelationen } from "@/types/vorgang"
 import {
   HALTESTRATEGIE_LABELS,
   OBJEKTTYP_LABELS,
@@ -26,6 +25,11 @@ import {
   OBJEKT_STATUS_VARIANT,
   type Objekt,
 } from "@/types/objekt"
+
+const VERTRAG_SELECT =
+  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+const VORGANG_SELECT =
+  "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -43,7 +47,8 @@ export default async function ObjektDetailPage({
 }) {
   const { id } = await params
   const supabase = await createServerClient()
-  const [objektRes, einheitenRes, vertraegeRes] = await Promise.all([
+  const [objektRes, einheitenRes, vertraegeRes, vorgaengeRes] =
+    await Promise.all([
     supabase.from("objekte").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("einheiten")
@@ -55,11 +60,18 @@ export default async function ObjektDetailPage({
       .select(VERTRAG_SELECT)
       .eq("objekt_id", id)
       .order("beginn", { nullsFirst: false }),
+    supabase
+      .from("vorgaenge")
+      .select(VORGANG_SELECT)
+      .eq("objekt_id", id)
+      .order("faellig_am", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false }),
   ])
 
   let objekt = objektRes.data as Objekt | null
   let einheiten = (einheitenRes.data ?? []) as Einheit[]
   let vertraege = (vertraegeRes.data ?? []) as unknown as VertragMitRelationen[]
+  const vorgaenge = (vorgaengeRes.data ?? []) as unknown as VorgangMitRelationen[]
 
   if (!objekt && isPreviewNoAuth()) {
     objekt = findDemoObjekt(id) ?? null
@@ -250,6 +262,29 @@ export default async function ObjektDetailPage({
               vertraege={vertraege}
               kontext="objekt"
               emptyText="Noch keine Verträge für dieses Objekt."
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              Vorgänge ({vorgaenge.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/vorgaenge/neu?objekt=${objekt.id}`} />}
+            >
+              <Plus />
+              <span>Neuer Vorgang</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <VorgaengeListe
+              vorgaenge={vorgaenge}
+              kontext="objekt"
+              emptyText="Noch keine Vorgänge für dieses Objekt."
             />
           </CardContent>
         </Card>
