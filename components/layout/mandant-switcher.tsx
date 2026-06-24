@@ -46,7 +46,24 @@ export function MandantSwitcher() {
         className="w-full bg-sidebar-accent/40 group-data-[collapsible=icon]:hidden"
         aria-label="Mandant wechseln"
       >
-        <SelectValue placeholder="Mandant wählen" />
+        <SelectValue placeholder="Mandant wählen">
+          {(value) => {
+            const m =
+              mandanten.find((x) => x.id === value) ?? mandant ?? null
+            if (!m) return "Mandant wählen"
+            return (
+              <span className="flex items-center gap-2">
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor: m.farbe ?? "var(--muted-foreground)",
+                  }}
+                />
+                {m.name}
+              </span>
+            )
+          }}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {mandanten.map((m) => (
