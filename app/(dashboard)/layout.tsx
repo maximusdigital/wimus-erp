@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { Bell, Plus, Search } from "lucide-react";
 
 import { createServerClient } from "@/lib/supabase/server";
-import { getActiveMandant, getUserMandanten } from "@/lib/mandanten";
+import { getActiveProjekt, getProjekte } from "@/lib/projekte";
 import { isPreviewNoAuth } from "@/lib/dev/preview";
 import { CrmSidebar, type SidebarUser } from "@/components/crm-sidebar";
-import { MandantProvider } from "@/components/providers/mandant-provider";
+import { ProjektProvider } from "@/components/providers/projekt-provider";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -43,8 +43,8 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const mandanten = await getUserMandanten();
-  const activeMandant = await getActiveMandant(mandanten);
+  const projekte = await getProjekte();
+  const activeProjekt = await getActiveProjekt(projekte);
 
   const email = user?.email ?? "vorschau@wimus.de";
   const name =
@@ -54,7 +54,7 @@ export default async function DashboardLayout({
   const sidebarUser = buildUser(email, name);
 
   return (
-    <MandantProvider mandant={activeMandant} mandanten={mandanten}>
+    <ProjektProvider projekt={activeProjekt} projekte={projekte}>
       <SidebarProvider>
         <CrmSidebar user={sidebarUser} />
         <SidebarInset>
@@ -90,6 +90,6 @@ export default async function DashboardLayout({
           <div className="flex flex-1 flex-col">{children}</div>
         </SidebarInset>
       </SidebarProvider>
-    </MandantProvider>
+    </ProjektProvider>
   );
 }

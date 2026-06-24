@@ -34,7 +34,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { MandantSwitcher } from "@/components/layout/mandant-switcher";
+import { ProjektSwitcher } from "@/components/layout/projekt-switcher";
 
 export type SidebarUser = {
   name: string;
@@ -134,7 +134,7 @@ export function CrmSidebar({ user }: { user: SidebarUser }) {
           </SidebarMenuItem>
         </SidebarMenu>
         <div className="px-1 pt-1 group-data-[collapsible=icon]:hidden">
-          <MandantSwitcher />
+          <ProjektSwitcher />
         </div>
       </SidebarHeader>
 
