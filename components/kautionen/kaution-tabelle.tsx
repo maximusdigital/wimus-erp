@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
   TableBody,
@@ -14,7 +14,6 @@ import { kontaktName } from "@/types/kontakt"
 import {
   KAUTION_ANLAGE_ART_LABELS,
   KAUTION_STATUS_LABELS,
-  KAUTION_STATUS_VARIANT,
   type KautionMitRelationen,
 } from "@/types/kaution"
 
@@ -55,9 +54,9 @@ export function KautionTabelle({
                   : "–"}
               </TableCell>
               <TableCell>
-                <Badge variant={KAUTION_STATUS_VARIANT[k.status] ?? "secondary"}>
+                <StatusBadge status={k.status}>
                   {KAUTION_STATUS_LABELS[k.status] ?? k.status}
-                </Badge>
+                </StatusBadge>
               </TableCell>
             </TableRow>
           ))}

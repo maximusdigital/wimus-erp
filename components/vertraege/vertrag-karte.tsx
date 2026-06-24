@@ -1,14 +1,13 @@
 import Link from "next/link"
 import { FileText } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import {
   VERTRAGSART_LABELS,
   VERTRAG_STATUS_LABELS,
-  VERTRAG_STATUS_VARIANT,
   warmmiete,
   type VertragMitRelationen,
 } from "@/types/vertrag"
@@ -30,11 +29,9 @@ export function VertragKarte({ vertrag }: { vertrag: VertragMitRelationen }) {
                       vertrag.vertragsart)
                     : "Vertrag")}
               </span>
-              <Badge
-                variant={VERTRAG_STATUS_VARIANT[vertrag.status] ?? "secondary"}
-              >
+              <StatusBadge status={vertrag.status}>
                 {VERTRAG_STATUS_LABELS[vertrag.status] ?? vertrag.status}
-              </Badge>
+              </StatusBadge>
             </div>
             <p className="truncate text-sm">
               {vertrag.mieter ? kontaktName(vertrag.mieter) : "–"}

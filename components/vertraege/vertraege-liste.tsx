@@ -1,13 +1,12 @@
 import Link from "next/link"
 import { FileText } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import {
   VERTRAGSART_LABELS,
   VERTRAG_STATUS_LABELS,
-  VERTRAG_STATUS_VARIANT,
   warmmiete,
   type VertragMitRelationen,
 } from "@/types/vertrag"
@@ -70,12 +69,12 @@ export function VertraegeListe({
                   <span className="text-sm font-medium leading-tight">
                     {titel}
                   </span>
-                  <Badge
-                    variant={VERTRAG_STATUS_VARIANT[v.status] ?? "secondary"}
+                  <StatusBadge
+                    status={v.status}
                     className="shrink-0 text-[0.7rem]"
                   >
                     {VERTRAG_STATUS_LABELS[v.status] ?? v.status}
-                  </Badge>
+                  </StatusBadge>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {meta || "–"}

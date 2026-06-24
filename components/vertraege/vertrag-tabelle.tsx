@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
   TableBody,
@@ -14,7 +14,6 @@ import { kontaktName } from "@/types/kontakt"
 import {
   VERTRAGSART_LABELS,
   VERTRAG_STATUS_LABELS,
-  VERTRAG_STATUS_VARIANT,
   warmmiete,
   type VertragMitRelationen,
 } from "@/types/vertrag"
@@ -65,9 +64,9 @@ export function VertragTabelle({
                 {formatEUR(warmmiete(v))}
               </TableCell>
               <TableCell>
-                <Badge variant={VERTRAG_STATUS_VARIANT[v.status] ?? "secondary"}>
+                <StatusBadge status={v.status}>
                   {VERTRAG_STATUS_LABELS[v.status] ?? v.status}
-                </Badge>
+                </StatusBadge>
               </TableCell>
             </TableRow>
           ))}

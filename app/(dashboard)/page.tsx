@@ -26,10 +26,10 @@ import {
 import { KpiCard } from "@/components/ui/kpi-card"
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
+import { StatusBadge } from "@/components/ui/status-badge"
 import {
   VERTRAGSART_LABELS,
   VERTRAG_STATUS_LABELS,
-  VERTRAG_STATUS_VARIANT,
   warmmiete,
   type VertragMitRelationen,
 } from "@/types/vertrag"
@@ -246,12 +246,9 @@ export default async function DashboardPage() {
                           {VERTRAGSART_LABELS[v.vertragsart] ?? v.vertragsart}
                         </Badge>
                       ) : null}
-                      <Badge
-                        variant={VERTRAG_STATUS_VARIANT[v.status] ?? "secondary"}
-                        className="text-[0.7rem]"
-                      >
+                      <StatusBadge status={v.status} className="text-[0.7rem]">
                         {VERTRAG_STATUS_LABELS[v.status] ?? v.status}
-                      </Badge>
+                      </StatusBadge>
                     </div>
                   </div>
                 </Link>

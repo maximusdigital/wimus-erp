@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { ChevronLeft, Pencil } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteKautionButton } from "@/components/kautionen/delete-kaution-button"
@@ -12,7 +12,6 @@ import { kontaktName } from "@/types/kontakt"
 import {
   KAUTION_ANLAGE_ART_LABELS,
   KAUTION_STATUS_LABELS,
-  KAUTION_STATUS_VARIANT,
   type KautionMitRelationen,
 } from "@/types/kaution"
 
@@ -63,11 +62,9 @@ export default async function KautionDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">{titel}</h1>
-              <Badge
-                variant={KAUTION_STATUS_VARIANT[kaution.status] ?? "secondary"}
-              >
+              <StatusBadge status={kaution.status}>
                 {KAUTION_STATUS_LABELS[kaution.status] ?? kaution.status}
-              </Badge>
+              </StatusBadge>
             </div>
             <p className="text-muted-foreground text-sm">
               {formatEUR(kaution.betrag)}

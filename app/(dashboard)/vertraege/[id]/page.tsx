@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { findDemoVertrag } from "@/lib/dev/demo-vertraege"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteVertragButton } from "@/components/vertraege/delete-vertrag-button"
@@ -14,7 +15,6 @@ import { kontaktName } from "@/types/kontakt"
 import {
   VERTRAGSART_LABELS,
   VERTRAG_STATUS_LABELS,
-  VERTRAG_STATUS_VARIANT,
   warmmiete,
   type VertragMitRelationen,
 } from "@/types/vertrag"
@@ -27,7 +27,6 @@ import {
 import {
   KAUTION_ANLAGE_ART_LABELS,
   KAUTION_STATUS_LABELS,
-  KAUTION_STATUS_VARIANT,
   type Kaution,
 } from "@/types/kaution"
 
@@ -103,11 +102,9 @@ export default async function VertragDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">{titel}</h1>
-              <Badge
-                variant={VERTRAG_STATUS_VARIANT[vertrag.status] ?? "secondary"}
-              >
+              <StatusBadge status={vertrag.status}>
                 {VERTRAG_STATUS_LABELS[vertrag.status] ?? vertrag.status}
-              </Badge>
+              </StatusBadge>
             </div>
             <p className="text-muted-foreground text-sm">
               {vertrag.mieter ? kontaktName(vertrag.mieter) : "Kein Mieter"}
@@ -266,13 +263,9 @@ export default async function VertragDetailPage({
                   <Field
                     label="Status"
                     value={
-                      <Badge
-                        variant={
-                          KAUTION_STATUS_VARIANT[kaution.status] ?? "secondary"
-                        }
-                      >
+                      <StatusBadge status={kaution.status}>
                         {KAUTION_STATUS_LABELS[kaution.status] ?? kaution.status}
-                      </Badge>
+                      </StatusBadge>
                     }
                   />
                   <Field label="Bank" value={kaution.bank} />

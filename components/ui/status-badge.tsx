@@ -32,20 +32,29 @@ const statusBadgeVariants = cva(
 type StatusTone = NonNullable<VariantProps<typeof statusBadgeVariants>["tone"]>
 
 const STATUS_TONE_MAP: Record<string, StatusTone> = {
+  // positiv / sicher
   aktiv: "success",
   laufend: "success",
   bezahlt: "success",
   erledigt: "success",
+  hinterlegt: "success", // Kaution gesichert
+  // negativ / abgebrochen
   gekuendigt: "danger",
   gekündigt: "danger",
   storniert: "danger",
   abgelehnt: "danger",
+  // Handlungsbedarf
   ausstehend: "warning",
   offen: "warning",
   inbearbeitung: "warning",
   "in bearbeitung": "warning",
+  angelegt: "warning", // Kaution angelegt, aber noch nicht hinterlegt
+  // neutral / abgeschlossen
   entwurf: "muted",
   inaktiv: "muted",
+  beendet: "muted",
+  abgerechnet: "muted",
+  ausgezahlt: "muted",
 }
 
 function resolveTone(status: string): StatusTone {
