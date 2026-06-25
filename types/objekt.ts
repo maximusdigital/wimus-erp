@@ -7,27 +7,25 @@ export type Objekt = {
   mandant_id: string
   gesellschaft_id: string | null
   kuerzel: string
-  bezeichnung: string | null
   strasse: string | null
   hausnummer: string | null
   plz: string | null
-  ort: string | null
-  objekttyp: string | null
+  stadt: string | null
+  stadtteil: string | null
+  land: string | null
+  typ: string | null
   baujahr: number | null
-  wohnflaeche_qm: number | null
-  grundstuecksflaeche_qm: number | null
   nutzen_lasten_datum: string | null
   notartermin_datum: string | null
   haltestrategie: string | null
   marktwert_sprengnetter: number | null
   marktwert_pricehubble: number | null
   status: string
-  notiz: string | null
 }
 
-/** Objekt inkl. Einheiten-Zähler (Supabase: einheiten(count)). */
+/** Objekt inkl. optionalem Einheiten-Zähler. */
 export type ObjektMitEinheiten = Objekt & {
-  einheiten: { count: number }[]
+  einheiten?: { count: number }[]
 }
 
 export const OBJEKTTYPEN = [

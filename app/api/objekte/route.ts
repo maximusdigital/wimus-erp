@@ -8,8 +8,9 @@ import { readIdList, reconcileVertragRelation } from "@/lib/relations"
 export async function GET() {
   const supabase = await createServerClient()
   const { data, error } = await supabase
+    .schema("wimus")
     .from("objekte")
-    .select("*, einheiten(count)")
+    .select("*")
     .order("kuerzel")
 
   if (error) {
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
+    .schema("wimus")
     .from("objekte")
     .insert({ ...parsed.data, mandant_id: active.id })
     .select()

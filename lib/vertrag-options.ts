@@ -36,7 +36,7 @@ export async function loadVertragOptions(): Promise<VertragOptions> {
       objekte = DEMO_OBJEKTE.map((o) => ({
         id: o.id,
         kuerzel: o.kuerzel,
-        bezeichnung: o.bezeichnung,
+        bezeichnung: o.kuerzel,
       }))
     }
     if (einheiten.length === 0) {

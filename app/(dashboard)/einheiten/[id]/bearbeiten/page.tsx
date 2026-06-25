@@ -41,7 +41,7 @@ export default async function EinheitBearbeitenPage({
       objekte = DEMO_OBJEKTE.map((o) => ({
         id: o.id,
         kuerzel: o.kuerzel,
-        bezeichnung: o.bezeichnung,
+        bezeichnung: o.kuerzel,
       }))
     }
   }

@@ -13,21 +13,18 @@ const numericString = z
 
 export const objektFormSchema = z.object({
   kuerzel: z.string().min(1, "Pflichtfeld").max(20, "Max. 20 Zeichen"),
-  bezeichnung: z.string().optional(),
   strasse: z.string().optional(),
   hausnummer: z.string().optional(),
   plz: z.string().optional(),
-  ort: z.string().optional(),
-  objekttyp: z.string().optional(),
+  stadt: z.string().optional(),
+  typ: z.string().optional(),
   haltestrategie: z.string().optional(),
   status: z.enum(OBJEKT_STATUS),
   baujahr: numericString,
-  wohnflaeche_qm: numericString,
   marktwert_sprengnetter: numericString,
   marktwert_pricehubble: numericString,
   nutzen_lasten_datum: z.string().optional(),
   notartermin_datum: z.string().optional(),
-  notiz: z.string().optional(),
 })
 
 export type ObjektFormValues = z.infer<typeof objektFormSchema>
@@ -62,19 +59,16 @@ export const objektInsertSchema = z.object({
     .min(1, "Pflichtfeld")
     .max(20, "Max. 20 Zeichen")
     .transform((v) => v.trim().toUpperCase()),
-  bezeichnung: textOrNull,
   strasse: textOrNull,
   hausnummer: textOrNull,
   plz: textOrNull,
-  ort: textOrNull,
-  objekttyp: enumOrNull(OBJEKTTYPEN),
+  stadt: textOrNull,
+  typ: enumOrNull(OBJEKTTYPEN),
   haltestrategie: enumOrNull(HALTESTRATEGIEN),
   status: z.enum(OBJEKT_STATUS),
   baujahr: numberOrNull,
-  wohnflaeche_qm: numberOrNull,
   marktwert_sprengnetter: numberOrNull,
   marktwert_pricehubble: numberOrNull,
   nutzen_lasten_datum: textOrNull,
   notartermin_datum: textOrNull,
-  notiz: textOrNull,
 })

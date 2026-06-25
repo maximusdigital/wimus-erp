@@ -16,8 +16,9 @@ export const metadata = {
 export default async function ObjektePage() {
   const supabase = await createServerClient()
   const { data, error } = await supabase
+    .schema("wimus")
     .from("objekte")
-    .select("*, einheiten(count)")
+    .select("*")
     .order("kuerzel")
 
   let objekte = (data ?? []) as ObjektMitEinheiten[]

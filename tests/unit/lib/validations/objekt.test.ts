@@ -19,8 +19,8 @@ describe("objektInsertSchema", () => {
   })
 
   it("leere optionale Strings werden zu null", () => {
-    const r = objektInsertSchema.parse({ ...valid, bezeichnung: "", strasse: "  " })
-    expect(r.bezeichnung).toBeNull()
+    const r = objektInsertSchema.parse({ ...valid, stadt: "", strasse: "  " })
+    expect(r.stadt).toBeNull()
     expect(r.strasse).toBeNull()
   })
 
@@ -28,25 +28,25 @@ describe("objektInsertSchema", () => {
     const r = objektInsertSchema.parse({
       ...valid,
       baujahr: "1998",
-      wohnflaeche_qm: "",
+      marktwert_sprengnetter: "",
     })
     expect(r.baujahr).toBe(1998)
-    expect(r.wohnflaeche_qm).toBeNull()
+    expect(r.marktwert_sprengnetter).toBeNull()
   })
 
   it("ungültiger Objekttyp wird abgelehnt", () => {
     expect(
-      objektInsertSchema.safeParse({ ...valid, objekttyp: "Schloss" }).success
+      objektInsertSchema.safeParse({ ...valid, typ: "Schloss" }).success
     ).toBe(false)
   })
 
   it("gültiger Objekttyp + Haltestrategie werden akzeptiert", () => {
     const r = objektInsertSchema.parse({
       ...valid,
-      objekttyp: "MFH",
+      typ: "MFH",
       haltestrategie: "bestand",
     })
-    expect(r.objekttyp).toBe("MFH")
+    expect(r.typ).toBe("MFH")
     expect(r.haltestrategie).toBe("bestand")
   })
 

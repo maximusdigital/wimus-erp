@@ -20,7 +20,6 @@ import {
 } from "@/types/objekt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -49,21 +48,18 @@ export type EinheitZuordnung = {
 
 const EMPTY_VALUES: ObjektFormValues = {
   kuerzel: "",
-  bezeichnung: "",
   strasse: "",
   hausnummer: "",
   plz: "",
-  ort: "",
-  objekttyp: "",
+  stadt: "",
+  typ: "",
   haltestrategie: "",
   status: "ist",
   baujahr: "",
-  wohnflaeche_qm: "",
   marktwert_sprengnetter: "",
   marktwert_pricehubble: "",
   nutzen_lasten_datum: "",
   notartermin_datum: "",
-  notiz: "",
 }
 
 function toFormValues(o: Objekt): ObjektFormValues {
@@ -72,21 +68,18 @@ function toFormValues(o: Objekt): ObjektFormValues {
   const d = (v: string | null) => (v ? v.slice(0, 10) : "")
   return {
     kuerzel: o.kuerzel,
-    bezeichnung: s(o.bezeichnung),
     strasse: s(o.strasse),
     hausnummer: s(o.hausnummer),
     plz: s(o.plz),
-    ort: s(o.ort),
-    objekttyp: s(o.objekttyp),
+    stadt: s(o.stadt),
+    typ: s(o.typ),
     haltestrategie: s(o.haltestrategie),
     status: o.status as ObjektFormValues["status"],
     baujahr: n(o.baujahr),
-    wohnflaeche_qm: n(o.wohnflaeche_qm),
     marktwert_sprengnetter: n(o.marktwert_sprengnetter),
     marktwert_pricehubble: n(o.marktwert_pricehubble),
     nutzen_lasten_datum: d(o.nutzen_lasten_datum),
     notartermin_datum: d(o.notartermin_datum),
-    notiz: s(o.notiz),
   }
 }
 
@@ -175,20 +168,6 @@ export function ObjektForm({
 
           <FormField
             control={form.control}
-            name="bezeichnung"
-            render={({ field }) => (
-              <FormItem className="sm:col-span-1 lg:col-span-2">
-                <FormLabel>Bezeichnung</FormLabel>
-                <FormControl>
-                  <Input placeholder="Bauhofstr. 16 – MFH" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="strasse"
             render={({ field }) => (
               <FormItem>
@@ -231,7 +210,7 @@ export function ObjektForm({
             />
             <FormField
               control={form.control}
-              name="ort"
+              name="stadt"
               render={({ field }) => (
                 <FormItem className="col-span-2">
                   <FormLabel>Ort</FormLabel>
@@ -246,7 +225,7 @@ export function ObjektForm({
 
           <FormField
             control={form.control}
-            name="objekttyp"
+            name="typ"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Objekttyp</FormLabel>
@@ -335,20 +314,6 @@ export function ObjektForm({
 
           <FormField
             control={form.control}
-            name="wohnflaeche_qm"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Wohnfläche (m²)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="320" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="nutzen_lasten_datum"
             render={({ field }) => (
               <FormItem>
@@ -403,20 +368,6 @@ export function ObjektForm({
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="notiz"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notiz</FormLabel>
-              <FormControl>
-                <Textarea rows={3} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         {einheiten.length > 0 ? (
           <ZuordnungFeld

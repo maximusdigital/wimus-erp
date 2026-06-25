@@ -28,14 +28,13 @@ export function ObjektKarte({ objekt }: { objekt: ObjektMitEinheiten }) {
               {OBJEKT_STATUS_LABELS[objekt.status] ?? objekt.status}
             </Badge>
           </div>
-          <p className="truncate text-sm">{objekt.bezeichnung ?? "–"}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {formatAdresse(objekt)}
+          <p className="truncate text-sm">
+            {formatAdresse({ ...objekt, ort: objekt.stadt })}
           </p>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>
-              {objekt.objekttyp
-                ? (OBJEKTTYP_LABELS[objekt.objekttyp] ?? objekt.objekttyp)
+              {objekt.typ
+                ? (OBJEKTTYP_LABELS[objekt.typ] ?? objekt.typ)
                 : "–"}
             </span>
             <span>{einheiten} Einheiten</span>

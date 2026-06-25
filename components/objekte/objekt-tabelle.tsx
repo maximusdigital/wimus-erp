@@ -24,7 +24,6 @@ export function ObjektTabelle({ objekte }: { objekte: ObjektMitEinheiten[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Kürzel</TableHead>
-            <TableHead>Bezeichnung</TableHead>
             <TableHead>Adresse</TableHead>
             <TableHead>Typ</TableHead>
             <TableHead className="text-right">Einheiten</TableHead>
@@ -43,16 +42,11 @@ export function ObjektTabelle({ objekte }: { objekte: ObjektMitEinheiten[] }) {
                   {o.kuerzel}
                 </Link>
               </TableCell>
-              <TableCell>
-                <Link href={`/objekte/${o.id}`} className="hover:underline">
-                  {o.bezeichnung ?? "–"}
-                </Link>
-              </TableCell>
               <TableCell className="text-muted-foreground">
-                {formatAdresse(o)}
+                {formatAdresse({ ...o, ort: o.stadt })}
               </TableCell>
               <TableCell>
-                {o.objekttyp ? (OBJEKTTYP_LABELS[o.objekttyp] ?? o.objekttyp) : "–"}
+                {o.typ ? (OBJEKTTYP_LABELS[o.typ] ?? o.typ) : "–"}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {o.einheiten?.[0]?.count ?? 0}

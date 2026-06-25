@@ -25,6 +25,7 @@ export default async function ObjektBearbeitenPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("objekte")
     .select("*")
     .eq("id", id)

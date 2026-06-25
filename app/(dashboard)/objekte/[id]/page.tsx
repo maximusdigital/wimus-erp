@@ -50,7 +50,7 @@ export default async function ObjektDetailPage({
   const supabase = await createServerClient()
   const [objektRes, einheitenRes, vertraegeRes, vorgaengeRes] =
     await Promise.all([
-    supabase.from("objekte").select("*").eq("id", id).maybeSingle(),
+    supabase.schema("wimus").from("objekte").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("einheiten")
       .select("*")
@@ -111,7 +111,7 @@ export default async function ObjektDetailPage({
               </Badge>
             </div>
             <p className="text-muted-foreground text-sm">
-              {objekt.bezeichnung ?? formatAdresse(objekt)}
+              {formatAdresse({ ...objekt, ort: objekt.stadt })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -137,8 +137,8 @@ export default async function ObjektDetailPage({
               <Field
                 label="Objekttyp"
                 value={
-                  objekt.objekttyp
-                    ? (OBJEKTTYP_LABELS[objekt.objekttyp] ?? objekt.objekttyp)
+                  objekt.typ
+                    ? (OBJEKTTYP_LABELS[objekt.typ] ?? objekt.typ)
                     : null
                 }
               />
@@ -152,12 +152,6 @@ export default async function ObjektDetailPage({
                 }
               />
               <Field label="Baujahr" value={objekt.baujahr} />
-              <Field
-                label="Wohnfläche"
-                value={
-                  objekt.wohnflaeche_qm ? `${objekt.wohnflaeche_qm} m²` : null
-                }
-              />
               <Field label="Einheiten" value={einheitenCount} />
               <div className="col-span-2 space-y-0.5">
                 <dt className="text-muted-foreground text-xs">Adresse</dt>
@@ -167,7 +161,9 @@ export default async function ObjektDetailPage({
                       strasse: objekt.strasse,
                       hausnummer: objekt.hausnummer,
                       plz: objekt.plz,
-                      stadt: objekt.ort,
+                      stadt: objekt.stadt,
+                      stadtteil: objekt.stadtteil,
+                      land: objekt.land,
                     }}
                   />
                 </dd>
@@ -219,17 +215,6 @@ export default async function ObjektDetailPage({
             </dl>
           </CardContent>
         </Card>
-
-        {objekt.notiz ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Notiz</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">{objekt.notiz}</p>
-            </CardContent>
-          </Card>
-        ) : null}
 
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
