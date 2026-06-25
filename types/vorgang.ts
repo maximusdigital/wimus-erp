@@ -7,14 +7,27 @@ export type Vorgang = {
   mandant_id: string
   objekt_id: string | null
   einheit_id: string | null
-  titel: string
-  beschreibung: string | null
+  gemeldet_von: string | null
+  handwerker_id: string | null
   typ: string | null
   prioritaet: string
-  kostentraeger: string | null
-  faellig_am: string | null
   status: string
+  kostentraeger: string | null
+  massnahme_typ: string | null
+  kosten_geschaetzt: number | null
+  kosten_ist: number | null
+  leistungsdatum: string | null
+  aktenzeichen: string | null
+  lfd_nr: number | null
+  paperless_id: string | null
 }
+
+/** Embed-Form eines verknüpften Kontakts (Handwerker / Melder). */
+export type VorgangKontaktRef = {
+  vorname: string | null
+  nachname: string | null
+  firmenname: string | null
+} | null
 
 /** Vorgang inkl. verknüpfter Kurzinfos (Supabase-Embeds mit Alias). */
 export type VorgangMitRelationen = Vorgang & {
@@ -23,11 +36,19 @@ export type VorgangMitRelationen = Vorgang & {
     verwendungszweck_code: string | null
     bezeichnung: string | null
   } | null
+  handwerker?: VorgangKontaktRef
+  gemeldet?: VorgangKontaktRef
 }
 
 /** Auswahloptionen für das Vorgangs-Formular. */
 export type ObjektRef = { id: string; kuerzel: string; bezeichnung: string | null }
 export type EinheitRef = { id: string; objekt_id: string; label: string }
+export type KontaktRef = {
+  id: string
+  vorname: string | null
+  nachname: string | null
+  firmenname: string | null
+}
 
 // ---------------------------------------------------------------------------
 // Typ
@@ -114,6 +135,25 @@ export const VORGANG_STATUS_VARIANT: Record<
 }
 
 // ---------------------------------------------------------------------------
+// Maßnahmen-Typ
+// ---------------------------------------------------------------------------
+export const MASSNAHME_TYPEN = [
+  "reparatur",
+  "wartung",
+  "modernisierung",
+  "instandhaltung",
+  "sonstige",
+] as const
+
+export const MASSNAHME_TYP_LABELS: Record<string, string> = {
+  reparatur: "Reparatur",
+  wartung: "Wartung",
+  modernisierung: "Modernisierung",
+  instandhaltung: "Instandhaltung",
+  sonstige: "Sonstige",
+}
+
+// ---------------------------------------------------------------------------
 // Kostenträger
 // ---------------------------------------------------------------------------
 export const VORGANG_KOSTENTRAEGER = [
@@ -139,4 +179,38 @@ export function einheitLabel(
 ): string | null {
   if (!einheit) return null
   return einheit.verwendungszweck_code ?? einheit.bezeichnung ?? null
+}
+
+/** Anzeige-Label für einen Kontakt (Handwerker / Melder). */
+export function kontaktLabel(
+  kontakt:
+    | { vorname: string | null; nachname: string | null; firmenname: string | null }
+    | null
+    | undefined
+): string | null {
+  if (!kontakt) return null
+  const person = [kontakt.vorname, kontakt.nachname].filter(Boolean).join(" ")
+  return kontakt.firmenname ?? (person || null)
+}
+
+/**
+ * Anzeige-Titel eines Vorgangs (es gibt kein freies Titel-Feld mehr).
+ * Baut ein Label aus Typ + Bezug (Objekt/Einheit) bzw. Aktenzeichen.
+ */
+export function vorgangTitel(v: {
+  typ?: string | null
+  aktenzeichen?: string | null
+  objekt?: { kuerzel: string } | null
+  einheit?: {
+    verwendungszweck_code: string | null
+    bezeichnung: string | null
+  } | null
+}): string {
+  const typLabel = v.typ ? (VORGANG_TYP_LABELS[v.typ] ?? v.typ) : "Vorgang"
+  const bezug = [v.objekt?.kuerzel, einheitLabel(v.einheit ?? null)]
+    .filter(Boolean)
+    .join(" · ")
+  if (bezug) return `${typLabel} – ${bezug}`
+  if (v.aktenzeichen) return `${typLabel} – ${v.aktenzeichen}`
+  return typLabel
 }

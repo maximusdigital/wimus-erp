@@ -13,6 +13,7 @@ import {
 import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
+  vorgangTitel,
   VORGANG_PRIORITAET_LABELS,
   VORGANG_STATUS_LABELS,
   VORGANG_STATUS_VARIANT,
@@ -30,11 +31,11 @@ export function VorgangTabelle({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Titel</TableHead>
+            <TableHead>Vorgang</TableHead>
             <TableHead>Objekt / Einheit</TableHead>
             <TableHead>Typ</TableHead>
             <TableHead>Priorität</TableHead>
-            <TableHead>Fällig</TableHead>
+            <TableHead>Leistung</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -43,7 +44,7 @@ export function VorgangTabelle({
             <TableRow key={v.id} className="hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link href={`/vorgaenge/${v.id}`} className="hover:underline">
-                  {v.titel}
+                  {vorgangTitel(v)}
                 </Link>
               </TableCell>
               <TableCell className="text-muted-foreground">
@@ -59,7 +60,7 @@ export function VorgangTabelle({
                 </PriorityBadge>
               </TableCell>
               <TableCell className="text-muted-foreground tabular-nums">
-                {formatDate(v.faellig_am)}
+                {formatDate(v.leistungsdatum)}
               </TableCell>
               <TableCell>
                 <Badge variant={VORGANG_STATUS_VARIANT[v.status] ?? "secondary"}>

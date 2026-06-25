@@ -89,10 +89,11 @@ export default async function EinheitDetailPage({
 
   // Vorgänge dieser Einheit (bidirektionale Verlinkung).
   const { data: vorgaengeData } = await supabase
+    .schema("wimus")
     .from("vorgaenge")
     .select(VORGANG_SELECT)
     .eq("einheit_id", id)
-    .order("faellig_am", { ascending: true, nullsFirst: false })
+    .order("leistungsdatum", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
   const vorgaenge = (vorgaengeData ?? []) as unknown as VorgangMitRelationen[]
 

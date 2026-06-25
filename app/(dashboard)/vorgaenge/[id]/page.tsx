@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PriorityBadge } from "@/components/ui/priority-badge"
 import { DeleteVorgangButton } from "@/components/vorgaenge/delete-vorgang-button"
-import { formatDate } from "@/lib/utils/format"
+import { formatDate, formatEUR } from "@/lib/utils/format"
 import {
   einheitLabel,
+  kontaktLabel,
+  vorgangTitel,
+  MASSNAHME_TYP_LABELS,
   VORGANG_KOSTENTRAEGER_LABELS,
   VORGANG_PRIORITAET_LABELS,
   VORGANG_STATUS_LABELS,
@@ -20,7 +23,7 @@ import {
 } from "@/types/vorgang"
 
 const SELECT =
-  "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung)"
+  "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung), handwerker:kontakte!handwerker_id(vorname, nachname, firmenname), gemeldet:kontakte!gemeldet_von(vorname, nachname, firmenname)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -39,6 +42,7 @@ export default async function VorgangDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("vorgaenge")
     .select(SELECT)
     .eq("id", id)
@@ -64,7 +68,7 @@ export default async function VorgangDetailPage({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">
-                {vorgang.titel}
+                {vorgangTitel(vorgang)}
               </h1>
               <Badge
                 variant={
@@ -92,7 +96,7 @@ export default async function VorgangDetailPage({
               <Pencil />
               <span>Bearbeiten</span>
             </Button>
-            <DeleteVorgangButton id={vorgang.id} label={vorgang.titel} />
+            <DeleteVorgangButton id={vorgang.id} label={vorgangTitel(vorgang)} />
           </div>
         </div>
       </div>
@@ -105,10 +109,23 @@ export default async function VorgangDetailPage({
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
               <Field
+                label="Aktenzeichen"
+                value={vorgang.aktenzeichen}
+              />
+              <Field
                 label="Typ"
                 value={
                   vorgang.typ
                     ? (VORGANG_TYP_LABELS[vorgang.typ] ?? vorgang.typ)
+                    : null
+                }
+              />
+              <Field
+                label="Maßnahme"
+                value={
+                  vorgang.massnahme_typ
+                    ? (MASSNAHME_TYP_LABELS[vorgang.massnahme_typ] ??
+                      vorgang.massnahme_typ)
                     : null
                 }
               />
@@ -133,7 +150,6 @@ export default async function VorgangDetailPage({
                   </Badge>
                 }
               />
-              <Field label="Fällig am" value={formatDate(vorgang.faellig_am)} />
               <Field
                 label="Kostenträger"
                 value={
@@ -142,6 +158,26 @@ export default async function VorgangDetailPage({
                       vorgang.kostentraeger)
                     : null
                 }
+              />
+              <Field
+                label="Kosten (geschätzt)"
+                value={
+                  vorgang.kosten_geschaetzt !== null
+                    ? formatEUR(vorgang.kosten_geschaetzt)
+                    : null
+                }
+              />
+              <Field
+                label="Kosten (Ist)"
+                value={
+                  vorgang.kosten_ist !== null
+                    ? formatEUR(vorgang.kosten_ist)
+                    : null
+                }
+              />
+              <Field
+                label="Leistungsdatum"
+                value={formatDate(vorgang.leistungsdatum)}
               />
               <Field label="Erstellt" value={formatDate(vorgang.created_at)} />
             </dl>
@@ -180,22 +216,35 @@ export default async function VorgangDetailPage({
                   ) : null
                 }
               />
+              <Field
+                label="Handwerker"
+                value={
+                  vorgang.handwerker_id ? (
+                    <Link
+                      href={`/kontakte/${vorgang.handwerker_id}`}
+                      className="hover:underline"
+                    >
+                      {kontaktLabel(vorgang.handwerker) ?? "Kontakt"}
+                    </Link>
+                  ) : null
+                }
+              />
+              <Field
+                label="Gemeldet von"
+                value={
+                  vorgang.gemeldet_von ? (
+                    <Link
+                      href={`/kontakte/${vorgang.gemeldet_von}`}
+                      className="hover:underline"
+                    >
+                      {kontaktLabel(vorgang.gemeldet) ?? "Kontakt"}
+                    </Link>
+                  ) : null
+                }
+              />
             </dl>
           </CardContent>
         </Card>
-
-        {vorgang.beschreibung ? (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">Beschreibung</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">
-                {vorgang.beschreibung}
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
       </div>
     </div>
   )

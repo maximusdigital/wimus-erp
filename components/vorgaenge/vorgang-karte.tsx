@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
+  vorgangTitel,
   VORGANG_PRIORITAET_LABELS,
   VORGANG_STATUS_LABELS,
   VORGANG_STATUS_VARIANT,
@@ -28,7 +29,9 @@ export function VorgangKarte({ vorgang }: { vorgang: VorgangMitRelationen }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate font-medium">{vorgang.titel}</span>
+              <span className="truncate font-medium">
+                {vorgangTitel(vorgang)}
+              </span>
               <Badge
                 variant={
                   VORGANG_STATUS_VARIANT[vorgang.status] ?? "secondary"
@@ -52,8 +55,8 @@ export function VorgangKarte({ vorgang }: { vorgang: VorgangMitRelationen }) {
                 {VORGANG_PRIORITAET_LABELS[vorgang.prioritaet] ??
                   vorgang.prioritaet}
               </PriorityBadge>
-              {vorgang.faellig_am ? (
-                <span>Fällig: {formatDate(vorgang.faellig_am)}</span>
+              {vorgang.leistungsdatum ? (
+                <span>Leistung: {formatDate(vorgang.leistungsdatum)}</span>
               ) : null}
             </div>
           </div>

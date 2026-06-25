@@ -14,7 +14,7 @@ export default async function NeuerVorgangPage({
   searchParams: Promise<{ objekt?: string; einheit?: string }>
 }) {
   const { objekt, einheit } = await searchParams
-  const { objekte, einheiten } = await loadVorgangOptions()
+  const { objekte, einheiten, kontakte } = await loadVorgangOptions()
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -38,6 +38,7 @@ export default async function NeuerVorgangPage({
         <VorgangForm
           objekte={objekte}
           einheiten={einheiten}
+          kontakte={kontakte}
           defaultObjektId={objekt}
           defaultEinheitId={einheit}
         />

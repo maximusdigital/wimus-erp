@@ -1,21 +1,37 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { einheitLabel, type EinheitRef, type ObjektRef } from "@/types/vorgang"
+import {
+  einheitLabel,
+  type EinheitRef,
+  type KontaktRef,
+  type ObjektRef,
+} from "@/types/vorgang"
 
 export type VorgangOptions = {
   objekte: ObjektRef[]
   einheiten: EinheitRef[]
+  kontakte: KontaktRef[]
 }
 
-/** Auswahllisten (Objekte + Einheiten) für das Vorgangs-Formular laden. */
+/** Auswahllisten (Objekte + Einheiten + Kontakte) für das Vorgangs-Formular laden. */
 export async function loadVorgangOptions(): Promise<VorgangOptions> {
   const supabase = await createServerClient()
 
-  const [objekteRes, einheitenRes] = await Promise.all([
-    supabase.from("objekte").select("id, kuerzel, bezeichnung").order("kuerzel"),
+  const [objekteRes, einheitenRes, kontakteRes] = await Promise.all([
     supabase
+      .schema("wimus")
+      .from("objekte")
+      .select("id, kuerzel, bezeichnung")
+      .order("kuerzel"),
+    supabase
+      .schema("wimus")
       .from("einheiten")
       .select("id, objekt_id, verwendungszweck_code, bezeichnung")
       .order("verwendungszweck_code", { nullsFirst: false }),
+    supabase
+      .schema("wimus")
+      .from("kontakte")
+      .select("id, vorname, nachname, firmenname")
+      .order("nachname", { nullsFirst: false }),
   ])
 
   const objekte = (objekteRes.data ?? []) as ObjektRef[]
@@ -36,5 +52,7 @@ export async function loadVorgangOptions(): Promise<VorgangOptions> {
       }) ?? "Einheit",
   }))
 
-  return { objekte, einheiten }
+  const kontakte = (kontakteRes.data ?? []) as KontaktRef[]
+
+  return { objekte, einheiten, kontakte }
 }

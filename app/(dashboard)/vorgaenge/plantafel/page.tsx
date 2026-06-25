@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
+  vorgangTitel,
   VORGANG_PRIORITAET_LABELS,
   VORGANG_PRIORITAET_VARIANT,
   VORGANG_STATUS,
@@ -34,7 +35,7 @@ function PlantafelKarte({ vorgang }: { vorgang: VorgangMitRelationen }) {
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium leading-tight">
-          {vorgang.titel}
+          {vorgangTitel(vorgang)}
         </span>
         <Badge
           variant={VORGANG_PRIORITAET_VARIANT[vorgang.prioritaet] ?? "secondary"}
@@ -49,9 +50,9 @@ function PlantafelKarte({ vorgang }: { vorgang: VorgangMitRelationen }) {
           ? ` · ${VORGANG_TYP_LABELS[vorgang.typ] ?? vorgang.typ}`
           : ""}
       </p>
-      {vorgang.faellig_am ? (
+      {vorgang.leistungsdatum ? (
         <p className="mt-1 text-xs text-muted-foreground">
-          Fällig: {formatDate(vorgang.faellig_am)}
+          Leistung: {formatDate(vorgang.leistungsdatum)}
         </p>
       ) : null}
     </Link>
@@ -61,9 +62,10 @@ function PlantafelKarte({ vorgang }: { vorgang: VorgangMitRelationen }) {
 export default async function VorgangPlantafelPage() {
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("vorgaenge")
     .select(SELECT)
-    .order("faellig_am", { ascending: true, nullsFirst: false })
+    .order("leistungsdatum", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 
   const vorgaenge = (data ?? []) as unknown as VorgangMitRelationen[]

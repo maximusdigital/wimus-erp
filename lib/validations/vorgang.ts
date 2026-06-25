@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import {
+  MASSNAHME_TYPEN,
   VORGANG_KOSTENTRAEGER,
   VORGANG_PRIORITAET,
   VORGANG_STATUS,
@@ -9,18 +10,22 @@ import {
 
 // ---------------------------------------------------------------------------
 // Client-Form-Schema: alle Felder als String (UI-Eingaben).
-// titel ist Pflicht; status/prioritaet als Enum (mit Defaults).
+// status/prioritaet als Enum (mit Defaults). aktenzeichen/lfd_nr sind AUTO
+// (DB-Trigger) und tauchen hier NICHT auf.
 // ---------------------------------------------------------------------------
 export const vorgangFormSchema = z.object({
-  titel: z.string().min(1, "Pflichtfeld"),
-  beschreibung: z.string().optional(),
   objekt_id: z.string().optional(),
   einheit_id: z.string().optional(),
+  gemeldet_von: z.string().optional(),
+  handwerker_id: z.string().optional(),
   typ: z.string().optional(),
+  massnahme_typ: z.string().optional(),
   prioritaet: z.enum(VORGANG_PRIORITAET),
-  kostentraeger: z.string().optional(),
-  faellig_am: z.string().optional(),
   status: z.enum(VORGANG_STATUS),
+  kostentraeger: z.string().optional(),
+  kosten_geschaetzt: z.string().optional(),
+  kosten_ist: z.string().optional(),
+  leistungsdatum: z.string().optional(),
 })
 
 export type VorgangFormValues = z.infer<typeof vorgangFormSchema>
@@ -41,6 +46,21 @@ const uuidOrNull = z
     message: "Ungültige Auswahl",
   })
 
+const numberOrNull = z
+  .union([z.string(), z.number()])
+  .optional()
+  .transform((v) => {
+    if (v === undefined || v === null) return null
+    if (typeof v === "number") return Number.isFinite(v) ? v : null
+    const trimmed = v.trim()
+    if (trimmed === "") return null
+    const n = Number(trimmed.replace(",", "."))
+    return Number.isFinite(n) ? n : null
+  })
+  .refine((v) => v === null || Number.isFinite(v), {
+    message: "Ungültiger Betrag",
+  })
+
 const enumOrNull = (values: readonly string[]) =>
   z
     .string()
@@ -51,13 +71,16 @@ const enumOrNull = (values: readonly string[]) =>
     })
 
 export const vorgangInsertSchema = z.object({
-  titel: z.string().min(1, "Pflichtfeld").transform((v) => v.trim()),
-  beschreibung: textOrNull,
   objekt_id: uuidOrNull,
   einheit_id: uuidOrNull,
+  gemeldet_von: uuidOrNull,
+  handwerker_id: uuidOrNull,
   typ: enumOrNull(VORGANG_TYPEN),
+  massnahme_typ: enumOrNull(MASSNAHME_TYPEN),
   prioritaet: z.enum(VORGANG_PRIORITAET),
-  kostentraeger: enumOrNull(VORGANG_KOSTENTRAEGER),
-  faellig_am: textOrNull,
   status: z.enum(VORGANG_STATUS),
+  kostentraeger: enumOrNull(VORGANG_KOSTENTRAEGER),
+  kosten_geschaetzt: numberOrNull,
+  kosten_ist: numberOrNull,
+  leistungsdatum: textOrNull,
 })

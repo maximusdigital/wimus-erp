@@ -23,9 +23,10 @@ export default async function VorgaengePage({
   const supabase = await createServerClient()
 
   let query = supabase
+    .schema("wimus")
     .from("vorgaenge")
     .select(SELECT)
-    .order("faellig_am", { ascending: true, nullsFirst: false })
+    .order("leistungsdatum", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 
   if (objekt) query = query.eq("objekt_id", objekt)

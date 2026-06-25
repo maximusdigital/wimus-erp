@@ -5,16 +5,17 @@ import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { vorgangInsertSchema } from "@/lib/validations/vorgang"
 
 const SELECT =
-  "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung)"
+  "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung), handwerker:kontakte!handwerker_id(vorname, nachname, firmenname), gemeldet:kontakte!gemeldet_von(vorname, nachname, firmenname)"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
   const { searchParams } = request.nextUrl
 
   let query = supabase
+    .schema("wimus")
     .from("vorgaenge")
     .select(SELECT)
-    .order("faellig_am", { ascending: true, nullsFirst: false })
+    .order("leistungsdatum", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 
   for (const key of ["objekt", "einheit"] as const) {
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
+    .schema("wimus")
     .from("vorgaenge")
     .insert({ ...parsed.data, mandant_id: active.id })
     .select()

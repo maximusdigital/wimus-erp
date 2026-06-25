@@ -57,10 +57,11 @@ export default async function ObjektDetailPage({
       .eq("objekt_id", id)
       .order("verwendungszweck_code", { nullsFirst: false }),
     supabase
+      .schema("wimus")
       .from("vorgaenge")
       .select(VORGANG_SELECT)
       .eq("objekt_id", id)
-      .order("faellig_am", { ascending: true, nullsFirst: false })
+      .order("leistungsdatum", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false }),
   ])
 

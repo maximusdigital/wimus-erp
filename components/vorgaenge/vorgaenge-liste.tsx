@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils/format"
 import {
   einheitLabel,
+  vorgangTitel,
   VORGANG_PRIORITAET_LABELS,
   VORGANG_PRIORITAET_VARIANT,
   VORGANG_STATUS_LABELS,
@@ -42,7 +43,7 @@ export function VorgaengeListe({
             ? einheitLabel(v.einheit)
             : null,
           v.typ ? (VORGANG_TYP_LABELS[v.typ] ?? v.typ) : null,
-          v.faellig_am ? `Fällig: ${formatDate(v.faellig_am)}` : null,
+          v.leistungsdatum ? `Leistung: ${formatDate(v.leistungsdatum)}` : null,
         ]
           .filter(Boolean)
           .join(" · ")
@@ -61,7 +62,7 @@ export function VorgaengeListe({
               <div className="grid flex-1 gap-0.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium leading-tight">
-                    {v.titel}
+                    {vorgangTitel(v)}
                   </span>
                   <Badge
                     variant={VORGANG_STATUS_VARIANT[v.status] ?? "secondary"}

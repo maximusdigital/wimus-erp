@@ -10,6 +10,9 @@ import {
   type VorgangFormValues,
 } from "@/lib/validations/vorgang"
 import {
+  kontaktLabel,
+  MASSNAHME_TYPEN,
+  MASSNAHME_TYP_LABELS,
   VORGANG_KOSTENTRAEGER,
   VORGANG_KOSTENTRAEGER_LABELS,
   VORGANG_PRIORITAET,
@@ -19,12 +22,12 @@ import {
   VORGANG_TYPEN,
   VORGANG_TYP_LABELS,
   type EinheitRef,
+  type KontaktRef,
   type ObjektRef,
   type Vorgang,
 } from "@/types/vorgang"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -46,31 +49,38 @@ function emptyValues(prefill?: {
   einheitId?: string
 }): VorgangFormValues {
   return {
-    titel: "",
-    beschreibung: "",
     objekt_id: prefill?.objektId ?? "",
     einheit_id: prefill?.einheitId ?? "",
+    gemeldet_von: "",
+    handwerker_id: "",
     typ: "",
+    massnahme_typ: "",
     prioritaet: "normal",
-    kostentraeger: "",
-    faellig_am: "",
     status: "offen",
+    kostentraeger: "",
+    kosten_geschaetzt: "",
+    kosten_ist: "",
+    leistungsdatum: "",
   }
 }
 
 function toFormValues(v: Vorgang): VorgangFormValues {
   const s = (x: string | null) => x ?? ""
   const d = (x: string | null) => (x ? x.slice(0, 10) : "")
+  const n = (x: number | null) => (x === null || x === undefined ? "" : String(x))
   return {
-    titel: v.titel,
-    beschreibung: s(v.beschreibung),
     objekt_id: s(v.objekt_id),
     einheit_id: s(v.einheit_id),
+    gemeldet_von: s(v.gemeldet_von),
+    handwerker_id: s(v.handwerker_id),
     typ: s(v.typ),
+    massnahme_typ: s(v.massnahme_typ),
     prioritaet: v.prioritaet as VorgangFormValues["prioritaet"],
-    kostentraeger: s(v.kostentraeger),
-    faellig_am: d(v.faellig_am),
     status: v.status as VorgangFormValues["status"],
+    kostentraeger: s(v.kostentraeger),
+    kosten_geschaetzt: n(v.kosten_geschaetzt),
+    kosten_ist: n(v.kosten_ist),
+    leistungsdatum: d(v.leistungsdatum),
   }
 }
 
@@ -78,12 +88,14 @@ export function VorgangForm({
   vorgang,
   objekte,
   einheiten,
+  kontakte,
   defaultObjektId,
   defaultEinheitId,
 }: {
   vorgang?: Vorgang
   objekte: ObjektRef[]
   einheiten: EinheitRef[]
+  kontakte: KontaktRef[]
   defaultObjektId?: string
   defaultEinheitId?: string
 }) {
@@ -141,13 +153,28 @@ export function VorgangForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <FormField
             control={form.control}
-            name="titel"
+            name="typ"
             render={({ field }) => (
-              <FormItem className="sm:col-span-2 lg:col-span-3">
-                <FormLabel>Titel *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Heizung defekt – BHS16 W3" {...field} />
-                </FormControl>
+              <FormItem>
+                <FormLabel>Typ</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Auswählen…">
+                        {field.value
+                          ? (VORGANG_TYP_LABELS[field.value] ?? field.value)
+                          : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VORGANG_TYPEN.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {VORGANG_TYP_LABELS[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -155,17 +182,112 @@ export function VorgangForm({
 
           <FormField
             control={form.control}
-            name="beschreibung"
+            name="massnahme_typ"
             render={({ field }) => (
-              <FormItem className="sm:col-span-2 lg:col-span-3">
-                <FormLabel>Beschreibung</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Details zum Vorgang…"
-                    rows={4}
-                    {...field}
-                  />
-                </FormControl>
+              <FormItem>
+                <FormLabel>Maßnahme</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Auswählen…">
+                        {field.value
+                          ? (MASSNAHME_TYP_LABELS[field.value] ?? field.value)
+                          : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {MASSNAHME_TYPEN.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {MASSNAHME_TYP_LABELS[m]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="prioritaet"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Priorität *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>
+                        {VORGANG_PRIORITAET_LABELS[field.value] ?? field.value}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VORGANG_PRIORITAET.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {VORGANG_PRIORITAET_LABELS[p]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>
+                        {VORGANG_STATUS_LABELS[field.value] ?? field.value}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VORGANG_STATUS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {VORGANG_STATUS_LABELS[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="kostentraeger"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Kostenträger</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Auswählen…">
+                        {field.value
+                          ? (VORGANG_KOSTENTRAEGER_LABELS[field.value] ??
+                            field.value)
+                          : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VORGANG_KOSTENTRAEGER.map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {VORGANG_KOSTENTRAEGER_LABELS[k]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -193,7 +315,12 @@ export function VorgangForm({
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Objekt wählen…" />
+                      <SelectValue placeholder="Objekt wählen…">
+                        {field.value
+                          ? (objekte.find((o) => o.id === field.value)
+                              ?.kuerzel ?? null)
+                          : null}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -219,7 +346,12 @@ export function VorgangForm({
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Einheit wählen…" />
+                      <SelectValue placeholder="Einheit wählen…">
+                        {field.value
+                          ? (einheiten.find((e) => e.id === field.value)
+                              ?.label ?? null)
+                          : null}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -237,20 +369,26 @@ export function VorgangForm({
 
           <FormField
             control={form.control}
-            name="typ"
+            name="handwerker_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Typ</FormLabel>
+                <FormLabel>Handwerker</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Auswählen…" />
+                      <SelectValue placeholder="Auswählen…">
+                        {field.value
+                          ? (kontaktLabel(
+                              kontakte.find((k) => k.id === field.value)
+                            ) ?? null)
+                          : null}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {VORGANG_TYPEN.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {VORGANG_TYP_LABELS[t]}
+                    {kontakte.map((k) => (
+                      <SelectItem key={k.id} value={k.id}>
+                        {kontaktLabel(k) ?? "Kontakt"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -262,20 +400,26 @@ export function VorgangForm({
 
           <FormField
             control={form.control}
-            name="prioritaet"
+            name="gemeldet_von"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Priorität *</FormLabel>
+                <FormLabel>Gemeldet von</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Auswählen…">
+                        {field.value
+                          ? (kontaktLabel(
+                              kontakte.find((k) => k.id === field.value)
+                            ) ?? null)
+                          : null}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {VORGANG_PRIORITAET.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {VORGANG_PRIORITAET_LABELS[p]}
+                    {kontakte.map((k) => (
+                      <SelectItem key={k.id} value={k.id}>
+                        {kontaktLabel(k) ?? "Kontakt"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -287,37 +431,18 @@ export function VorgangForm({
 
           <FormField
             control={form.control}
-            name="kostentraeger"
+            name="kosten_geschaetzt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Kostenträger</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Auswählen…" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {VORGANG_KOSTENTRAEGER.map((k) => (
-                      <SelectItem key={k} value={k}>
-                        {VORGANG_KOSTENTRAEGER_LABELS[k]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="faellig_am"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fällig am</FormLabel>
+                <FormLabel>Kosten (geschätzt)</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -326,24 +451,33 @@ export function VorgangForm({
 
           <FormField
             control={form.control}
-            name="status"
+            name="kosten_ist"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status *</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {VORGANG_STATUS.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {VORGANG_STATUS_LABELS[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel>Kosten (Ist)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="leistungsdatum"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Leistungsdatum</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
