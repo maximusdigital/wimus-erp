@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { objektInsertSchema } from "@/lib/validations/objekt"
-import { readIdList, reconcileVertragRelation } from "@/lib/relations"
+import { readIdList } from "@/lib/relations"
 
 export async function GET() {
   const supabase = await createServerClient()
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
 
   const json = await request.json().catch(() => null)
   const einheitIds = readIdList(json, "einheit_ids") ?? []
-  const vertragIds = readIdList(json, "vertrag_ids")
   const parsed = objektInsertSchema.safeParse(json)
   if (!parsed.success) {
     return NextResponse.json(
@@ -66,18 +65,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Verträge-Zuordnung abgleichen (objekt_id ist nullable → add/remove).
-  if (vertragIds) {
-    const relError = await reconcileVertragRelation(
-      supabase,
-      "objekt_id",
-      data.id,
-      vertragIds
-    )
-    if (relError) {
-      return NextResponse.json({ error: relError }, { status: 500 })
-    }
-  }
+  // Verträge werden nicht mehr direkt am Objekt zugeordnet – die Verknüpfung
+  // läuft ausschließlich über die Einheit (mietvertraege hat keine objekt_id).
 
   return NextResponse.json(data, { status: 201 })
 }

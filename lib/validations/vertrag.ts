@@ -1,10 +1,9 @@
 import { z } from "zod"
 
-import { VERTRAGSARTEN, VERTRAG_STATUS } from "@/types/vertrag"
+import { VERTRAGSTYPEN, VERTRAG_STATUS } from "@/types/vertrag"
 
 // ---------------------------------------------------------------------------
 // Client-Form-Schema: alle Felder als String (UI-Eingaben).
-// unbefristet als "ja"/"nein"-Auswahl → Boolean erst im Insert.
 // ---------------------------------------------------------------------------
 const numericString = z
   .string()
@@ -12,15 +11,13 @@ const numericString = z
   .refine((v) => !v || !Number.isNaN(Number(v)), { message: "Ungültige Zahl" })
 
 export const vertragFormSchema = z.object({
-  vertragsnummer: z.string().optional(),
-  vertragsart: z.string().optional(),
+  vertragstyp: z.string().optional(),
   status: z.enum(VERTRAG_STATUS),
-  objekt_id: z.string().optional(),
   einheit_id: z.string().optional(),
   mieter_id: z.string().optional(),
-  beginn: z.string().optional(),
-  ende: z.string().optional(),
-  unbefristet: z.enum(["ja", "nein"]),
+  mietbeginn: z.string().optional(),
+  mietende: z.string().optional(),
+  kdu_relevant: z.enum(["ja", "nein"]),
   grundmiete: numericString,
   bk_pauschale: numericString,
   heizkosten_pauschale: numericString,
@@ -62,15 +59,13 @@ const enumOrNull = (values: readonly string[]) =>
     })
 
 export const vertragInsertSchema = z.object({
-  vertragsnummer: textOrNull,
-  vertragsart: enumOrNull(VERTRAGSARTEN),
+  vertragstyp: enumOrNull(VERTRAGSTYPEN),
   status: z.enum(VERTRAG_STATUS),
-  objekt_id: uuidOrNull,
   einheit_id: uuidOrNull,
   mieter_id: uuidOrNull,
-  beginn: textOrNull,
-  ende: textOrNull,
-  unbefristet: z
+  mietbeginn: textOrNull,
+  mietende: textOrNull,
+  kdu_relevant: z
     .union([z.boolean(), z.enum(["ja", "nein"])])
     .transform((v) => v === true || v === "ja"),
   grundmiete: numberOrNull,

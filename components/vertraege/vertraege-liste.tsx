@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import {
-  VERTRAGSART_LABELS,
+  VERTRAGSTYP_LABELS,
   VERTRAG_STATUS_LABELS,
   warmmiete,
   type VertragMitRelationen,
@@ -36,18 +36,17 @@ export function VertraegeListe({
   return (
     <ul className="flex flex-col">
       {vertraege.map((v, index) => {
-        const titel =
-          v.vertragsnummer ??
-          (v.vertragsart
-            ? (VERTRAGSART_LABELS[v.vertragsart] ?? v.vertragsart)
-            : "Vertrag")
+        const titel = v.vertragstyp
+          ? (VERTRAGSTYP_LABELS[v.vertragstyp] ?? v.vertragstyp)
+          : "Vertrag"
         const meta = [
           kontext !== "mieter" && v.mieter ? kontaktName(v.mieter) : null,
-          kontext !== "objekt" && v.objekt?.kuerzel ? v.objekt.kuerzel : null,
+          kontext !== "objekt" && v.einheit?.objekt?.kuerzel
+            ? v.einheit.objekt.kuerzel
+            : null,
           kontext !== "einheit" && v.einheit?.verwendungszweck_code
             ? v.einheit.verwendungszweck_code
             : null,
-          v.vertragsart ? (VERTRAGSART_LABELS[v.vertragsart] ?? v.vertragsart) : null,
         ]
           .filter(Boolean)
           .join(" · ")

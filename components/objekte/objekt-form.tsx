@@ -86,18 +86,13 @@ function toFormValues(o: Objekt): ObjektFormValues {
 export function ObjektForm({
   objekt,
   einheiten = [],
-  vertraege = [],
-  selectedVertragIds = [],
 }: {
   objekt?: Objekt
   einheiten?: EinheitZuordnung[]
-  vertraege?: MultiSelectOption[]
-  selectedVertragIds?: string[]
 }) {
   const router = useRouter()
   const isEdit = Boolean(objekt)
   const [serverError, setServerError] = useState<string | null>(null)
-  const [vertragIds, setVertragIds] = useState<string[]>(selectedVertragIds)
 
   // Aktuell diesem Objekt zugeordnete Einheiten sind vorausgewählt und gesperrt
   // (objekt_id ist Pflicht – Abwählen würde die Einheit verwaisen lassen; das
@@ -130,7 +125,7 @@ export function ObjektForm({
       {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, einheit_ids, vertrag_ids: vertragIds }),
+        body: JSON.stringify({ ...values, einheit_ids }),
       }
     )
 
@@ -377,17 +372,6 @@ export function ObjektForm({
             onChange={setEinheitIds}
             emptyText="Keine Einheiten vorhanden."
             beschreibung="Ausgewählte Einheiten werden diesem Objekt zugeordnet (ggf. von einem anderen Objekt hierher verschoben). Bereits zugeordnete Einheiten sind gesperrt – zum Lösen die Einheit einem anderen Objekt zuweisen."
-          />
-        ) : null}
-
-        {vertraege.length > 0 ? (
-          <ZuordnungFeld
-            label="Verträge zuordnen"
-            options={vertraege}
-            value={vertragIds}
-            onChange={setVertragIds}
-            emptyText="Keine Verträge vorhanden."
-            beschreibung="Welche Verträge gehören zu diesem Objekt. Abwählen löst die Zuordnung."
           />
         ) : null}
 

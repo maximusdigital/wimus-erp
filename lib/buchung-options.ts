@@ -22,8 +22,9 @@ export async function loadBuchungOptions(): Promise<BuchungOptions> {
       .select("id, objekt_id, verwendungszweck_code, bezeichnung")
       .order("verwendungszweck_code", { nullsFirst: false }),
     supabase
+      .schema("wimus")
       .from("kontakte")
-      .select("id, typ, vorname, nachname, firma")
+      .select("id, vorname, nachname, firmenname")
       .order("nachname", { nullsFirst: false }),
   ])
 

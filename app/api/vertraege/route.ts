@@ -5,18 +5,20 @@ import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { vertragInsertSchema } from "@/lib/validations/vertrag"
 
 const SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
   const { searchParams } = request.nextUrl
 
   let query = supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select(SELECT)
-    .order("beginn", { nullsFirst: false })
+    .order("mietbeginn", { nullsFirst: false })
 
-  for (const key of ["objekt", "einheit", "mieter"] as const) {
+  // Objekt wird über die Einheit erreicht; direkter Filter nur Einheit/Mieter.
+  for (const key of ["einheit", "mieter"] as const) {
     const value = searchParams.get(key)
     if (value) query = query.eq(`${key}_id`, value)
   }
@@ -53,7 +55,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .insert({ ...parsed.data, mandant_id: active.id })
     .select()
     .single()

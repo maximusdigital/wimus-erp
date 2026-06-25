@@ -26,7 +26,8 @@ export async function reconcileVertragRelation(
   selectedIds: string[]
 ): Promise<string | null> {
   const { data: current, error: readError } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select("id")
     .eq(relation, parentId)
   if (readError) return readError.message
@@ -37,14 +38,16 @@ export async function reconcileVertragRelation(
 
   if (toDetach.length > 0) {
     const { error } = await supabase
-      .from("vertraege")
+      .schema("wimus")
+      .from("mietvertraege")
       .update({ [relation]: null })
       .in("id", toDetach)
     if (error) return error.message
   }
   if (toAttach.length > 0) {
     const { error } = await supabase
-      .from("vertraege")
+      .schema("wimus")
+      .from("mietvertraege")
       .update({ [relation]: parentId })
       .in("id", toAttach)
     if (error) return error.message

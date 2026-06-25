@@ -28,24 +28,24 @@ describe("readIdList", () => {
 
 describe("buildVertragOptionen", () => {
   const vertraege = [
-    { id: "v1", label: "MV-001", objekt_id: "o1", einheit_id: null, mieter_id: null },
-    { id: "v2", label: "MV-002", objekt_id: "o2", einheit_id: null, mieter_id: null },
-    { id: "v3", label: "MV-003", objekt_id: null, einheit_id: null, mieter_id: null },
+    { id: "v1", label: "MV-001", einheit_id: "e1", mieter_id: null },
+    { id: "v2", label: "MV-002", einheit_id: "e2", mieter_id: null },
+    { id: "v3", label: "MV-003", einheit_id: null, mieter_id: null },
   ]
 
   it("selectedIds = Verträge, die der Entität bereits zugeordnet sind", () => {
-    const { selectedIds } = buildVertragOptionen(vertraege, "objekt_id", "o1")
+    const { selectedIds } = buildVertragOptionen(vertraege, "einheit_id", "e1")
     expect(selectedIds).toEqual(["v1"])
   })
 
   it("markiert fremd zugeordnete Verträge mit Hinweis", () => {
-    const { options } = buildVertragOptionen(vertraege, "objekt_id", "o1")
+    const { options } = buildVertragOptionen(vertraege, "einheit_id", "e1")
     expect(options.find((o) => o.value === "v2")?.hint).toBe("bereits zugeordnet")
     expect(options.find((o) => o.value === "v1")?.hint).toBeUndefined()
     expect(options.find((o) => o.value === "v3")?.hint).toBeUndefined()
   })
 
   it("ohne entityId keine Vorauswahl", () => {
-    expect(buildVertragOptionen(vertraege, "objekt_id").selectedIds).toEqual([])
+    expect(buildVertragOptionen(vertraege, "einheit_id").selectedIds).toEqual([])
   })
 })

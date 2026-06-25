@@ -28,7 +28,7 @@ import { formatDate, formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
-  VERTRAGSART_LABELS,
+  VERTRAGSTYP_LABELS,
   VERTRAG_STATUS_LABELS,
   warmmiete,
   type VertragMitRelationen,
@@ -39,7 +39,7 @@ export const metadata = {
 }
 
 const VERTRAG_SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 
 type Kpi = {
   label: string
@@ -57,15 +57,20 @@ async function ladeDashboardDaten() {
       supabase.from("objekte").select("*", { count: "exact", head: true }),
       supabase.from("einheiten").select("*", { count: "exact", head: true }),
       supabase.from("kontakte").select("*", { count: "exact", head: true }),
-      supabase.from("vertraege").select("*", { count: "exact", head: true }),
       supabase
-        .from("vertraege")
+        .schema("wimus")
+        .from("mietvertraege")
+        .select("*", { count: "exact", head: true }),
+      supabase
+        .schema("wimus")
+        .from("mietvertraege")
         .select("*", { count: "exact", head: true })
         .eq("status", "aktiv"),
       supabase
-        .from("vertraege")
+        .schema("wimus")
+        .from("mietvertraege")
         .select(VERTRAG_SELECT)
-        .order("beginn", { nullsFirst: false })
+        .order("mietbeginn", { nullsFirst: false })
         .limit(5),
     ])
 
@@ -234,16 +239,16 @@ export default async function DashboardPage() {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {v.objekt?.kuerzel ?? "–"}
+                      {v.einheit?.objekt?.kuerzel ?? "–"}
                       {v.einheit?.verwendungszweck_code
                         ? ` · ${v.einheit.verwendungszweck_code}`
                         : ""}
-                      {v.beginn ? ` · ab ${formatDate(v.beginn)}` : ""}
+                      {v.mietbeginn ? ` · ab ${formatDate(v.mietbeginn)}` : ""}
                     </p>
                     <div className="mt-1 flex items-center gap-1.5">
-                      {v.vertragsart ? (
+                      {v.vertragstyp ? (
                         <Badge variant="secondary" className="text-[0.7rem]">
-                          {VERTRAGSART_LABELS[v.vertragsart] ?? v.vertragsart}
+                          {VERTRAGSTYP_LABELS[v.vertragstyp] ?? v.vertragstyp}
                         </Badge>
                       ) : null}
                       <StatusBadge status={v.status} className="text-[0.7rem]">

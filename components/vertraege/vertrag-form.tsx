@@ -10,8 +10,8 @@ import {
   type VertragFormValues,
 } from "@/lib/validations/vertrag"
 import {
-  VERTRAGSARTEN,
-  VERTRAGSART_LABELS,
+  VERTRAGSTYPEN,
+  VERTRAGSTYP_LABELS,
   VERTRAG_STATUS,
   VERTRAG_STATUS_LABELS,
   type EinheitRef,
@@ -39,20 +39,17 @@ import {
 } from "@/components/ui/form"
 
 function emptyValues(prefill?: {
-  objektId?: string
   einheitId?: string
   mieterId?: string
 }): VertragFormValues {
   return {
-    vertragsnummer: "",
-    vertragsart: "",
+    vertragstyp: "",
     status: "entwurf",
-    objekt_id: prefill?.objektId ?? "",
     einheit_id: prefill?.einheitId ?? "",
     mieter_id: prefill?.mieterId ?? "",
-    beginn: "",
-    ende: "",
-    unbefristet: "ja",
+    mietbeginn: "",
+    mietende: "",
+    kdu_relevant: "nein",
     grundmiete: "",
     bk_pauschale: "",
     heizkosten_pauschale: "",
@@ -62,19 +59,17 @@ function emptyValues(prefill?: {
 }
 
 function toFormValues(v: Vertrag): VertragFormValues {
-  const s = (x: string | null) => x ?? ""
+  const s = (x: string | null | undefined) => x ?? ""
   const n = (x: number | null) => (x == null ? "" : String(x))
   const d = (x: string | null) => (x ? x.slice(0, 10) : "")
   return {
-    vertragsnummer: s(v.vertragsnummer),
-    vertragsart: s(v.vertragsart),
+    vertragstyp: s(v.vertragstyp),
     status: v.status as VertragFormValues["status"],
-    objekt_id: s(v.objekt_id),
     einheit_id: s(v.einheit_id),
     mieter_id: s(v.mieter_id),
-    beginn: d(v.beginn),
-    ende: d(v.ende),
-    unbefristet: v.unbefristet ? "ja" : "nein",
+    mietbeginn: d(v.mietbeginn),
+    mietende: d(v.mietende),
+    kdu_relevant: v.kdu_relevant ? "ja" : "nein",
     grundmiete: n(v.grundmiete),
     bk_pauschale: n(v.bk_pauschale),
     heizkosten_pauschale: n(v.heizkosten_pauschale),
@@ -104,25 +99,29 @@ export function VertragForm({
   const isEdit = Boolean(vertrag)
   const [serverError, setServerError] = useState<string | null>(null)
 
-  // Objekt aus der vorausgewählten Einheit ableiten, damit der Einheiten-Filter passt.
-  const einheitObjektId = defaultEinheitId
-    ? einheiten.find((e) => e.id === defaultEinheitId)?.objekt_id
-    : undefined
-
   const form = useForm<VertragFormValues>({
     resolver: zodResolver(vertragFormSchema),
     defaultValues: vertrag
       ? toFormValues(vertrag)
       : emptyValues({
-          objektId: defaultObjektId ?? einheitObjektId,
           einheitId: defaultEinheitId,
           mieterId: defaultMieterId,
         }),
   })
 
-  const selectedObjekt = form.watch("objekt_id")
-  const einheitOptionen = selectedObjekt
-    ? einheiten.filter((e) => e.objekt_id === selectedObjekt)
+  // mietvertraege speichert nur einheit_id; das Objekt dient hier nur als Filter,
+  // um die Einheiten-Auswahl einzugrenzen (lokaler State, kein Formularfeld).
+  const einheitObjektId = (id: string | undefined) =>
+    id ? einheiten.find((e) => e.id === id)?.objekt_id ?? "" : ""
+  const [objektFilter, setObjektFilter] = useState<string>(
+    () =>
+      defaultObjektId ??
+      einheitObjektId(vertrag?.einheit_id ?? defaultEinheitId) ??
+      ""
+  )
+
+  const einheitOptionen = objektFilter
+    ? einheiten.filter((e) => e.objekt_id === objektFilter)
     : einheiten
 
   async function onSubmit(values: VertragFormValues) {
@@ -155,24 +154,10 @@ export function VertragForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <FormField
             control={form.control}
-            name="vertragsnummer"
+            name="vertragstyp"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Vertragsnummer</FormLabel>
-                <FormControl>
-                  <Input placeholder="2021-BHS16-W3" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="vertragsart"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Vertragsart</FormLabel>
+                <FormLabel>Vertragstyp</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -180,9 +165,9 @@ export function VertragForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {VERTRAGSARTEN.map((a) => (
+                    {VERTRAGSTYPEN.map((a) => (
                       <SelectItem key={a} value={a}>
-                        {VERTRAGSART_LABELS[a]}
+                        {VERTRAGSTYP_LABELS[a]}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -217,41 +202,35 @@ export function VertragForm({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="objekt_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Objekt</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={(v) => {
-                    field.onChange(v)
-                    // Einheit zurücksetzen, wenn sie nicht zum Objekt passt.
-                    const cur = form.getValues("einheit_id")
-                    if (cur && !einheiten.some((e) => e.id === cur && e.objekt_id === v)) {
-                      form.setValue("einheit_id", "")
-                    }
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Objekt wählen…" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {objekte.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.kuerzel}
-                        {o.bezeichnung ? ` – ${o.bezeichnung}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Objekt ist kein Vertragsfeld – nur Filter für die Einheiten-Auswahl. */}
+          <FormItem>
+            <FormLabel>Objekt (Filter)</FormLabel>
+            <Select
+              value={objektFilter}
+              onValueChange={(v) => {
+                const next = v ?? ""
+                setObjektFilter(next)
+                // Einheit zurücksetzen, wenn sie nicht zum Objekt passt.
+                const cur = form.getValues("einheit_id")
+                if (cur && !einheiten.some((e) => e.id === cur && e.objekt_id === next)) {
+                  form.setValue("einheit_id", "")
+                }
+              }}
+            >
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Objekt wählen…" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {objekte.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.kuerzel}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormItem>
 
           <FormField
             control={form.control}
@@ -305,10 +284,10 @@ export function VertragForm({
 
           <FormField
             control={form.control}
-            name="beginn"
+            name="mietbeginn"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Beginn</FormLabel>
+                <FormLabel>Mietbeginn</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -319,10 +298,10 @@ export function VertragForm({
 
           <FormField
             control={form.control}
-            name="ende"
+            name="mietende"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ende</FormLabel>
+                <FormLabel>Mietende</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -333,10 +312,10 @@ export function VertragForm({
 
           <FormField
             control={form.control}
-            name="unbefristet"
+            name="kdu_relevant"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Unbefristet</FormLabel>
+                <FormLabel>KdU-relevant</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">

@@ -28,7 +28,7 @@ import {
 } from "@/types/objekt"
 
 const VERTRAG_SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 const VORGANG_SELECT =
   "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung)"
 
@@ -48,19 +48,14 @@ export default async function ObjektDetailPage({
 }) {
   const { id } = await params
   const supabase = await createServerClient()
-  const [objektRes, einheitenRes, vertraegeRes, vorgaengeRes] =
-    await Promise.all([
+  const [objektRes, einheitenRes, vorgaengeRes] = await Promise.all([
     supabase.schema("wimus").from("objekte").select("*").eq("id", id).maybeSingle(),
     supabase
+      .schema("wimus")
       .from("einheiten")
       .select("*")
       .eq("objekt_id", id)
       .order("verwendungszweck_code", { nullsFirst: false }),
-    supabase
-      .from("vertraege")
-      .select(VERTRAG_SELECT)
-      .eq("objekt_id", id)
-      .order("beginn", { nullsFirst: false }),
     supabase
       .from("vorgaenge")
       .select(VORGANG_SELECT)
@@ -71,7 +66,6 @@ export default async function ObjektDetailPage({
 
   let objekt = objektRes.data as Objekt | null
   let einheiten = (einheitenRes.data ?? []) as Einheit[]
-  let vertraege = (vertraegeRes.data ?? []) as unknown as VertragMitRelationen[]
   const vorgaenge = (vorgaengeRes.data ?? []) as unknown as VorgangMitRelationen[]
 
   if (!objekt && isPreviewNoAuth()) {
@@ -80,8 +74,21 @@ export default async function ObjektDetailPage({
   if (isPreviewNoAuth() && einheiten.length === 0) {
     einheiten = DEMO_EINHEITEN.filter((e) => e.objekt_id === id) as Einheit[]
   }
+
+  // Verträge des Objekts laufen über dessen Einheiten (mietvertraege hat keine objekt_id).
+  const einheitIds = einheiten.map((e) => e.id)
+  let vertraege: VertragMitRelationen[] = []
+  if (einheitIds.length > 0) {
+    const { data: vertraegeData } = await supabase
+      .schema("wimus")
+      .from("mietvertraege")
+      .select(VERTRAG_SELECT)
+      .in("einheit_id", einheitIds)
+      .order("mietbeginn", { nullsFirst: false })
+    vertraege = (vertraegeData ?? []) as unknown as VertragMitRelationen[]
+  }
   if (isPreviewNoAuth() && vertraege.length === 0) {
-    vertraege = DEMO_VERTRAEGE.filter((v) => v.objekt_id === id)
+    vertraege = DEMO_VERTRAEGE.filter((v) => einheitIds.includes(v.einheit_id ?? ""))
   }
 
   if (!objekt) {

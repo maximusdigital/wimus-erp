@@ -16,14 +16,16 @@ export async function loadVertragOptions(): Promise<VertragOptions> {
   const supabase = await createServerClient()
 
   const [objekteRes, einheitenRes, kontakteRes] = await Promise.all([
-    supabase.from("objekte").select("id, kuerzel, bezeichnung").order("kuerzel"),
+    supabase.schema("wimus").from("objekte").select("id, kuerzel").order("kuerzel"),
     supabase
+      .schema("wimus")
       .from("einheiten")
       .select("id, objekt_id, verwendungszweck_code, bezeichnung")
       .order("verwendungszweck_code", { nullsFirst: false }),
     supabase
+      .schema("wimus")
       .from("kontakte")
-      .select("id, typ, vorname, nachname, firma")
+      .select("id, vorname, nachname, firmenname")
       .order("nachname", { nullsFirst: false }),
   ])
 
@@ -36,7 +38,6 @@ export async function loadVertragOptions(): Promise<VertragOptions> {
       objekte = DEMO_OBJEKTE.map((o) => ({
         id: o.id,
         kuerzel: o.kuerzel,
-        bezeichnung: o.kuerzel,
       }))
     }
     if (einheiten.length === 0) {
@@ -50,8 +51,7 @@ export async function loadVertragOptions(): Promise<VertragOptions> {
     if (kontakte.length === 0) {
       kontakte = DEMO_KONTAKTE.map((k) => ({
         id: k.id,
-        // public.kontakte (Dropdown) nutzt weiterhin das einfache typ/firma-Schema;
-        // aus den wimus-Demo-Rollenflags den primären Typ ableiten.
+        // Primären Typ aus den Demo-Rollenflags ableiten.
         typ: k.ist_mieter
           ? "mieter"
           : k.ist_eigentuemer
@@ -61,7 +61,7 @@ export async function loadVertragOptions(): Promise<VertragOptions> {
               : "sonstige",
         vorname: k.vorname,
         nachname: k.nachname,
-        firma: k.firmenname,
+        firmenname: k.firmenname,
       }))
     }
   }

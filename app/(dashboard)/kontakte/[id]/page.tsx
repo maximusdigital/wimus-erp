@@ -22,7 +22,7 @@ import {
 } from "@/types/kontakt"
 
 const VERTRAG_SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -59,10 +59,11 @@ export default async function KontaktDetailPage({
 
   // Verträge, in denen dieser Kontakt Mieter ist (bidirektionale Verlinkung).
   const { data: vertraegeData } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select(VERTRAG_SELECT)
     .eq("mieter_id", id)
-    .order("beginn", { nullsFirst: false })
+    .order("mietbeginn", { nullsFirst: false })
   let vertraege = (vertraegeData ?? []) as unknown as VertragMitRelationen[]
   if (isPreviewNoAuth() && vertraege.length === 0) {
     vertraege = DEMO_VERTRAEGE.filter((v) => v.mieter_id === id)

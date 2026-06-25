@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import {
-  VERTRAGSART_LABELS,
+  VERTRAGSTYP_LABELS,
   VERTRAG_STATUS_LABELS,
   warmmiete,
   type VertragMitRelationen,
@@ -23,11 +23,10 @@ export function VertragKarte({ vertrag }: { vertrag: VertragMitRelationen }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate font-medium">
-                {vertrag.vertragsnummer ??
-                  (vertrag.vertragsart
-                    ? (VERTRAGSART_LABELS[vertrag.vertragsart] ??
-                      vertrag.vertragsart)
-                    : "Vertrag")}
+                {vertrag.vertragstyp
+                  ? (VERTRAGSTYP_LABELS[vertrag.vertragstyp] ??
+                    vertrag.vertragstyp)
+                  : "Vertrag"}
               </span>
               <StatusBadge status={vertrag.status}>
                 {VERTRAG_STATUS_LABELS[vertrag.status] ?? vertrag.status}
@@ -37,7 +36,7 @@ export function VertragKarte({ vertrag }: { vertrag: VertragMitRelationen }) {
               {vertrag.mieter ? kontaktName(vertrag.mieter) : "–"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {vertrag.objekt?.kuerzel ?? "–"}
+              {vertrag.einheit?.objekt?.kuerzel ?? "–"}
               {vertrag.einheit?.verwendungszweck_code
                 ? ` · ${vertrag.einheit.verwendungszweck_code}`
                 : ""}

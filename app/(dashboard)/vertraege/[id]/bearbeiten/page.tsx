@@ -8,7 +8,7 @@ import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { loadVertragOptions } from "@/lib/vertrag-options"
 import { VertragForm } from "@/components/vertraege/vertrag-form"
 import {
-  VERTRAGSART_LABELS,
+  VERTRAGSTYP_LABELS,
   type Vertrag,
 } from "@/types/vertrag"
 
@@ -25,7 +25,8 @@ export default async function VertragBearbeitenPage({
   const supabase = await createServerClient()
 
   const { data } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select("*")
     .eq("id", id)
     .maybeSingle()
@@ -42,11 +43,9 @@ export default async function VertragBearbeitenPage({
 
   const { objekte, einheiten, kontakte } = await loadVertragOptions()
 
-  const titel =
-    vertrag.vertragsnummer ??
-    (vertrag.vertragsart
-      ? (VERTRAGSART_LABELS[vertrag.vertragsart] ?? vertrag.vertragsart)
-      : "Vertrag")
+  const titel = vertrag.vertragstyp
+    ? (VERTRAGSTYP_LABELS[vertrag.vertragstyp] ?? vertrag.vertragstyp)
+    : "Vertrag"
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">

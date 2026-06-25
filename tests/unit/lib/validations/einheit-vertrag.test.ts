@@ -39,32 +39,34 @@ describe("einheitInsertSchema", () => {
   })
 })
 
-// Phase 1 – Core Immobilien: Vertrag-Validierung
+// Phase 1 – Core Immobilien: Vertrag-Validierung (wimus.mietvertraege)
 describe("vertragInsertSchema", () => {
-  const valid = { status: "aktiv" as const, unbefristet: "nein" as const }
+  const valid = { status: "aktiv" as const, kdu_relevant: "nein" as const }
 
-  it("unbefristet wird zu boolean transformiert", () => {
-    expect(vertragInsertSchema.parse({ ...valid, unbefristet: "ja" }).unbefristet).toBe(
-      true
-    )
+  it("kdu_relevant wird zu boolean transformiert", () => {
     expect(
-      vertragInsertSchema.parse({ ...valid, unbefristet: "nein" }).unbefristet
+      vertragInsertSchema.parse({ ...valid, kdu_relevant: "ja" }).kdu_relevant
+    ).toBe(true)
+    expect(
+      vertragInsertSchema.parse({ ...valid, kdu_relevant: "nein" }).kdu_relevant
     ).toBe(false)
   })
 
-  it("akzeptiert Vertragsarten V01–V04, lehnt andere ab", () => {
-    expect(vertragInsertSchema.parse({ ...valid, vertragsart: "V03" }).vertragsart).toBe(
-      "V03"
-    )
+  it("akzeptiert Vertragstypen V01–V04, lehnt andere ab", () => {
     expect(
-      vertragInsertSchema.safeParse({ ...valid, vertragsart: "V99" }).success
+      vertragInsertSchema.parse({ ...valid, vertragstyp: "V03" }).vertragstyp
+    ).toBe("V03")
+    expect(
+      vertragInsertSchema.safeParse({ ...valid, vertragstyp: "V99" }).success
     ).toBe(false)
   })
 
   it("optionale FK-IDs: leer -> null, ungültig -> Fehler", () => {
-    expect(vertragInsertSchema.parse({ ...valid, objekt_id: "" }).objekt_id).toBeNull()
     expect(
-      vertragInsertSchema.safeParse({ ...valid, objekt_id: "nope" }).success
+      vertragInsertSchema.parse({ ...valid, einheit_id: "" }).einheit_id
+    ).toBeNull()
+    expect(
+      vertragInsertSchema.safeParse({ ...valid, einheit_id: "nope" }).success
     ).toBe(false)
     expect(vertragInsertSchema.parse({ ...valid, mieter_id: UUID }).mieter_id).toBe(UUID)
   })

@@ -4,13 +4,15 @@ import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { kontaktName } from "@/types/kontakt"
 import type { MultiSelectOption } from "@/components/shared/multi-select-list"
 
-/** Vertrags-Beziehung, die aus den Stammdaten-Masken gepflegt werden kann. */
-export type VertragRelation = "objekt_id" | "einheit_id" | "mieter_id"
+/**
+ * Vertrags-Beziehung, die aus den Stammdaten-Masken gepflegt werden kann.
+ * mietvertraege hat keine objekt_id mehr – Objekt-Bezug läuft über die Einheit.
+ */
+export type VertragRelation = "einheit_id" | "mieter_id"
 
 export type VertragZuordnung = {
   id: string
   label: string
-  objekt_id: string | null
   einheit_id: string | null
   mieter_id: string | null
 }
@@ -19,21 +21,25 @@ export type VertragZuordnung = {
 export async function loadVertragZuordnungen(): Promise<VertragZuordnung[]> {
   const supabase = await createServerClient()
   const { data } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select(
-      "id, vertragsnummer, objekt_id, einheit_id, mieter_id, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code), mieter:kontakte(vorname, nachname, firma)"
+      "id, vertragstyp, einheit_id, mieter_id, einheit:einheiten(verwendungszweck_code, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
     )
-    .order("beginn", { nullsFirst: false })
+    .order("mietbeginn", { nullsFirst: false })
 
   type Row = {
     id: string
-    vertragsnummer: string | null
-    objekt_id: string | null
+    vertragstyp: string | null
     einheit_id: string | null
     mieter_id: string | null
-    objekt: { kuerzel: string | null } | null
-    einheit: { verwendungszweck_code: string | null } | null
-    mieter: { vorname: string | null; nachname: string | null; firma: string | null } | null
+    einheit:
+      | {
+          verwendungszweck_code: string | null
+          objekt: { kuerzel: string | null } | null
+        }
+      | null
+    mieter: { vorname: string | null; nachname: string | null; firmenname: string | null } | null
   }
 
   let rows = (data ?? []) as unknown as Row[]
@@ -41,13 +47,14 @@ export async function loadVertragZuordnungen(): Promise<VertragZuordnung[]> {
   if (isPreviewNoAuth() && rows.length === 0) {
     rows = DEMO_VERTRAEGE.map((v) => ({
       id: v.id,
-      vertragsnummer: v.vertragsnummer,
-      objekt_id: v.objekt_id,
+      vertragstyp: v.vertragstyp,
       einheit_id: v.einheit_id,
       mieter_id: v.mieter_id,
-      objekt: v.objekt ? { kuerzel: v.objekt.kuerzel } : null,
       einheit: v.einheit
-        ? { verwendungszweck_code: v.einheit.verwendungszweck_code }
+        ? {
+            verwendungszweck_code: v.einheit.verwendungszweck_code,
+            objekt: v.einheit.objekt ? { kuerzel: v.einheit.objekt.kuerzel } : null,
+          }
         : null,
       mieter: v.mieter,
     }))
@@ -55,19 +62,15 @@ export async function loadVertragZuordnungen(): Promise<VertragZuordnung[]> {
 
   return rows.map((r) => {
     const kontext = [
-      r.objekt?.kuerzel,
+      r.einheit?.objekt?.kuerzel,
       r.einheit?.verwendungszweck_code,
       r.mieter ? kontaktName(r.mieter) : null,
     ]
       .filter(Boolean)
       .join(" · ")
-    const label = r.vertragsnummer
-      ? `${r.vertragsnummer}${kontext ? ` (${kontext})` : ""}`
-      : kontext || "Vertrag ohne Nummer"
     return {
       id: r.id,
-      label,
-      objekt_id: r.objekt_id,
+      label: kontext || r.vertragstyp || "Vertrag",
       einheit_id: r.einheit_id,
       mieter_id: r.mieter_id,
     }

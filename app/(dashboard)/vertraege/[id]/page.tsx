@@ -13,7 +13,7 @@ import { DeleteVertragButton } from "@/components/vertraege/delete-vertrag-butto
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import {
-  VERTRAGSART_LABELS,
+  VERTRAGSTYP_LABELS,
   VERTRAG_STATUS_LABELS,
   warmmiete,
   type VertragMitRelationen,
@@ -31,7 +31,7 @@ import {
 } from "@/types/kaution"
 
 const SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt_id, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -50,7 +50,8 @@ export default async function VertragDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select(SELECT)
     .eq("id", id)
     .maybeSingle()
@@ -82,11 +83,9 @@ export default async function VertragDetailPage({
   const mahnungen = (mahnungenData ?? []) as Mahnung[]
   const kaution = kautionData as Kaution | null
 
-  const titel =
-    vertrag.vertragsnummer ??
-    (vertrag.vertragsart
-      ? (VERTRAGSART_LABELS[vertrag.vertragsart] ?? vertrag.vertragsart)
-      : "Vertrag")
+  const titel = vertrag.vertragstyp
+    ? (VERTRAGSTYP_LABELS[vertrag.vertragstyp] ?? vertrag.vertragstyp)
+    : "Vertrag"
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -131,15 +130,18 @@ export default async function VertragDetailPage({
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
               <Field
-                label="Vertragsart"
+                label="Vertragstyp"
                 value={
-                  vertrag.vertragsart
-                    ? (VERTRAGSART_LABELS[vertrag.vertragsart] ??
-                      vertrag.vertragsart)
+                  vertrag.vertragstyp
+                    ? (VERTRAGSTYP_LABELS[vertrag.vertragstyp] ??
+                      vertrag.vertragstyp)
                     : null
                 }
               />
-              <Field label="Vertragsnummer" value={vertrag.vertragsnummer} />
+              <Field
+                label="KdU-relevant"
+                value={vertrag.kdu_relevant ? "Ja" : "Nein"}
+              />
               <Field
                 label="Mieter"
                 value={
@@ -156,12 +158,12 @@ export default async function VertragDetailPage({
               <Field
                 label="Objekt"
                 value={
-                  vertrag.objekt_id ? (
+                  vertrag.einheit?.objekt_id ? (
                     <Link
-                      href={`/objekte/${vertrag.objekt_id}`}
+                      href={`/objekte/${vertrag.einheit.objekt_id}`}
                       className="hover:underline"
                     >
-                      {vertrag.objekt?.kuerzel ?? "Objekt"}
+                      {vertrag.einheit.objekt?.kuerzel ?? "Objekt"}
                     </Link>
                   ) : null
                 }
@@ -182,9 +184,9 @@ export default async function VertragDetailPage({
               <Field
                 label="Laufzeit"
                 value={
-                  vertrag.unbefristet
-                    ? `seit ${formatDate(vertrag.beginn)} · unbefristet`
-                    : `${formatDate(vertrag.beginn)} – ${formatDate(vertrag.ende)}`
+                  vertrag.mietende
+                    ? `${formatDate(vertrag.mietbeginn)} – ${formatDate(vertrag.mietende)}`
+                    : `seit ${formatDate(vertrag.mietbeginn)} · unbefristet`
                 }
               />
               <Field

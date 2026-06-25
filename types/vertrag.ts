@@ -6,32 +6,48 @@ export type Vertrag = {
   updated_at: string
   mandant_id: string
   einheit_id: string | null
-  objekt_id: string | null
   mieter_id: string | null
-  vertragsart: string | null
-  vertragsnummer: string | null
-  beginn: string | null
-  ende: string | null
-  unbefristet: boolean
+  vertragstyp: string | null
+  mietbeginn: string | null
+  mietende: string | null
   grundmiete: number | null
   bk_pauschale: number | null
   heizkosten_pauschale: number | null
   strompauschale: number | null
   faelligkeitsregel: string | null
-  kdu_id: string | null
-  kaution_id: string | null
   status: string
+  // Optionale wimus-Felder (werden teils im UI gepflegt).
+  kdu_relevant?: boolean | null
+  kuendigungsausschluss_bis?: string | null
+  widerrufs_frist?: string | null
+  staffel_config?: unknown | null
+  aktenzeichen?: string | null
+  paperless_id?: number | null
+  bk_modell?: string | null
+  ust_pflichtig?: boolean | null
+  citytax_betrag?: number | null
 }
 
-/** Vertrag inkl. verknüpfter Kurzinfos (Supabase-Embeds mit Alias). */
+/**
+ * Vertrag inkl. verknüpfter Kurzinfos (Supabase-Embeds mit Alias).
+ * Objekt wird über die Einheit erreicht (mietvertraege hat keine objekt_id).
+ */
 export type VertragMitRelationen = Vertrag & {
-  objekt: { kuerzel: string; bezeichnung: string | null } | null
-  einheit: { verwendungszweck_code: string | null; bezeichnung: string | null } | null
-  mieter: { vorname: string | null; nachname: string | null; firma: string | null } | null
+  einheit:
+    | {
+        verwendungszweck_code: string | null
+        bezeichnung: string | null
+        objekt_id?: string | null
+        objekt: { kuerzel: string } | null
+      }
+    | null
+  mieter:
+    | { vorname: string | null; nachname: string | null; firmenname: string | null }
+    | null
 }
 
 /** Auswahloptionen für das Vertrags-Formular. */
-export type ObjektRef = { id: string; kuerzel: string; bezeichnung: string | null }
+export type ObjektRef = { id: string; kuerzel: string }
 export type EinheitRef = {
   id: string
   objekt_id: string
@@ -40,16 +56,16 @@ export type EinheitRef = {
 }
 export type KontaktRef = {
   id: string
-  typ: string
+  typ?: string
   vorname: string | null
   nachname: string | null
-  firma: string | null
+  firmenname: string | null
 }
 
-export const VERTRAGSARTEN = ["V01", "V02", "V03", "V04"] as const
+export const VERTRAGSTYPEN = ["V01", "V02", "V03", "V04"] as const
 
-// Vertragsarten gem. Spec v5, Kap. 4.5.
-export const VERTRAGSART_LABELS: Record<string, string> = {
+// Vertragstypen gem. Spec v5, Kap. 4.5.
+export const VERTRAGSTYP_LABELS: Record<string, string> = {
   V01: "V01 – Standard (Wohnraum)",
   V02: "V02 – Befristet",
   V03: "V03 – KZV (7% USt, Beds24)",

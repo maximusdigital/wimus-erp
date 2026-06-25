@@ -6,13 +6,14 @@ import { vertragInsertSchema } from "@/lib/validations/vertrag"
 type Context = { params: Promise<{ id: string }> }
 
 const SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 
 export async function GET(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
   const { data, error } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select(SELECT)
     .eq("id", id)
     .maybeSingle()
@@ -41,7 +42,8 @@ export async function PATCH(request: NextRequest, { params }: Context) {
 
   // mandant_id wird nicht verändert; RLS erlaubt Update nur für eigene Mandanten.
   const { data, error } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .update(parsed.data)
     .eq("id", id)
     .select()
@@ -60,7 +62,11 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
 
-  const { error } = await supabase.from("vertraege").delete().eq("id", id)
+  const { error } = await supabase
+    .schema("wimus")
+    .from("mietvertraege")
+    .delete()
+    .eq("id", id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

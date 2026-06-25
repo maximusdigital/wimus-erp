@@ -14,7 +14,10 @@ export const metadata = {
 }
 
 const SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
+// Bei Objekt-Filter muss die Einheit inner-gejoint werden (Filter auf Embed).
+const SELECT_OBJEKT =
+  "*, einheit:einheiten!inner(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 
 export default async function VertraegePage({
   searchParams,
@@ -25,11 +28,13 @@ export default async function VertraegePage({
   const supabase = await createServerClient()
 
   let query = supabase
-    .from("vertraege")
-    .select(SELECT)
-    .order("beginn", { nullsFirst: false })
+    .schema("wimus")
+    .from("mietvertraege")
+    .select(objekt ? SELECT_OBJEKT : SELECT)
+    .order("mietbeginn", { nullsFirst: false })
 
-  if (objekt) query = query.eq("objekt_id", objekt)
+  // Objekt-Filter läuft über die Einheit (mietvertraege hat keine objekt_id).
+  if (objekt) query = query.eq("einheit.objekt_id", objekt)
   if (mieter) query = query.eq("mieter_id", mieter)
 
   const { data, error } = await query
@@ -40,7 +45,7 @@ export default async function VertraegePage({
   if (isPreviewNoAuth() && vertraege.length === 0) {
     vertraege = DEMO_VERTRAEGE.filter(
       (v) =>
-        (!objekt || v.objekt_id === objekt) &&
+        (!objekt || v.einheit?.objekt?.kuerzel === objekt) &&
         (!mieter || v.mieter_id === mieter)
     )
   }
