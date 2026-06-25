@@ -16,11 +16,21 @@ WIMUS ERP ist die digitale Schaltzentrale für die Württembergische Immobilien 
 - Keine Rückfragen stellen. Bei Unklarheiten sinnvolle Standardannahme treffen,
   umsetzen und die Annahme kurz dokumentieren.    Dann gilt es für jede Session in diesem Projekt automatisch.
 
+## Spec-System (maßgeblich)
+- Specs liegen als **Spec-as-Code (Markdown)** unter `.docs/specs/<NNNN_modul>/`
+  (gesplittet: `00_konzept` · `10_architektur` · `20_datenmodell` · `30_prozesse` ·
+  `40_design` · `50_migration` · `60_tests`). Index: `.docs/specs/README.md`.
+- **Vor jeder Modul-Arbeit das zugehörige `00_konzept.md` lesen** (Stand/Decisions/offene
+  Punkte/Version). Modul-Version lebt nur dort; Git macht die Versionierung.
+- Module: `0001_erp-kern` (Fundament), `0002_fibu` (Belegerkennung/Kontierung).
+- Alte Word-Specs sind nach `.docs/ALT/` archiviert (nur Referenz, nicht maßgeblich).
+- UI-Konventionen: `0001_erp-kern/40_design.md` (V104, Shadcn + Tremor + WIMUS Custom).
+
 ---
 
 ## Datenmodell-Stand (v5)
 
-**Maßgebliche Spec:** `.docs/WIMUS_ERP_Uebergabedokument_v5.docx` (Version 5.0, Kap. 5). Bei mehreren Versionen immer die höchste lesen.
+**Maßgebliche Spec:** `.docs/specs/0001_erp-kern/` (Spec-as-Code; `20_datenmodell.md` + `00_konzept.md`). Alte Word-Docs unter `.docs/ALT/` nur als Referenz.
 
 - **Schema `wimus`** (search_path = `wimus, public`), Plural, kein Prefix
 - **Zieldatenmodell: 82 Tabellen** in 5 Gruppen (Kern · Verträge/Buchungen/Bank · Objekt-Details/Ausstattung/Zähler/Custom Fields · Steuer/AfA/Szenarien · Vorgänge/Workforce/Vertrieb)
