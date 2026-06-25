@@ -24,3 +24,17 @@ export async function getWorkspaceId(): Promise<string | null> {
     .maybeSingle()
   return (data?.id as string | undefined) ?? null
 }
+
+/** Vollständiger Workspace-Datensatz (Org-Ebene 1) – Einzelzeile. */
+export async function getWorkspace(): Promise<Record<string, unknown> | null> {
+  const supabase = await createServerClient()
+  const { data } = await supabase
+    .schema("wimus")
+    .from("workspaces")
+    .select(
+      "id, name, kuerzel, inhaber, strasse, hausnummer, plz, stadt, telefon, email, website, ci_farbe_primary, logo_url"
+    )
+    .limit(1)
+    .maybeSingle()
+  return (data as Record<string, unknown> | null) ?? null
+}

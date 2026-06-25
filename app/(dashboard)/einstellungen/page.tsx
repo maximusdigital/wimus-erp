@@ -18,14 +18,14 @@ const bereiche = [
     desc: "Tochterunternehmen / Gesellschaften (Org-Ebene 2).",
     href: "/einstellungen/firmen",
     icon: Building2,
-    aktiv: false,
+    aktiv: true,
   },
   {
     title: "Workspace",
     desc: "Dachorganisation (Org-Ebene 1) & globale CI-Defaults.",
     href: "/einstellungen/workspace",
     icon: Layers,
-    aktiv: false,
+    aktiv: true,
   },
 ]
 
