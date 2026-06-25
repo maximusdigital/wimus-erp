@@ -20,7 +20,7 @@ export default async function AssetBearbeitenPage({
   const supabase = await createServerClient()
 
   const { data } = await supabase
-    .from("asset_register")
+    .schema("public").from("asset_register")
     .select("*")
     .eq("id", id)
     .maybeSingle()

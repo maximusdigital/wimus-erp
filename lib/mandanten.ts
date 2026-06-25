@@ -14,7 +14,7 @@ export async function getUserMandanten(): Promise<Mandant[]> {
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("mandanten")
-    .select("id, name, kuerzel, farbe")
+    .select("id, name, kuerzel, farbe:ci_farbe_primary")
     .order("name")
 
   return (data as Mandant[] | null) ?? []

@@ -20,7 +20,8 @@ export function readIdList(json: unknown, key: string): string[] | null {
  * Gibt eine Fehlermeldung zurück oder `null` bei Erfolg.
  */
 export async function reconcileVertragRelation(
-  supabase: SupabaseClient,
+  // Schema-agnostisch: der Default-Client ist seit dem Cutover "wimus".
+  supabase: SupabaseClient<any, any, any>,
   relation: VertragRelation,
   parentId: string,
   selectedIds: string[]

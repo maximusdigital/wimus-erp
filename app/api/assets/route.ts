@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
 
   let query = supabase
-    .from("asset_register")
+    .schema("public").from("asset_register")
     .select(SELECT)
     .order("bezeichnung", { ascending: true })
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
-    .from("asset_register")
+    .schema("public").from("asset_register")
     .insert({ ...parsed.data, mandant_id: active.id })
     .select()
     .single()

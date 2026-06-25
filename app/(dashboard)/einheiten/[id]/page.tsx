@@ -22,7 +22,7 @@ import {
 } from "@/types/einheit"
 
 const VERTRAG_SELECT =
-  "*, objekt:objekte(kuerzel, bezeichnung), einheit:einheiten(verwendungszweck_code, bezeichnung), mieter:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
 const VORGANG_SELECT =
   "*, objekt:objekte(kuerzel), einheit:einheiten(verwendungszweck_code, bezeichnung)"
 
@@ -78,10 +78,11 @@ export default async function EinheitDetailPage({
 
   // Verträge dieser Einheit (bidirektionale Verlinkung).
   const { data: vertraegeData } = await supabase
-    .from("vertraege")
+    .schema("wimus")
+    .from("mietvertraege")
     .select(VERTRAG_SELECT)
     .eq("einheit_id", id)
-    .order("beginn", { nullsFirst: false })
+    .order("mietbeginn", { nullsFirst: false })
   let vertraege = (vertraegeData ?? []) as unknown as VertragMitRelationen[]
   if (isPreviewNoAuth() && vertraege.length === 0) {
     vertraege = DEMO_VERTRAEGE.filter((v) => v.einheit_id === id)

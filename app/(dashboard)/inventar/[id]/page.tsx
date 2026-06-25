@@ -37,7 +37,7 @@ export default async function AssetDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
-    .from("asset_register")
+    .schema("public").from("asset_register")
     .select(SELECT)
     .eq("id", id)
     .maybeSingle()

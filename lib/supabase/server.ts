@@ -15,6 +15,10 @@ export async function createServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Cutover: Standard-Schema ist wimus. Reste auf public werden je Query
+      // explizit via .schema("public") angesprochen (user_mandanten via RLS,
+      // asset_register/Inventar P5).
+      db: { schema: "wimus" },
       cookies: {
         getAll() {
           return cookieStore.getAll()

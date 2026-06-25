@@ -23,7 +23,7 @@ export default async function InventarPage({
   const supabase = await createServerClient()
 
   let query = supabase
-    .from("asset_register")
+    .schema("public").from("asset_register")
     .select(SELECT)
     .order("bezeichnung", { ascending: true })
 
