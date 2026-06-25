@@ -9,6 +9,18 @@ export type Projekt = {
   ci_farbe_primary: string | null
 }
 
+/** Projekt-Typen (Spezifikation V501 Kap. 2.2). */
+export const PROJEKT_TYPEN = [
+  "kzv",
+  "monteur",
+  "wg",
+  "hausverwaltung",
+  "development",
+  "ankauf",
+  "bauprojekt",
+  "r2r",
+] as const
+
 /** Labels für die Projekt-Typen (Spezifikation V501 Kap. 2.2). */
 export const PROJEKT_TYP_LABELS: Record<string, string> = {
   kzv: "KZV / Touristen",
@@ -19,6 +31,15 @@ export const PROJEKT_TYP_LABELS: Record<string, string> = {
   ankauf: "Ankauf",
   bauprojekt: "Bauprojekt",
   r2r: "Rent2Rent",
+}
+
+/** Projekt-Status (Spezifikation V501). */
+export const PROJEKT_STATUS = ["planung", "aktiv", "abgeschlossen"] as const
+
+export const PROJEKT_STATUS_LABELS: Record<string, string> = {
+  planung: "Planung",
+  aktiv: "Aktiv",
+  abgeschlossen: "Abgeschlossen",
 }
 
 /**

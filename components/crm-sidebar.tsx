@@ -69,7 +69,11 @@ const secondaryNav: NavItem[] = [
   { title: "E-Mails", href: "/emails", icon: Mail, soon: true },
   { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock, soon: true },
   { title: "Bestandsentwicklung", href: "/bestandsentwicklung", icon: TrendingUp, soon: true },
-  { title: "Einstellungen", href: "/einstellungen", icon: Settings, soon: true },
+];
+
+// Aktive Verwaltungs-Navigation.
+const settingsNav: NavItem[] = [
+  { title: "Einstellungen", href: "/einstellungen", icon: Settings },
 ];
 
 function isActiveHref(pathname: string, href: string) {
@@ -143,6 +147,13 @@ export function CrmSidebar({ user }: { user: SidebarUser }) {
           <SidebarGroupLabel>Hauptmenü</SidebarGroupLabel>
           <SidebarGroupContent>
             <NavMenu items={mainNav} />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Verwaltung</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavMenu items={settingsNav} />
           </SidebarGroupContent>
         </SidebarGroup>
 
