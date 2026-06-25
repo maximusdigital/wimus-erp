@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Building2, FolderKanban, Layers } from "lucide-react"
+import { Building2, FolderKanban, Layers, Receipt } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -25,6 +25,13 @@ const bereiche = [
     desc: "Dachorganisation (Org-Ebene 1) & globale CI-Defaults.",
     href: "/einstellungen/workspace",
     icon: Layers,
+    aktiv: true,
+  },
+  {
+    title: "BK-Kostenarten",
+    desc: "Betriebskosten-Kostenarten-Katalog (BetrKV, Umlageschlüssel, HKVO).",
+    href: "/einstellungen/bk-arten",
+    icon: Receipt,
     aktiv: true,
   },
 ]

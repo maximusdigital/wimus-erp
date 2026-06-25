@@ -146,3 +146,23 @@ Runnable: `tests/unit/lib/fristen.test.ts` (10 Tests).
 - **CRUD**: /fristen Liste (Ampel-Punkt) + Neu/Detail/Bearbeiten; Sidebar aktiv.
 - **RLS als User (200)**: `wimus.fristen` lesbar.
 - Build + 148 Tests grün.
+
+---
+
+## Phase 2 — Betriebskosten-Kerne (Rechenlogik + BK-Arten)
+
+Runnable: `tests/unit/lib/bk.test.ts` (13 Tests).
+
+### Abnahme-Testfälle (durchgeführt)
+- **Verbrauchs-Umrechnung kWh**: Gas (m³×Brennwert×Zustandszahl), Heizöl (L×9,8),
+  Pellets (kg×4,8), kWh direkt.
+- **Warmwasser**: 18% der Heizkosten (HKVO §9), Prozent konfigurierbar.
+- **HKVO-Töpfe**: 70% Verbrauch / 30% Fläche (konfigurierbar).
+- **Umlageschlüssel-Verteilung** `verteileKosten`: flaeche/einheit/individuell;
+  intern_abgerechnet (KZV) trägt 0; Rundungsrest beim letzten Zahler → Summe exakt.
+- **BK-Arten-Katalog**: /einstellungen/bk-arten CRUD (Kategorie, BetrKV, Umlageschlüssel,
+  HKVO, umlagefähig); RLS als User validiert (200).
+- Build + 161 Tests grün.
+
+> Offen (nächster Schritt): Abrechnungseinheiten + Kostenverteilungs-Lauf
+> (kostenverteilung_positionen → bk_abrechnungen) nutzen `verteileKosten`.
