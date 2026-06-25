@@ -205,3 +205,19 @@ Runnable: `tests/unit/lib/betriebskosten-run.test.ts` (4 Tests).
 
 > Hinweis: Save-Happy-Path braucht reale Daten (einheiten/mietvertraege/Mitglieder/
 > Positionen); aktuell sind nur objekte/mandanten in wimus migriert.
+
+---
+
+## Phase 2 — Mahnlauf (Forderung → Mahnung)
+
+Runnable: `tests/unit/lib/mahnlauf.test.ts` (9 Tests).
+
+### Abnahme-Testfälle (durchgeführt)
+- **istMahnfaehig**: überfällig + offen + Karenz (>3T) → ja; bezahlt/voll bezahlt/
+  innerhalb Karenz/Stufe 5 → nein.
+- **naechsteMahnung**: Stufe +1, Zinsen taggenau auf offenen Betrag, Gebühren je Stufe,
+  Gesamt = Haupt+Zins+Gebühr; offener Restbetrag nach Teilzahlung = Hauptforderung.
+- **mahnlauf**: liefert nur mahnfähige Forderungen mit Vorschlag.
+- **UI/API** `/finanzen/mahnlauf` + `POST /api/forderungen/[id]/mahnung`: erzeugt
+  Mahnung (mahnungen) + setzt Forderung mahnstufe/status/mahnung_id.
+- Build + 178 Tests grün.

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { AlertTriangle, ChevronRight, Euro, PiggyBank, Receipt } from "lucide-react"
+import { AlertTriangle, ChevronRight, Euro, Gavel, PiggyBank, Receipt } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -149,6 +149,23 @@ export default async function FinanzenPage() {
                 <p className="font-medium">Mahnwesen</p>
                 <p className="text-muted-foreground text-sm">
                   Mahnungen anlegen, eskalieren und verfolgen.
+                </p>
+              </div>
+              <ChevronRight className="text-muted-foreground size-5 shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/finanzen/mahnlauf" className="block">
+          <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="flex aspect-square size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <Gavel className="size-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Mahnlauf</p>
+                <p className="text-muted-foreground text-sm">
+                  Überfällige Forderungen automatisch mahnen.
                 </p>
               </div>
               <ChevronRight className="text-muted-foreground size-5 shrink-0" />
