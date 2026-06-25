@@ -16,7 +16,9 @@ export async function getProjekte(): Promise<Projekt[]> {
   const { data } = await supabase
     .schema("wimus")
     .from("projekte")
-    .select("id, name, kuerzel, typ, parent_projekt_id, ebene, ci_farbe_primary")
+    .select(
+      "id, name, kuerzel, typ, parent_projekt_id, ebene, ci_farbe_primary, ci_farbe_secondary"
+    )
     .eq("aktiv", true)
 
   return orderProjekteTree((data as Projekt[] | null) ?? [])

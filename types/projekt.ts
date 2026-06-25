@@ -7,6 +7,36 @@ export type Projekt = {
   parent_projekt_id: string | null
   ebene: number | null
   ci_farbe_primary: string | null
+  ci_farbe_secondary?: string | null
+}
+
+/**
+ * Effektive CI-Farben mit Marketing-Vererbung (Spec V501 Kap. 2.4):
+ * NULL am Projekt → vom Parent erben (rekursiv hoch). Gibt null zurück,
+ * wenn nirgends gesetzt (→ globaler Default greift).
+ */
+export function effectiveCi(
+  projekt: Projekt | null,
+  alle: Projekt[]
+): { primary: string | null; secondary: string | null } {
+  const byId = new Map(alle.map((p) => [p.id, p]))
+  let p: Projekt | null = projekt
+  let primary: string | null = null
+  let secondary: string | null = null
+  const seen = new Set<string>()
+  while (p && !seen.has(p.id)) {
+    seen.add(p.id)
+    if (!primary && p.ci_farbe_primary) primary = p.ci_farbe_primary
+    if (!secondary && p.ci_farbe_secondary) secondary = p.ci_farbe_secondary
+    if (primary && secondary) break
+    p = p.parent_projekt_id ? (byId.get(p.parent_projekt_id) ?? null) : null
+  }
+  return { primary, secondary }
+}
+
+/** Validiert einen #RGB/#RRGGBB-Hex-String (Schutz gegen CSS-Injection). */
+export function isHexColor(value: string | null | undefined): value is string {
+  return typeof value === "string" && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value)
 }
 
 /** Projekt-Typen (Spezifikation V501 Kap. 2.2). */

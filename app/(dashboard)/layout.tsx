@@ -7,6 +7,7 @@ import { getActiveProjekt, getProjekte } from "@/lib/projekte";
 import { isPreviewNoAuth } from "@/lib/dev/preview";
 import { CrmSidebar, type SidebarUser } from "@/components/crm-sidebar";
 import { ProjektProvider } from "@/components/providers/projekt-provider";
+import { ProjektTheme } from "@/components/layout/projekt-theme";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
 
   return (
     <ProjektProvider projekt={activeProjekt} projekte={projekte}>
+      <ProjektTheme projekt={activeProjekt} projekte={projekte} />
       <SidebarProvider>
         <CrmSidebar user={sidebarUser} />
         <SidebarInset>
