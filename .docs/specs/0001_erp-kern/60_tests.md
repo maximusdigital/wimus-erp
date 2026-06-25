@@ -68,3 +68,45 @@ Restbuchwert nach 5×AfA; IST vs PLAN. Mahnwesen 5-stufig: Stufe 1 keine Gebühr
 
 > Bezug FiBu (0002): Validierungsregeln des FiBu-Moduls (netto+ust≈brutto, IBAN-Prüfsumme,
 > Kontierungs-Lookup) ergänzen diese Testbasis und gehören in `0002_fibu/60_tests.md`.
+
+---
+
+## Cutover public → wimus — Abnahme-Testfälle (Branch `cutover/wimus`)
+
+> Stand 2026-06-25. Die App liest/schreibt die Geschäftsentitäten jetzt im
+> `wimus`-Schema (Default-Schema der Supabase-Clients = `wimus`). `user_mandanten`
+> (Auth-Mapping) und `asset_register` (Inventar, P5) bleiben bewusst in `public`.
+
+### Migrierte Entitäten + Spalten-Mapping (verifiziert)
+
+| Entität | public → wimus | Runnable Test |
+|---------|----------------|---------------|
+| objekte | `ort→stadt`, `objekttyp→typ`; entfernt bezeichnung/wohnflaeche_qm/notiz | `tests/unit/lib/validations/objekt.test.ts` |
+| einheiten | `einheitstyp→typ`, `wohnflaeche_qm→flaeche`, `zimmer_anzahl→zimmer`; status→`aktiv`; kein mandant_id | `tests/unit/lib/validations/einheit-vertrag.test.ts` |
+| kontakte | `typ`→6×`ist_*` + `kontakt_typ`; `firma→firmenname`; `telefon→festnetz/mobil`; `ort→stadt` | `tests/unit/lib/validations/kontakt.test.ts` |
+| vertraege → **mietvertraege** | `vertragsart→vertragstyp`, `beginn→mietbeginn`, `ende→mietende`; ohne objekt_id (→ via Einheit) | `tests/unit/lib/validations/einheit-vertrag.test.ts` |
+| buchungen_kzv → **buchungen** | `betrag→betrag_brutto`, `city_tax→citytax_betrag`; ohne objekt_id/nuki_code | `tests/unit/lib/validations/buchung.test.ts`, `tests/integration/api/beds24-webhook.test.ts` |
+| mahnungen | `vertrag_id→mietvertrag_id`, `gesamt→gesamtforderung` | `tests/unit/lib/validations/finanzen.test.ts`, `tests/unit/lib/mahnwesen.test.ts` |
+| kautionen | `vertrag_id→mietvertrag_id`; bank/iban→bankkonto/zinsen | `tests/unit/lib/validations/finanzen.test.ts` |
+| vorgaenge | Spec-Modell: ohne titel/beschreibung/faellig_am; +handwerker/kosten/leistungsdatum/aktenzeichen/massnahme_typ | `tests/unit/lib/validations/vorgang-asset.test.ts` |
+
+### Abnahmekriterien (durchgeführt)
+
+- **AK-1 Unit/Integration:** `npm run test:run` → **127 Tests grün** (17 Dateien),
+  inkl. Beds24-Webhook (401/400/422/200/500, CityTax+Keybox, Storno, Default-Mandant)
+  jetzt gegen `wimus.buchungen`.
+- **AK-2 Build:** `npm run build` → grün (alle Routen, Typecheck).
+- **AK-3 UI-Smoke (Playwright Preview):** 36 Routen (Liste/Neu/Detail/Bearbeiten je
+  Entität + Einstellungen) → **alle HTTP 200, 0 Konsolenfehler**.
+- **AK-4 RLS/Daten als echter User (`info@wimus.de`):** Login (password grant) →
+  `wimus.objekte` liefert **10/10** mit korrekt gemappten Spalten (stadt/typ/status),
+  `wimus.mandanten` 4/4. RLS (Migration 008, mandant_isolation) greift.
+- **AK-5 Embed-Validierung als User (200):** mietvertraege/buchungen/mahnungen/
+  kautionen (`vertrag:mietvertraege(aktenzeichen)`) + vorgaenge
+  (`kontakte!handwerker_id`/`!gemeldet_von`) gegen das echte wimus-Schema geprüft.
+
+### Offen / nicht im Cutover
+
+- Inventar/Assets (`asset_register`) bleibt `public` bis P5 (QR+OCR+AfA).
+- Tremor-Charts (Design V104) durch React-19-Peerkonflikt blockiert (custom KpiCard aktiv).
+- pgTAP (RLS/Trigger DB-seitig) im Supabase-SQL-Editor — separat.
