@@ -9,12 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  KONTAKT_TYP_LABELS,
-  KONTAKT_TYP_VARIANT,
-  kontaktName,
-  type Kontakt,
-} from "@/types/kontakt"
+import { kontaktName, kontaktRollen, type Kontakt } from "@/types/kontakt"
 
 export function KontaktTabelle({ kontakte }: { kontakte: Kontakt[] }) {
   return (
@@ -23,36 +18,47 @@ export function KontaktTabelle({ kontakte }: { kontakte: Kontakt[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Typ</TableHead>
+            <TableHead>Rollen</TableHead>
             <TableHead>E-Mail</TableHead>
             <TableHead>Telefon</TableHead>
-            <TableHead>Ort</TableHead>
+            <TableHead>Stadt</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {kontakte.map((k) => (
-            <TableRow key={k.id} className="hover:bg-muted/50">
-              <TableCell className="font-medium">
-                <Link href={`/kontakte/${k.id}`} className="hover:underline">
-                  {kontaktName(k)}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <Badge variant={KONTAKT_TYP_VARIANT[k.typ] ?? "secondary"}>
-                  {KONTAKT_TYP_LABELS[k.typ] ?? k.typ}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {k.email ?? "–"}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {k.telefon ?? "–"}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {k.ort ?? "–"}
-              </TableCell>
-            </TableRow>
-          ))}
+          {kontakte.map((k) => {
+            const rollen = kontaktRollen(k)
+            return (
+              <TableRow key={k.id} className="hover:bg-muted/50">
+                <TableCell className="font-medium">
+                  <Link href={`/kontakte/${k.id}`} className="hover:underline">
+                    {kontaktName(k)}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {rollen.length > 0 ? (
+                      rollen.map((r) => (
+                        <Badge key={r} variant="secondary">
+                          {r}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="outline">–</Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {k.email ?? "–"}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {k.telefon_mobil ?? k.telefon_festnetz ?? "–"}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {k.stadt ?? "–"}
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

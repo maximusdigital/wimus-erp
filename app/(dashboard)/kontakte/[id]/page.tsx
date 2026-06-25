@@ -12,12 +12,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteKontaktButton } from "@/components/kontakte/delete-kontakt-button"
 import { VertraegeListe } from "@/components/vertraege/vertraege-liste"
-import { formatAdresse, formatDate } from "@/lib/utils/format"
+import { formatAdresse } from "@/lib/utils/format"
 import type { VertragMitRelationen } from "@/types/vertrag"
 import {
-  KONTAKT_TYP_LABELS,
-  KONTAKT_TYP_VARIANT,
   kontaktName,
+  kontaktRollen,
+  SPRACHE_LABELS,
   type Kontakt,
 } from "@/types/kontakt"
 
@@ -41,6 +41,7 @@ export default async function KontaktDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("kontakte")
     .select("*")
     .eq("id", id)
@@ -68,6 +69,13 @@ export default async function KontaktDetailPage({
   }
 
   const name = kontaktName(kontakt)
+  const rollen = kontaktRollen(kontakt)
+  const adresse = formatAdresse({
+    strasse: kontakt.strasse,
+    hausnummer: kontakt.hausnummer,
+    plz: kontakt.plz,
+    ort: kontakt.stadt,
+  })
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -81,14 +89,19 @@ export default async function KontaktDetailPage({
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">{name}</h1>
-              <Badge variant={KONTAKT_TYP_VARIANT[kontakt.typ] ?? "secondary"}>
-                {KONTAKT_TYP_LABELS[kontakt.typ] ?? kontakt.typ}
-              </Badge>
+              {rollen.map((r) => (
+                <Badge key={r} variant="secondary">
+                  {r}
+                </Badge>
+              ))}
+              {kontakt.aktiv === false ? (
+                <Badge variant="outline">Inaktiv</Badge>
+              ) : null}
             </div>
             <p className="text-muted-foreground text-sm">
-              {kontakt.email ?? formatAdresse(kontakt)}
+              {kontakt.email ?? adresse}
             </p>
           </div>
           <div className="flex gap-2">
@@ -111,10 +124,18 @@ export default async function KontaktDetailPage({
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <Field label="Anrede" value={kontakt.anrede} />
-              <Field label="Firma" value={kontakt.firma} />
-              <Field label="Vorname" value={kontakt.vorname} />
-              <Field label="Nachname" value={kontakt.nachname} />
+              {kontakt.kontakt_typ === "firma" ? (
+                <>
+                  <Field label="Firmenname" value={kontakt.firmenname} />
+                  <Field label="Rechtsform" value={kontakt.rechtsform} />
+                </>
+              ) : (
+                <>
+                  <Field label="Anrede" value={kontakt.anrede} />
+                  <Field label="Vorname" value={kontakt.vorname} />
+                  <Field label="Nachname" value={kontakt.nachname} />
+                </>
+              )}
               <Field
                 label="E-Mail"
                 value={
@@ -129,27 +150,41 @@ export default async function KontaktDetailPage({
                 }
               />
               <Field
-                label="Telefon"
+                label="Telefon (mobil)"
                 value={
-                  kontakt.telefon ? (
+                  kontakt.telefon_mobil ? (
                     <a
-                      href={`tel:${kontakt.telefon}`}
+                      href={`tel:${kontakt.telefon_mobil}`}
                       className="hover:underline"
                     >
-                      {kontakt.telefon}
+                      {kontakt.telefon_mobil}
                     </a>
                   ) : null
                 }
               />
-              <Field label="Ausweis-Nr." value={kontakt.ausweis_nr} />
+              <Field
+                label="Telefon (Festnetz)"
+                value={
+                  kontakt.telefon_festnetz ? (
+                    <a
+                      href={`tel:${kontakt.telefon_festnetz}`}
+                      className="hover:underline"
+                    >
+                      {kontakt.telefon_festnetz}
+                    </a>
+                  ) : null
+                }
+              />
               <div className="col-span-2 space-y-0.5">
                 <dt className="text-muted-foreground text-xs">Adresse</dt>
                 <dd>
                   <AddressBlock
                     adresse={{
                       strasse: kontakt.strasse,
+                      hausnummer: kontakt.hausnummer,
                       plz: kontakt.plz,
-                      stadt: kontakt.ort,
+                      stadt: kontakt.stadt,
+                      land: kontakt.land,
                     }}
                   />
                 </dd>
@@ -160,32 +195,37 @@ export default async function KontaktDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">DSGVO</CardTitle>
+            <CardTitle className="text-base">Bank &amp; Buchhaltung</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <Field label="IBAN" value={kontakt.iban} />
+              <Field label="BIC" value={kontakt.bic} />
+              <Field label="Debitor-Nr." value={kontakt.debitor_nr} />
+              <Field label="Kreditor-Nr." value={kontakt.kreditor_nr} />
               <Field
-                label="Datenweitergabe"
-                value={kontakt.dsgvo_datenweitergabe ? "Ja" : "Nein"}
+                label="Zahlungsziel"
+                value={
+                  kontakt.zahlungsziel_tage != null
+                    ? `${kontakt.zahlungsziel_tage} Tage`
+                    : null
+                }
               />
               <Field
-                label="Einwilligung am"
-                value={formatDate(kontakt.dsgvo_einwilligung_am)}
+                label="Sprache"
+                value={
+                  kontakt.sprache
+                    ? (SPRACHE_LABELS[kontakt.sprache] ?? kontakt.sprache)
+                    : null
+                }
+              />
+              <Field
+                label="DSGVO-Datenweitergabe"
+                value={kontakt.dsgvo_datenweitergabe ? "Ja" : "Nein"}
               />
             </dl>
           </CardContent>
         </Card>
-
-        {kontakt.notiz ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Notiz</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">{kontakt.notiz}</p>
-            </CardContent>
-          </Card>
-        ) : null}
 
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">

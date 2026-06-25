@@ -7,16 +7,18 @@ import { readIdList, reconcileVertragRelation } from "@/lib/relations"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
-  const typ = request.nextUrl.searchParams.get("typ")
+  // Rollen-Filter: ?rolle=ist_mieter etc.
+  const rolle = request.nextUrl.searchParams.get("rolle")
 
   let query = supabase
+    .schema("wimus")
     .from("kontakte")
     .select("*")
     .order("nachname", { nullsFirst: false })
-    .order("firma", { nullsFirst: false })
+    .order("firmenname", { nullsFirst: false })
 
-  if (typ) {
-    query = query.eq("typ", typ)
+  if (rolle) {
+    query = query.eq(rolle, true)
   }
 
   const { data, error } = await query
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
+    .schema("wimus")
     .from("kontakte")
     .insert({ ...parsed.data, mandant_id: active.id })
     .select()

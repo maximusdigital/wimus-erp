@@ -7,11 +7,7 @@ import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Button } from "@/components/ui/button"
 import { KontaktKarte } from "@/components/kontakte/kontakt-karte"
 import { KontaktTabelle } from "@/components/kontakte/kontakt-tabelle"
-import {
-  KONTAKT_TYPEN,
-  KONTAKT_TYP_LABELS,
-  type Kontakt,
-} from "@/types/kontakt"
+import { ROLLEN, type Kontakt, type RollenKey } from "@/types/kontakt"
 import { cn } from "@/lib/utils"
 
 export const metadata = {
@@ -21,19 +17,21 @@ export const metadata = {
 export default async function KontaktePage({
   searchParams,
 }: {
-  searchParams: Promise<{ typ?: string }>
+  searchParams: Promise<{ rolle?: string }>
 }) {
-  const { typ } = await searchParams
+  const { rolle } = await searchParams
   const supabase = await createServerClient()
 
   let query = supabase
+    .schema("wimus")
     .from("kontakte")
     .select("*")
     .order("nachname", { nullsFirst: false })
-    .order("firma", { nullsFirst: false })
+    .order("firmenname", { nullsFirst: false })
 
-  if (typ) {
-    query = query.eq("typ", typ)
+  const validRolle = ROLLEN.find((r) => r.key === rolle)?.key
+  if (validRolle) {
+    query = query.eq(validRolle, true)
   }
 
   const { data, error } = await query
@@ -42,10 +40,12 @@ export default async function KontaktePage({
 
   // Vorschau/Demo: Demo-Daten, damit die Liste ohne DB befüllt ist.
   if (isPreviewNoAuth() && kontakte.length === 0) {
-    kontakte = typ ? DEMO_KONTAKTE.filter((k) => k.typ === typ) : DEMO_KONTAKTE
+    kontakte = validRolle
+      ? DEMO_KONTAKTE.filter((k) => k[validRolle as RollenKey])
+      : DEMO_KONTAKTE
   }
 
-  const filterHref = (t?: string) => (t ? `/kontakte?typ=${t}` : "/kontakte")
+  const filterHref = (t?: string) => (t ? `/kontakte?rolle=${t}` : "/kontakte")
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -68,21 +68,23 @@ export default async function KontaktePage({
           href={filterHref()}
           className={cn(
             "rounded-full border px-3 py-1 text-xs transition-colors",
-            !typ ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+            !rolle ? "bg-primary text-primary-foreground" : "hover:bg-muted"
           )}
         >
           Alle
         </Link>
-        {KONTAKT_TYPEN.map((t) => (
+        {ROLLEN.map((r) => (
           <Link
-            key={t}
-            href={filterHref(t)}
+            key={r.key}
+            href={filterHref(r.key)}
             className={cn(
               "rounded-full border px-3 py-1 text-xs transition-colors",
-              typ === t ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              rolle === r.key
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted"
             )}
           >
-            {KONTAKT_TYP_LABELS[t]}
+            {r.label}
           </Link>
         ))}
       </div>

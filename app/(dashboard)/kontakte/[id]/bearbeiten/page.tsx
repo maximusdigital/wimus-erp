@@ -24,6 +24,7 @@ export default async function KontaktBearbeitenPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("kontakte")
     .select("*")
     .eq("id", id)

@@ -50,10 +50,18 @@ export async function loadVertragOptions(): Promise<VertragOptions> {
     if (kontakte.length === 0) {
       kontakte = DEMO_KONTAKTE.map((k) => ({
         id: k.id,
-        typ: k.typ,
+        // public.kontakte (Dropdown) nutzt weiterhin das einfache typ/firma-Schema;
+        // aus den wimus-Demo-Rollenflags den primären Typ ableiten.
+        typ: k.ist_mieter
+          ? "mieter"
+          : k.ist_eigentuemer
+            ? "eigentuemer"
+            : k.ist_dienstleister
+              ? "dienstleister"
+              : "sonstige",
         vorname: k.vorname,
         nachname: k.nachname,
-        firma: k.firma,
+        firma: k.firmenname,
       }))
     }
   }
