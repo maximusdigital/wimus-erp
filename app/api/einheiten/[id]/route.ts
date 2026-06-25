@@ -10,6 +10,7 @@ export async function GET(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
   const { data, error } = await supabase
+    .schema("wimus")
     .from("einheiten")
     .select("*, objekte(kuerzel, bezeichnung)")
     .eq("id", id)
@@ -38,8 +39,9 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     )
   }
 
-  // mandant_id wird nicht verändert; RLS erlaubt Update nur für eigene Mandanten.
+  // RLS-Isolation läuft über das Objekt (objekt_id); kein mandant_id auf einheiten.
   const { data, error } = await supabase
+    .schema("wimus")
     .from("einheiten")
     .update(parsed.data)
     .eq("id", id)
@@ -73,7 +75,11 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
 
-  const { error } = await supabase.from("einheiten").delete().eq("id", id)
+  const { error } = await supabase
+    .schema("wimus")
+    .from("einheiten")
+    .delete()
+    .eq("id", id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

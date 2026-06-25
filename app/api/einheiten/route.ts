@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
-import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { einheitInsertSchema } from "@/lib/validations/einheit"
 import { readIdList, reconcileVertragRelation } from "@/lib/relations"
 
@@ -10,6 +9,7 @@ export async function GET(request: NextRequest) {
   const objektId = request.nextUrl.searchParams.get("objekt")
 
   let query = supabase
+    .schema("wimus")
     .from("einheiten")
     .select("*, objekte(kuerzel, bezeichnung)")
     .order("verwendungszweck_code", { nullsFirst: false })
@@ -28,16 +28,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient()
 
-  // Aktiven Mandanten ermitteln (RLS erlaubt Insert nur für eigene Mandanten).
-  const mandanten = await getUserMandanten()
-  const active = await getActiveMandant(mandanten)
-  if (!active) {
-    return NextResponse.json(
-      { error: "Kein aktiver Mandant gefunden." },
-      { status: 400 }
-    )
-  }
-
   const json = await request.json().catch(() => null)
   const vertragIds = readIdList(json, "vertrag_ids")
   const parsed = einheitInsertSchema.safeParse(json)
@@ -48,9 +38,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // RLS-Isolation läuft über das Objekt (objekt_id); kein mandant_id auf einheiten.
   const { data, error } = await supabase
+    .schema("wimus")
     .from("einheiten")
-    .insert({ ...parsed.data, mandant_id: active.id })
+    .insert(parsed.data)
     .select()
     .single()
 

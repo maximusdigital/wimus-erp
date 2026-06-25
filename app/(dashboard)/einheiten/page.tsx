@@ -22,6 +22,7 @@ export default async function EinheitenPage({
   const supabase = await createServerClient()
 
   let query = supabase
+    .schema("wimus")
     .from("einheiten")
     .select("*, objekte(kuerzel, bezeichnung)")
     .order("verwendungszweck_code", { nullsFirst: false })

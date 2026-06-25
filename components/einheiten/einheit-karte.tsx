@@ -1,14 +1,9 @@
 import Link from "next/link"
 import { DoorOpen } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  EINHEITSTYP_LABELS,
-  EINHEIT_STATUS_LABELS,
-  EINHEIT_STATUS_VARIANT,
-  type EinheitMitObjekt,
-} from "@/types/einheit"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { EINHEITSTYP_LABELS, type EinheitMitObjekt } from "@/types/einheit"
 
 export function EinheitKarte({ einheit }: { einheit: EinheitMitObjekt }) {
   return (
@@ -23,11 +18,9 @@ export function EinheitKarte({ einheit }: { einheit: EinheitMitObjekt }) {
               <span className="truncate font-medium">
                 {einheit.verwendungszweck_code ?? einheit.bezeichnung ?? "Einheit"}
               </span>
-              <Badge
-                variant={EINHEIT_STATUS_VARIANT[einheit.status] ?? "secondary"}
-              >
-                {EINHEIT_STATUS_LABELS[einheit.status] ?? einheit.status}
-              </Badge>
+              <StatusBadge status={einheit.aktiv ? "aktiv" : "inaktiv"}>
+                {einheit.aktiv ? "Aktiv" : "Inaktiv"}
+              </StatusBadge>
             </div>
             <p className="truncate text-sm">{einheit.bezeichnung ?? "–"}</p>
             <p className="truncate text-xs text-muted-foreground">
@@ -36,15 +29,12 @@ export function EinheitKarte({ einheit }: { einheit: EinheitMitObjekt }) {
             </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>
-                {einheit.einheitstyp
-                  ? (EINHEITSTYP_LABELS[einheit.einheitstyp] ??
-                    einheit.einheitstyp)
+                {einheit.typ
+                  ? (EINHEITSTYP_LABELS[einheit.typ] ?? einheit.typ)
                   : "–"}
               </span>
               <span>
-                {einheit.wohnflaeche_qm != null
-                  ? `${einheit.wohnflaeche_qm} m²`
-                  : "– m²"}
+                {einheit.flaeche != null ? `${einheit.flaeche} m²` : "– m²"}
               </span>
             </div>
           </div>

@@ -8,6 +8,7 @@ import type { EinheitZuordnung } from "@/components/objekte/objekt-form"
 export async function loadEinheitZuordnungen(): Promise<EinheitZuordnung[]> {
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("einheiten")
     .select("id, objekt_id, verwendungszweck_code, bezeichnung, objekte(kuerzel)")
     .order("verwendungszweck_code", { nullsFirst: false })

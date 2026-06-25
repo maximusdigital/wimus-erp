@@ -5,8 +5,8 @@ import { Building2, ChevronLeft, Pencil, Plus } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { findDemoEinheit, DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteEinheitButton } from "@/components/einheiten/delete-einheit-button"
 import { EinheitenListe } from "@/components/einheiten/einheiten-liste"
@@ -17,8 +17,6 @@ import type { VertragMitRelationen } from "@/types/vertrag"
 import type { VorgangMitRelationen } from "@/types/vorgang"
 import {
   EINHEITSTYP_LABELS,
-  EINHEIT_STATUS_LABELS,
-  EINHEIT_STATUS_VARIANT,
   type Einheit,
   type EinheitMitObjekt,
 } from "@/types/einheit"
@@ -45,6 +43,7 @@ export default async function EinheitDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("einheiten")
     .select("*, objekte(kuerzel, bezeichnung)")
     .eq("id", id)
@@ -64,6 +63,7 @@ export default async function EinheitDetailPage({
   let geschwister: Einheit[] = []
   if (einheit.objekt_id) {
     const { data: geschwisterData } = await supabase
+      .schema("wimus")
       .from("einheiten")
       .select("*")
       .eq("objekt_id", einheit.objekt_id)
@@ -113,11 +113,9 @@ export default async function EinheitDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">{titel}</h1>
-              <Badge
-                variant={EINHEIT_STATUS_VARIANT[einheit.status] ?? "secondary"}
-              >
-                {EINHEIT_STATUS_LABELS[einheit.status] ?? einheit.status}
-              </Badge>
+              <StatusBadge status={einheit.aktiv ? "aktiv" : "inaktiv"}>
+                {einheit.aktiv ? "Aktiv" : "Inaktiv"}
+              </StatusBadge>
             </div>
             <p className="text-muted-foreground text-sm">
               {einheit.bezeichnung ?? "–"}
@@ -159,9 +157,8 @@ export default async function EinheitDetailPage({
               <Field
                 label="Einheitstyp"
                 value={
-                  einheit.einheitstyp
-                    ? (EINHEITSTYP_LABELS[einheit.einheitstyp] ??
-                      einheit.einheitstyp)
+                  einheit.typ
+                    ? (EINHEITSTYP_LABELS[einheit.typ] ?? einheit.typ)
                     : null
                 }
               />
@@ -170,16 +167,14 @@ export default async function EinheitDetailPage({
                 value={einheit.verwendungszweck_code}
               />
               <Field label="Lage" value={einheit.lage} />
-              <Field label="Etage" value={einheit.etage} />
+              <Field label="Etage" value={einheit.etage_beschreibung} />
               <Field
                 label="Wohnfläche"
                 value={
-                  einheit.wohnflaeche_qm != null
-                    ? `${einheit.wohnflaeche_qm} m²`
-                    : null
+                  einheit.flaeche != null ? `${einheit.flaeche} m²` : null
                 }
               />
-              <Field label="Zimmer" value={einheit.zimmer_anzahl} />
+              <Field label="Zimmer" value={einheit.zimmer} />
             </dl>
           </CardContent>
         </Card>

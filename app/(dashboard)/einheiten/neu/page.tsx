@@ -23,6 +23,7 @@ export default async function NeueEinheitPage({
   const { objekt } = await searchParams
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("objekte")
     .select("id, kuerzel, bezeichnung")
     .order("kuerzel")

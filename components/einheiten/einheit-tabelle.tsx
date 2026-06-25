@@ -1,6 +1,5 @@
 import Link from "next/link"
 
-import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -9,12 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  EINHEITSTYP_LABELS,
-  EINHEIT_STATUS_LABELS,
-  EINHEIT_STATUS_VARIANT,
-  type EinheitMitObjekt,
-} from "@/types/einheit"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { EINHEITSTYP_LABELS, type EinheitMitObjekt } from "@/types/einheit"
 
 export function EinheitTabelle({ einheiten }: { einheiten: EinheitMitObjekt[] }) {
   return (
@@ -28,7 +23,7 @@ export function EinheitTabelle({ einheiten }: { einheiten: EinheitMitObjekt[] })
             <TableHead>Typ</TableHead>
             <TableHead>Lage</TableHead>
             <TableHead className="text-right">Fläche</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Aktiv</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -48,20 +43,18 @@ export function EinheitTabelle({ einheiten }: { einheiten: EinheitMitObjekt[] })
                 {e.objekte?.kuerzel ?? "–"}
               </TableCell>
               <TableCell>
-                {e.einheitstyp
-                  ? (EINHEITSTYP_LABELS[e.einheitstyp] ?? e.einheitstyp)
-                  : "–"}
+                {e.typ ? (EINHEITSTYP_LABELS[e.typ] ?? e.typ) : "–"}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {e.lage ?? "–"}
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {e.wohnflaeche_qm != null ? `${e.wohnflaeche_qm} m²` : "–"}
+                {e.flaeche != null ? `${e.flaeche} m²` : "–"}
               </TableCell>
               <TableCell>
-                <Badge variant={EINHEIT_STATUS_VARIANT[e.status] ?? "secondary"}>
-                  {EINHEIT_STATUS_LABELS[e.status] ?? e.status}
-                </Badge>
+                <StatusBadge status={e.aktiv ? "aktiv" : "inaktiv"}>
+                  {e.aktiv ? "Aktiv" : "Inaktiv"}
+                </StatusBadge>
               </TableCell>
             </TableRow>
           ))}

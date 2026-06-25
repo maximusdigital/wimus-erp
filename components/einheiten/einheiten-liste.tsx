@@ -1,13 +1,8 @@
 import Link from "next/link"
 import { DoorOpen } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
-import {
-  EINHEITSTYP_LABELS,
-  EINHEIT_STATUS_LABELS,
-  EINHEIT_STATUS_VARIANT,
-  type Einheit,
-} from "@/types/einheit"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { EINHEITSTYP_LABELS, type Einheit } from "@/types/einheit"
 
 /**
  * Kompakte, anklickbare Einheiten-Liste.
@@ -34,11 +29,9 @@ export function EinheitenListe({
       {items.map((e, index) => {
         const titel = e.verwendungszweck_code ?? e.bezeichnung ?? "Einheit"
         const meta = [
-          e.einheitstyp
-            ? (EINHEITSTYP_LABELS[e.einheitstyp] ?? e.einheitstyp)
-            : null,
+          e.typ ? (EINHEITSTYP_LABELS[e.typ] ?? e.typ) : null,
           e.lage,
-          e.wohnflaeche_qm != null ? `${e.wohnflaeche_qm} m²` : null,
+          e.flaeche != null ? `${e.flaeche} m²` : null,
         ]
           .filter(Boolean)
           .join(" · ")
@@ -59,12 +52,12 @@ export function EinheitenListe({
                   <span className="text-sm font-medium leading-tight">
                     {titel}
                   </span>
-                  <Badge
-                    variant={EINHEIT_STATUS_VARIANT[e.status] ?? "secondary"}
+                  <StatusBadge
+                    status={e.aktiv ? "aktiv" : "inaktiv"}
                     className="shrink-0 text-[0.7rem]"
                   >
-                    {EINHEIT_STATUS_LABELS[e.status] ?? e.status}
-                  </Badge>
+                    {e.aktiv ? "Aktiv" : "Inaktiv"}
+                  </StatusBadge>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {meta || "–"}

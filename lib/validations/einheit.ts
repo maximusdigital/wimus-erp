@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { EINHEITSTYPEN, EINHEIT_STATUS } from "@/types/einheit"
+import { EINHEITSTYPEN } from "@/types/einheit"
 
 // ---------------------------------------------------------------------------
 // Client-Form-Schema: alle Felder als String (UI-Eingaben), keine Typ-Transform.
@@ -13,17 +13,22 @@ const numericString = z
 
 export const einheitFormSchema = z.object({
   objekt_id: z.string().min(1, "Pflichtfeld"),
+  kuerzel: z.string().optional(),
   bezeichnung: z.string().optional(),
   lage: z.string().optional(),
   verwendungszweck_code: z.string().optional(),
-  einheitstyp: z.string().optional(),
-  status: z.enum(EINHEIT_STATUS),
-  wohnflaeche_qm: numericString,
-  zimmer_anzahl: numericString,
-  etage: z.string().optional(),
+  typ: z.string().optional(),
+  aktiv: z.enum(["ja", "nein"]),
+  flaeche: numericString,
+  zimmer: numericString,
+  schlafzimmer: numericString,
+  baeder: numericString,
+  etage_beschreibung: z.string().optional(),
   keybox_pin_statisch: z.string().optional(),
   keybox_standort: z.string().optional(),
   max_personen: numericString,
+  anleitung_url: z.string().optional(),
+  gaestemappe_url_slug: z.string().optional(),
 })
 
 export type EinheitFormValues = z.infer<typeof einheitFormSchema>
@@ -54,18 +59,26 @@ const enumOrNull = (values: readonly string[]) =>
 
 export const einheitInsertSchema = z.object({
   objekt_id: z.string().uuid("Ungültiges Objekt"),
+  kuerzel: textOrNull,
   bezeichnung: textOrNull,
   lage: textOrNull,
   verwendungszweck_code: z
     .string()
     .optional()
     .transform((v) => (v && v.trim() !== "" ? v.trim().toUpperCase() : null)),
-  einheitstyp: enumOrNull(EINHEITSTYPEN),
-  status: z.enum(EINHEIT_STATUS),
-  wohnflaeche_qm: numberOrNull,
-  zimmer_anzahl: numberOrNull,
-  etage: textOrNull,
+  typ: enumOrNull(EINHEITSTYPEN),
+  aktiv: z
+    .union([z.boolean(), z.enum(["ja", "nein"])])
+    .optional()
+    .transform((v) => v !== false && v !== "nein"),
+  flaeche: numberOrNull,
+  zimmer: numberOrNull,
+  schlafzimmer: numberOrNull,
+  baeder: numberOrNull,
+  etage_beschreibung: textOrNull,
   keybox_pin_statisch: textOrNull,
   keybox_standort: textOrNull,
   max_personen: numberOrNull,
+  anleitung_url: textOrNull,
+  gaestemappe_url_slug: textOrNull,
 })

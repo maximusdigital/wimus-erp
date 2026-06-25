@@ -12,8 +12,6 @@ import {
 import {
   EINHEITSTYPEN,
   EINHEITSTYP_LABELS,
-  EINHEIT_STATUS,
-  EINHEIT_STATUS_LABELS,
   type Einheit,
   type ObjektOption,
 } from "@/types/einheit"
@@ -40,17 +38,22 @@ import type { MultiSelectOption } from "@/components/shared/multi-select-list"
 function emptyValues(objektId?: string): EinheitFormValues {
   return {
     objekt_id: objektId ?? "",
+    kuerzel: "",
     bezeichnung: "",
     lage: "",
     verwendungszweck_code: "",
-    einheitstyp: "",
-    status: "frei",
-    wohnflaeche_qm: "",
-    zimmer_anzahl: "",
-    etage: "",
+    typ: "",
+    aktiv: "ja",
+    flaeche: "",
+    zimmer: "",
+    schlafzimmer: "",
+    baeder: "",
+    etage_beschreibung: "",
     keybox_pin_statisch: "",
     keybox_standort: "",
     max_personen: "",
+    anleitung_url: "",
+    gaestemappe_url_slug: "",
   }
 }
 
@@ -59,17 +62,22 @@ function toFormValues(e: Einheit): EinheitFormValues {
   const n = (v: number | null) => (v == null ? "" : String(v))
   return {
     objekt_id: e.objekt_id,
+    kuerzel: s(e.kuerzel),
     bezeichnung: s(e.bezeichnung),
     lage: s(e.lage),
     verwendungszweck_code: s(e.verwendungszweck_code),
-    einheitstyp: s(e.einheitstyp),
-    status: e.status as EinheitFormValues["status"],
-    wohnflaeche_qm: n(e.wohnflaeche_qm),
-    zimmer_anzahl: n(e.zimmer_anzahl),
-    etage: s(e.etage),
+    typ: s(e.typ),
+    aktiv: e.aktiv === false ? "nein" : "ja",
+    flaeche: n(e.flaeche),
+    zimmer: n(e.zimmer),
+    schlafzimmer: n(e.schlafzimmer),
+    baeder: n(e.baeder),
+    etage_beschreibung: s(e.etage_beschreibung),
     keybox_pin_statisch: s(e.keybox_pin_statisch),
     keybox_standort: s(e.keybox_standort),
     max_personen: n(e.max_personen),
+    anleitung_url: s(e.anleitung_url),
+    gaestemappe_url_slug: s(e.gaestemappe_url_slug),
   }
 }
 
@@ -156,6 +164,20 @@ export function EinheitForm({
 
           <FormField
             control={form.control}
+            name="kuerzel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Kürzel</FormLabel>
+                <FormControl>
+                  <Input placeholder="W3" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="bezeichnung"
             render={({ field }) => (
               <FormItem>
@@ -184,14 +206,18 @@ export function EinheitForm({
 
           <FormField
             control={form.control}
-            name="einheitstyp"
+            name="typ"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Einheitstyp</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Auswählen…" />
+                      <SelectValue placeholder="Auswählen…">
+                        {(v) =>
+                          v ? (EINHEITSTYP_LABELS[v] ?? v) : "Auswählen…"
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -209,22 +235,21 @@ export function EinheitForm({
 
           <FormField
             control={form.control}
-            name="status"
+            name="aktiv"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status *</FormLabel>
+                <FormLabel>Aktiv</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue>
+                        {(v) => (v === "nein" ? "Inaktiv" : "Aktiv")}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {EINHEIT_STATUS.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {EINHEIT_STATUS_LABELS[s]}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="ja">Aktiv</SelectItem>
+                    <SelectItem value="nein">Inaktiv</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -248,7 +273,7 @@ export function EinheitForm({
 
           <FormField
             control={form.control}
-            name="etage"
+            name="etage_beschreibung"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Etage</FormLabel>
@@ -262,7 +287,7 @@ export function EinheitForm({
 
           <FormField
             control={form.control}
-            name="wohnflaeche_qm"
+            name="flaeche"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Wohnfläche (m²)</FormLabel>
@@ -276,12 +301,40 @@ export function EinheitForm({
 
           <FormField
             control={form.control}
-            name="zimmer_anzahl"
+            name="zimmer"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Zimmer</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.5" placeholder="3" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="schlafzimmer"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Schlafzimmer</FormLabel>
+                <FormControl>
+                  <Input type="number" step="1" placeholder="2" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="baeder"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bäder</FormLabel>
+                <FormControl>
+                  <Input type="number" step="1" placeholder="1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -334,6 +387,34 @@ export function EinheitForm({
                   <FormLabel>Max. Personen</FormLabel>
                   <FormControl>
                     <Input type="number" step="1" placeholder="4" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="anleitung_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Anleitung-URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://…" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="gaestemappe_url_slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gästemappe-Slug</FormLabel>
+                  <FormControl>
+                    <Input placeholder="bhs16-w3" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

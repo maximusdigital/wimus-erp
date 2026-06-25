@@ -4,20 +4,25 @@ export type Einheit = {
   id: string
   created_at: string
   updated_at: string
-  mandant_id: string
   objekt_id: string
+  kuerzel: string | null
   bezeichnung: string | null
   lage: string | null
   verwendungszweck_code: string | null
-  einheitstyp: string | null
-  wohnflaeche_qm: number | null
-  zimmer_anzahl: number | null
-  etage: string | null
-  status: string
-  // KZV / Keybox (Migration 003)
+  typ: string | null
+  flaeche: number | null
+  zimmer: number | null
+  schlafzimmer: number | null
+  baeder: number | null
+  etage_beschreibung: string | null
+  aktiv: boolean
+  // KZV / Keybox
+  keybox_vorhanden: boolean | null
   keybox_pin_statisch: string | null
   keybox_standort: string | null
   max_personen: number | null
+  anleitung_url: string | null
+  gaestemappe_url_slug: string | null
 }
 
 /** Einheit inkl. Objekt-Kurzinfo (Supabase: objekte(kuerzel, bezeichnung)). */
@@ -46,29 +51,4 @@ export const EINHEITSTYP_LABELS: Record<string, string> = {
   gewerbe: "Gewerbe",
   stellplatz: "Stellplatz",
   garage: "Garage",
-}
-
-export const EINHEIT_STATUS = [
-  "frei",
-  "vermietet",
-  "eigennutzung",
-  "sanierung",
-] as const
-
-export const EINHEIT_STATUS_LABELS: Record<string, string> = {
-  frei: "Frei",
-  vermietet: "Vermietet",
-  eigennutzung: "Eigennutzung",
-  sanierung: "Sanierung",
-}
-
-/** Badge-Variante je Status. */
-export const EINHEIT_STATUS_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  frei: "secondary",
-  vermietet: "default",
-  eigennutzung: "outline",
-  sanierung: "destructive",
 }

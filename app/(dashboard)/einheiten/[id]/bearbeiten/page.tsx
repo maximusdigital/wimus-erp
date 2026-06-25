@@ -26,8 +26,17 @@ export default async function EinheitBearbeitenPage({
   const supabase = await createServerClient()
 
   const [{ data: einheitData }, { data: objekteData }] = await Promise.all([
-    supabase.from("einheiten").select("*").eq("id", id).maybeSingle(),
-    supabase.from("objekte").select("id, kuerzel, bezeichnung").order("kuerzel"),
+    supabase
+      .schema("wimus")
+      .from("einheiten")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase
+      .schema("wimus")
+      .from("objekte")
+      .select("id, kuerzel, bezeichnung")
+      .order("kuerzel"),
   ])
 
   let einheit = einheitData as Einheit | null

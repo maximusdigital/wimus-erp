@@ -5,30 +5,36 @@ import { vertragInsertSchema } from "@/lib/validations/vertrag"
 
 const UUID = "11111111-1111-4111-8111-111111111111"
 
-// Phase 1 – Core Immobilien: Einheit-Validierung
+// Phase 1 – Core Immobilien: Einheit-Validierung (wimus-Schema)
 describe("einheitInsertSchema", () => {
   it("objekt_id muss eine UUID sein (Pflichtbeziehung)", () => {
-    expect(einheitInsertSchema.safeParse({ status: "frei" }).success).toBe(false)
+    expect(einheitInsertSchema.safeParse({}).success).toBe(false)
     expect(
-      einheitInsertSchema.safeParse({ objekt_id: "abc", status: "frei" }).success
+      einheitInsertSchema.safeParse({ objekt_id: "abc" }).success
     ).toBe(false)
   })
 
   it("verwendungszweck_code wird getrimmt und uppercased", () => {
     const r = einheitInsertSchema.parse({
       objekt_id: UUID,
-      status: "frei",
       verwendungszweck_code: " bhs16w3z1 ",
     })
     expect(r.verwendungszweck_code).toBe("BHS16W3Z1")
   })
 
-  it("akzeptiert gültigen Status, lehnt ungültigen ab", () => {
+  it("typ akzeptiert gültige Werte, lehnt ungültige ab", () => {
     expect(
-      einheitInsertSchema.parse({ objekt_id: UUID, status: "vermietet" }).status
-    ).toBe("vermietet")
+      einheitInsertSchema.parse({ objekt_id: UUID, typ: "wohnung" }).typ
+    ).toBe("wohnung")
     expect(
-      einheitInsertSchema.safeParse({ objekt_id: UUID, status: "besetzt" }).success
+      einheitInsertSchema.safeParse({ objekt_id: UUID, typ: "besetzt" }).success
+    ).toBe(false)
+  })
+
+  it("aktiv: 'nein' -> false, Default true", () => {
+    expect(einheitInsertSchema.parse({ objekt_id: UUID }).aktiv).toBe(true)
+    expect(
+      einheitInsertSchema.parse({ objekt_id: UUID, aktiv: "nein" }).aktiv
     ).toBe(false)
   })
 })
