@@ -5,13 +5,13 @@ import { mahnungInsertSchema } from "@/lib/validations/mahnung"
 
 type Context = { params: Promise<{ id: string }> }
 
-const SELECT =
-  "*, vertrag:vertraege(vertragsnummer), mieter:kontakte(vorname, nachname, firma)"
+const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
 export async function GET(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
   const { data, error } = await supabase
+    .schema("wimus")
     .from("mahnungen")
     .select(SELECT)
     .eq("id", id)
@@ -39,15 +39,16 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     )
   }
 
-  const gesamt =
+  const gesamtforderung =
     (parsed.data.hauptforderung ?? 0) +
     (parsed.data.zinsen ?? 0) +
     (parsed.data.gebuehren ?? 0)
 
   // mandant_id wird nicht verändert; RLS erlaubt Update nur für eigene Mandanten.
   const { data, error } = await supabase
+    .schema("wimus")
     .from("mahnungen")
-    .update({ ...parsed.data, gesamt })
+    .update({ ...parsed.data, gesamtforderung })
     .eq("id", id)
     .select()
     .maybeSingle()
@@ -65,7 +66,11 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
 
-  const { error } = await supabase.from("mahnungen").delete().eq("id", id)
+  const { error } = await supabase
+    .schema("wimus")
+    .from("mahnungen")
+    .delete()
+    .eq("id", id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

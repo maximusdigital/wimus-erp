@@ -4,7 +4,6 @@ import { PiggyBank } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatEUR } from "@/lib/utils/format"
-import { kontaktName } from "@/types/kontakt"
 import {
   KAUTION_ANLAGE_ART_LABELS,
   KAUTION_STATUS_LABELS,
@@ -22,15 +21,12 @@ export function KautionKarte({ kaution }: { kaution: KautionMitRelationen }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate font-medium">
-                {kaution.mieter ? kontaktName(kaution.mieter) : "–"}
+                {kaution.vertrag?.aktenzeichen ?? "Kaution"}
               </span>
               <StatusBadge status={kaution.status}>
                 {KAUTION_STATUS_LABELS[kaution.status] ?? kaution.status}
               </StatusBadge>
             </div>
-            <p className="truncate text-xs text-muted-foreground">
-              {kaution.vertrag?.vertragsnummer ?? "–"}
-            </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>Betrag: {formatEUR(kaution.betrag)}</span>
               {kaution.anlage_art ? (

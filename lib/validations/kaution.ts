@@ -11,13 +11,12 @@ const numericString = z
   .refine((v) => !v || !Number.isNaN(Number(v)), { message: "Ungültige Zahl" })
 
 export const kautionFormSchema = z.object({
-  vertrag_id: z.string().optional(),
-  mieter_id: z.string().optional(),
+  mietvertrag_id: z.string().optional(),
   betrag: numericString,
   anlage_art: z.string().optional(),
   zinssatz: numericString,
-  bank: z.string().optional(),
-  iban: z.string().optional(),
+  zinsen_kumuliert: numericString,
+  rueckzahlung_datum: z.string().optional(),
   status: z.enum(KAUTION_STATUS),
 })
 
@@ -55,12 +54,11 @@ const enumOrNull = (values: readonly string[]) =>
     })
 
 export const kautionInsertSchema = z.object({
-  vertrag_id: uuidOrNull,
-  mieter_id: uuidOrNull,
+  mietvertrag_id: uuidOrNull,
   betrag: numberOrNull,
   anlage_art: enumOrNull(KAUTION_ANLAGE_ARTEN),
   zinssatz: numberOrNull,
-  bank: textOrNull,
-  iban: textOrNull,
+  zinsen_kumuliert: numberOrNull,
+  rueckzahlung_datum: textOrNull,
   status: z.enum(KAUTION_STATUS),
 })

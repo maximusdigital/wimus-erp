@@ -69,14 +69,16 @@ export default async function VertragDetailPage({
   // Zugehörige Finanzdatensätze laden (nicht in der Vorschau ohne DB).
   const [{ data: mahnungenData }, { data: kautionData }] = await Promise.all([
     supabase
+      .schema("wimus")
       .from("mahnungen")
       .select("*")
-      .eq("vertrag_id", id)
+      .eq("mietvertrag_id", id)
       .order("faellig_am", { ascending: false, nullsFirst: false }),
     supabase
+      .schema("wimus")
       .from("kautionen")
       .select("*")
-      .eq("vertrag_id", id)
+      .eq("mietvertrag_id", id)
       .order("created_at", { ascending: false })
       .maybeSingle(),
   ])
@@ -270,7 +272,12 @@ export default async function VertragDetailPage({
                       </StatusBadge>
                     }
                   />
-                  <Field label="Bank" value={kaution.bank} />
+                  <Field
+                    label="Zinssatz"
+                    value={
+                      kaution.zinssatz != null ? `${kaution.zinssatz} %` : null
+                    }
+                  />
                 </dl>
               </Link>
             ) : (
@@ -329,7 +336,7 @@ export default async function VertragDetailPage({
                         </span>
                       </div>
                       <span className="shrink-0 text-sm font-medium tabular-nums">
-                        {formatEUR(m.gesamt)}
+                        {formatEUR(m.gesamtforderung)}
                       </span>
                     </Link>
                   </li>

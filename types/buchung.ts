@@ -1,6 +1,6 @@
 /** Buchung (KZV) – Datentyp + Auswahl-Konstanten (clientseitig nutzbar).
  *
- * DB-Tabelle: public.buchungen_kzv (Schema public). UI-Routen: /buchungen.
+ * DB-Tabelle: wimus.buchungen (Schema wimus). UI-Routen: /buchungen.
  */
 
 export type Buchung = {
@@ -9,23 +9,24 @@ export type Buchung = {
   updated_at: string
   mandant_id: string
   einheit_id: string | null
-  objekt_id: string | null
   gast_id: string | null
   beds24_id: string | null
   kanal: string | null
   checkin: string | null
   checkout: string | null
   personen: number | null
-  nuki_code: string | null
   tuya_szene: string | null
-  betrag: number | null
-  city_tax: number | null
+  betrag_brutto: number | null
+  citytax_betrag: number | null
   status: string
   apartment_pin: string | null
   keybox_pin: string | null
   ust_prozent: number | null
   gaestemappe_token: string | null
   meldeschein_reisepass: string | null
+  mietvertrag_id: string | null
+  rechnung_id: string | null
+  aktenzeichen: string | null
 }
 
 /** Buchung inkl. verknüpfter Kurzinfos (Supabase-Embeds mit Alias). */
@@ -33,9 +34,14 @@ export type BuchungMitRelationen = Buchung & {
   einheit: {
     verwendungszweck_code: string | null
     bezeichnung: string | null
+    objekt_id: string | null
+    objekt: { kuerzel: string } | null
   } | null
-  objekt: { kuerzel: string } | null
-  gast: { vorname: string | null; nachname: string | null; firma: string | null } | null
+  gast: {
+    vorname: string | null
+    nachname: string | null
+    firmenname: string | null
+  } | null
 }
 
 export const KANAELE = ["airbnb", "booking", "direkt", "sonstige"] as const

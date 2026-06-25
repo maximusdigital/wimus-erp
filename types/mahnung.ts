@@ -5,22 +5,21 @@ export type Mahnung = {
   created_at: string
   updated_at: string
   mandant_id: string
-  vertrag_id: string | null
-  mieter_id: string | null
+  mietvertrag_id: string | null
   stufe: number
   hauptforderung: number | null
   zinsen: number | null
   gebuehren: number | null
-  gesamt: number | null
+  gesamtforderung: number | null
   faellig_am: string | null
-  versendet_am: string | null
+  mahngericht_az: string | null
   status: string
+  aktenzeichen: string | null
 }
 
 /** Mahnung inkl. verknüpfter Kurzinfos (Supabase-Embeds mit Alias). */
 export type MahnungMitRelationen = Mahnung & {
-  vertrag: { vertragsnummer: string | null } | null
-  mieter: { vorname: string | null; nachname: string | null; firma: string | null } | null
+  vertrag: { aktenzeichen: string | null } | null
 }
 
 export const MAHN_STUFEN = [1, 2, 3, 4, 5] as const

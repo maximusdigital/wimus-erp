@@ -4,7 +4,6 @@ import { AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDate, formatEUR } from "@/lib/utils/format"
-import { kontaktName } from "@/types/kontakt"
 import {
   MAHN_STATUS_LABELS,
   MAHN_STATUS_VARIANT,
@@ -30,13 +29,10 @@ export function MahnungKarte({ mahnung }: { mahnung: MahnungMitRelationen }) {
               </Badge>
             </div>
             <p className="truncate text-sm">
-              {mahnung.mieter ? kontaktName(mahnung.mieter) : "–"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {mahnung.vertrag?.vertragsnummer ?? "–"}
+              {mahnung.vertrag?.aktenzeichen ?? "–"}
             </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span>Gesamt: {formatEUR(mahnung.gesamt)}</span>
+              <span>Gesamt: {formatEUR(mahnung.gesamtforderung)}</span>
               <span>Fällig: {formatDate(mahnung.faellig_am)}</span>
             </div>
           </div>

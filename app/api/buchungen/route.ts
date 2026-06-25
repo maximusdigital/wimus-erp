@@ -6,18 +6,19 @@ import { buchungInsertSchema } from "@/lib/validations/buchung"
 import { ableiteEinheitFelder } from "@/lib/buchung-derive"
 
 const SELECT =
-  "*, einheit:einheiten(verwendungszweck_code, bezeichnung), objekt:objekte(kuerzel), gast:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt_id, objekt:objekte(kuerzel)), gast:kontakte(vorname, nachname, firmenname)"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
   const { searchParams } = request.nextUrl
 
   let query = supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .select(SELECT)
     .order("checkin", { ascending: false, nullsFirst: false })
 
-  for (const key of ["einheit", "objekt", "gast"] as const) {
+  for (const key of ["einheit", "gast"] as const) {
     const value = searchParams.get(key)
     if (value) query = query.eq(`${key}_id`, value)
   }
@@ -55,7 +56,8 @@ export async function POST(request: NextRequest) {
   const abgeleitet = await ableiteEinheitFelder(supabase, parsed.data)
 
   const { data, error } = await supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .insert({ ...parsed.data, ...abgeleitet, mandant_id: active.id })
     .select()
     .single()

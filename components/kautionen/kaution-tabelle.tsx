@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatEUR } from "@/lib/utils/format"
-import { kontaktName } from "@/types/kontakt"
 import {
   KAUTION_ANLAGE_ART_LABELS,
   KAUTION_STATUS_LABELS,
@@ -27,7 +26,6 @@ export function KautionTabelle({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Mieter</TableHead>
             <TableHead>Vertrag</TableHead>
             <TableHead className="text-right">Betrag</TableHead>
             <TableHead>Anlageart</TableHead>
@@ -39,11 +37,8 @@ export function KautionTabelle({
             <TableRow key={k.id} className="hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link href={`/finanzen/kautionen/${k.id}`} className="hover:underline">
-                  {k.mieter ? kontaktName(k.mieter) : "–"}
+                  {k.vertrag?.aktenzeichen ?? "Kaution"}
                 </Link>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {k.vertrag?.vertragsnummer ?? "–"}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatEUR(k.betrag)}

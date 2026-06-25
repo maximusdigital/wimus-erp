@@ -15,12 +15,12 @@ export default async function FinanzenPage() {
   const supabase = await createServerClient()
 
   const [mahnungenRes, kautionenRes] = await Promise.all([
-    supabase.from("mahnungen").select("gesamt, status"),
-    supabase.from("kautionen").select("betrag, status"),
+    supabase.schema("wimus").from("mahnungen").select("gesamtforderung, status"),
+    supabase.schema("wimus").from("kautionen").select("betrag, status"),
   ])
 
   const mahnungen = (mahnungenRes.data ?? []) as {
-    gesamt: number | null
+    gesamtforderung: number | null
     status: string
   }[]
   const kautionen = (kautionenRes.data ?? []) as {
@@ -33,7 +33,7 @@ export default async function FinanzenPage() {
   )
   const anzahlOffen = offeneMahnungen.length
   const summeOffen = offeneMahnungen.reduce(
-    (sum, m) => sum + (m.gesamt ?? 0),
+    (sum, m) => sum + (m.gesamtforderung ?? 0),
     0
   )
   const summeHinterlegt = kautionen

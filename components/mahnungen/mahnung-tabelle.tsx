@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatDate, formatEUR } from "@/lib/utils/format"
-import { kontaktName } from "@/types/kontakt"
 import {
   MAHN_STATUS_LABELS,
   MAHN_STATUS_VARIANT,
@@ -29,7 +28,6 @@ export function MahnungTabelle({
         <TableHeader>
           <TableRow>
             <TableHead>Stufe</TableHead>
-            <TableHead>Mieter</TableHead>
             <TableHead>Vertrag</TableHead>
             <TableHead className="text-right">Gesamt</TableHead>
             <TableHead>Fällig</TableHead>
@@ -44,12 +42,11 @@ export function MahnungTabelle({
                   {MAHN_STUFE_LABELS[m.stufe] ?? `Stufe ${m.stufe}`}
                 </Link>
               </TableCell>
-              <TableCell>{m.mieter ? kontaktName(m.mieter) : "–"}</TableCell>
               <TableCell className="text-muted-foreground">
-                {m.vertrag?.vertragsnummer ?? "–"}
+                {m.vertrag?.aktenzeichen ?? "–"}
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {formatEUR(m.gesamt)}
+                {formatEUR(m.gesamtforderung)}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDate(m.faellig_am)}

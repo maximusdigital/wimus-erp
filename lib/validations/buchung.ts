@@ -19,7 +19,7 @@ export const buchungFormSchema = z.object({
   checkin: z.string().optional(),
   checkout: z.string().optional(),
   personen: numericString,
-  betrag: numericString,
+  betrag_brutto: numericString,
   ust_prozent: numericString,
   apartment_pin: z.string().optional(),
   status: z.enum(BUCHUNG_STATUS),
@@ -29,8 +29,8 @@ export type BuchungFormValues = z.infer<typeof buchungFormSchema>
 
 // ---------------------------------------------------------------------------
 // Server-Insert-Schema: bereinigt + typisiert die rohen Form-Werte.
-// Hinweis: objekt_id, keybox_pin und city_tax werden serverseitig (API) aus
-// der gewählten Einheit / dem Objekt abgeleitet – daher NICHT hier enthalten.
+// Hinweis: keybox_pin und citytax_betrag werden serverseitig (API) aus der
+// gewählten Einheit / dem Objekt abgeleitet – daher NICHT hier enthalten.
 // ---------------------------------------------------------------------------
 const textOrNull = z
   .string()
@@ -76,7 +76,7 @@ export const buchungInsertSchema = z.object({
   checkin: textOrNull,
   checkout: textOrNull,
   personen: intOrNull,
-  betrag: numberOrNull,
+  betrag_brutto: numberOrNull,
   ust_prozent: numberOrNull,
   apartment_pin: textOrNull,
   status: z.enum(BUCHUNG_STATUS),

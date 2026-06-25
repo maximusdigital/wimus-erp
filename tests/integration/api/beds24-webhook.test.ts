@@ -21,10 +21,13 @@ const UUID = "11111111-1111-4111-8111-111111111111"
 /** Minimaler chainbarer Supabase-Mock, der je Tabelle Daten liefert. */
 function makeClient(opts: {
   einheit?: Record<string, unknown> | null
-  ort?: string | null
+  objektMandantId?: string | null
+  stadt?: string | null
   upsertError?: string
 }) {
-  return {
+  const client = {
+    // wimus-Schema: .schema("wimus") gibt denselben chainbaren Client zurück.
+    schema: () => client,
     from(table: string) {
       const chain: Record<string, unknown> = {}
       const ret = () => chain
@@ -37,7 +40,13 @@ function makeClient(opts: {
       }
       chain.maybeSingle = async () => {
         if (table === "einheiten") return { data: opts.einheit ?? null }
-        if (table === "objekte") return { data: { ort: opts.ort ?? null } }
+        if (table === "objekte")
+          return {
+            data: {
+              mandant_id: opts.objektMandantId ?? null,
+              stadt: opts.stadt ?? null,
+            },
+          }
         return { data: null }
       }
       chain.single = async () =>
@@ -47,6 +56,7 @@ function makeClient(opts: {
       return chain
     },
   }
+  return client
 }
 
 function req(
@@ -106,11 +116,11 @@ describe("Beds24-Webhook POST", () => {
     state.client = makeClient({
       einheit: {
         id: "e1",
-        mandant_id: "m1",
         objekt_id: "o1",
         keybox_pin_statisch: "9999",
       },
-      ort: "Stuttgart",
+      objektMandantId: "m1",
+      stadt: "Stuttgart",
     })
     const res = await POST(
       req({
@@ -129,19 +139,21 @@ describe("Beds24-Webhook POST", () => {
     expect(state.lastUpsert).toMatchObject({
       mandant_id: "m1",
       einheit_id: "e1",
-      objekt_id: "o1",
       beds24_id: "B100",
       keybox_pin: "9999",
-      city_tax: 18, // 3 € × 2 Pers. × 3 Nächte (Stuttgart)
+      citytax_betrag: 18, // 3 € × 2 Pers. × 3 Nächte (Stuttgart)
       status: "bestaetigt",
     })
+    // wimus.buchungen führt keine objekt_id mehr
+    expect(state.lastUpsert?.objekt_id).toBeUndefined()
     // apartment_pin bleibt offen (TTLock via n8n)
     expect(state.lastUpsert?.apartment_pin).toBeUndefined()
   })
 
   it("Stornierung -> status 'storniert'", async () => {
     state.client = makeClient({
-      einheit: { id: "e1", mandant_id: "m1", objekt_id: null, keybox_pin_statisch: null },
+      einheit: { id: "e1", objekt_id: "o1", keybox_pin_statisch: null },
+      objektMandantId: "m1",
     })
     const res = await POST(
       req({ bookId: "B100", einheit_id: UUID, status: "cancelled" })
@@ -152,7 +164,8 @@ describe("Beds24-Webhook POST", () => {
 
   it("DB-Fehler beim Upsert -> 500", async () => {
     state.client = makeClient({
-      einheit: { id: "e1", mandant_id: "m1", objekt_id: null, keybox_pin_statisch: null },
+      einheit: { id: "e1", objekt_id: "o1", keybox_pin_statisch: null },
+      objektMandantId: "m1",
       upsertError: "duplicate key",
     })
     const res = await POST(req({ bookId: "B100", einheit_id: UUID }))

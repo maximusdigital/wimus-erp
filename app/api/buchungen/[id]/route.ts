@@ -7,13 +7,14 @@ import { ableiteEinheitFelder } from "@/lib/buchung-derive"
 type Context = { params: Promise<{ id: string }> }
 
 const SELECT =
-  "*, einheit:einheiten(verwendungszweck_code, bezeichnung), objekt:objekte(kuerzel), gast:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt_id, objekt:objekte(kuerzel)), gast:kontakte(vorname, nachname, firmenname)"
 
 export async function GET(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
   const { data, error } = await supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .select(SELECT)
     .eq("id", id)
     .maybeSingle()
@@ -44,7 +45,8 @@ export async function PATCH(request: NextRequest, { params }: Context) {
 
   // mandant_id wird nicht verändert; RLS erlaubt Update nur für eigene Mandanten.
   const { data, error } = await supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .update({ ...parsed.data, ...abgeleitet })
     .eq("id", id)
     .select()
@@ -63,7 +65,11 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
 
-  const { error } = await supabase.from("buchungen_kzv").delete().eq("id", id)
+  const { error } = await supabase
+    .schema("wimus")
+    .from("buchungen")
+    .delete()
+    .eq("id", id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

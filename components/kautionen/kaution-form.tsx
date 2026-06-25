@@ -17,8 +17,6 @@ import {
   type Kaution,
 } from "@/types/kaution"
 import type { VertragOption } from "@/lib/finanzen-options"
-import type { KontaktRef } from "@/types/vertrag"
-import { kontaktName } from "@/types/kontakt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -39,13 +37,12 @@ import {
 
 function emptyValues(prefill?: { vertragId?: string }): KautionFormValues {
   return {
-    vertrag_id: prefill?.vertragId ?? "",
-    mieter_id: "",
+    mietvertrag_id: prefill?.vertragId ?? "",
     betrag: "",
     anlage_art: "",
     zinssatz: "",
-    bank: "",
-    iban: "",
+    zinsen_kumuliert: "",
+    rueckzahlung_datum: "",
     status: "angelegt",
   }
 }
@@ -53,14 +50,14 @@ function emptyValues(prefill?: { vertragId?: string }): KautionFormValues {
 function toFormValues(k: Kaution): KautionFormValues {
   const s = (x: string | null) => x ?? ""
   const n = (x: number | null) => (x == null ? "" : String(x))
+  const d = (x: string | null) => (x ? x.slice(0, 10) : "")
   return {
-    vertrag_id: s(k.vertrag_id),
-    mieter_id: s(k.mieter_id),
+    mietvertrag_id: s(k.mietvertrag_id),
     betrag: n(k.betrag),
     anlage_art: s(k.anlage_art),
     zinssatz: n(k.zinssatz),
-    bank: s(k.bank),
-    iban: s(k.iban),
+    zinsen_kumuliert: n(k.zinsen_kumuliert),
+    rueckzahlung_datum: d(k.rueckzahlung_datum),
     status: k.status as KautionFormValues["status"],
   }
 }
@@ -68,12 +65,10 @@ function toFormValues(k: Kaution): KautionFormValues {
 export function KautionForm({
   kaution,
   vertraege,
-  kontakte,
   defaultVertragId,
 }: {
   kaution?: Kaution
   vertraege: VertragOption[]
-  kontakte: KontaktRef[]
   defaultVertragId?: string
 }) {
   const router = useRouter()
@@ -119,7 +114,7 @@ export function KautionForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <FormField
             control={form.control}
-            name="vertrag_id"
+            name="mietvertrag_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vertrag</FormLabel>
@@ -133,31 +128,6 @@ export function KautionForm({
                     {vertraege.map((v) => (
                       <SelectItem key={v.id} value={v.id}>
                         {v.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="mieter_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mieter</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Kontakt wählen…" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {kontakte.map((k) => (
-                      <SelectItem key={k.id} value={k.id}>
-                        {kontaktName(k)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -247,12 +217,12 @@ export function KautionForm({
 
           <FormField
             control={form.control}
-            name="bank"
+            name="zinsen_kumuliert"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Bank</FormLabel>
+                <FormLabel>Zinsen kumuliert (€)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Volksbank Stuttgart" {...field} />
+                  <Input type="number" step="0.01" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -261,12 +231,12 @@ export function KautionForm({
 
           <FormField
             control={form.control}
-            name="iban"
+            name="rueckzahlung_datum"
             render={({ field }) => (
-              <FormItem className="sm:col-span-2 lg:col-span-1">
-                <FormLabel>IBAN</FormLabel>
+              <FormItem>
+                <FormLabel>Rückzahlung am</FormLabel>
                 <FormControl>
-                  <Input placeholder="DE00 0000 0000 0000 0000 00" {...field} />
+                  <Input type="date" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

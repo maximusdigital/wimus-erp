@@ -20,6 +20,7 @@ export default async function MahnungBearbeitenPage({
   const supabase = await createServerClient()
 
   const { data } = await supabase
+    .schema("wimus")
     .from("mahnungen")
     .select("*")
     .eq("id", id)
@@ -31,7 +32,7 @@ export default async function MahnungBearbeitenPage({
     notFound()
   }
 
-  const { vertraege, kontakte } = await loadFinanzenOptions()
+  const { vertraege } = await loadFinanzenOptions()
   const titel = MAHN_STUFE_LABELS[mahnung.stufe] ?? `Stufe ${mahnung.stufe}`
 
   return (
@@ -51,11 +52,7 @@ export default async function MahnungBearbeitenPage({
       </div>
 
       <div className="max-w-4xl">
-        <MahnungForm
-          mahnung={mahnung}
-          vertraege={vertraege}
-          kontakte={kontakte}
-        />
+        <MahnungForm mahnung={mahnung} vertraege={vertraege} />
       </div>
     </div>
   )

@@ -5,20 +5,19 @@ export type Kaution = {
   created_at: string
   updated_at: string
   mandant_id: string
-  vertrag_id: string | null
-  mieter_id: string | null
+  mietvertrag_id: string | null
+  bankkonto_id: string | null
   betrag: number | null
   anlage_art: string | null
   zinssatz: number | null
-  bank: string | null
-  iban: string | null
+  zinsen_kumuliert: number | null
   status: string
+  rueckzahlung_datum: string | null
 }
 
 /** Kaution inkl. verknüpfter Kurzinfos (Supabase-Embeds mit Alias). */
 export type KautionMitRelationen = Kaution & {
-  vertrag: { vertragsnummer: string | null } | null
-  mieter: { vorname: string | null; nachname: string | null; firma: string | null } | null
+  vertrag: { aktenzeichen: string | null } | null
 }
 
 export const KAUTION_ANLAGE_ARTEN = [

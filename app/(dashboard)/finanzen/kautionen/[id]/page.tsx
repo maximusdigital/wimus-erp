@@ -7,16 +7,14 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteKautionButton } from "@/components/kautionen/delete-kaution-button"
-import { formatEUR } from "@/lib/utils/format"
-import { kontaktName } from "@/types/kontakt"
+import { formatDate, formatEUR } from "@/lib/utils/format"
 import {
   KAUTION_ANLAGE_ART_LABELS,
   KAUTION_STATUS_LABELS,
   type KautionMitRelationen,
 } from "@/types/kaution"
 
-const SELECT =
-  "*, vertrag:vertraege(vertragsnummer), mieter:kontakte(vorname, nachname, firma)"
+const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -35,6 +33,7 @@ export default async function KautionDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("kautionen")
     .select(SELECT)
     .eq("id", id)
@@ -46,7 +45,9 @@ export default async function KautionDetailPage({
     notFound()
   }
 
-  const titel = kaution.mieter ? kontaktName(kaution.mieter) : "Kaution"
+  const titel = kaution.vertrag?.aktenzeichen
+    ? `Kaution ${kaution.vertrag.aktenzeichen}`
+    : "Kaution"
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -109,27 +110,14 @@ export default async function KautionDetailPage({
                 }
               />
               <Field
-                label="Mieter"
-                value={
-                  kaution.mieter_id ? (
-                    <Link
-                      href={`/kontakte/${kaution.mieter_id}`}
-                      className="hover:underline"
-                    >
-                      {kaution.mieter ? kontaktName(kaution.mieter) : "Kontakt"}
-                    </Link>
-                  ) : null
-                }
-              />
-              <Field
                 label="Vertrag"
                 value={
-                  kaution.vertrag_id ? (
+                  kaution.mietvertrag_id ? (
                     <Link
-                      href={`/vertraege/${kaution.vertrag_id}`}
+                      href={`/vertraege/${kaution.mietvertrag_id}`}
                       className="hover:underline"
                     >
-                      {kaution.vertrag?.vertragsnummer ?? "Vertrag"}
+                      {kaution.vertrag?.aktenzeichen ?? "Vertrag"}
                     </Link>
                   ) : null
                 }
@@ -140,12 +128,18 @@ export default async function KautionDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Bankverbindung</CardTitle>
+            <CardTitle className="text-base">Verzinsung &amp; Rückzahlung</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <Field label="Bank" value={kaution.bank} />
-              <Field label="IBAN" value={kaution.iban} />
+              <Field
+                label="Zinsen kumuliert"
+                value={formatEUR(kaution.zinsen_kumuliert)}
+              />
+              <Field
+                label="Rückzahlung am"
+                value={formatDate(kaution.rueckzahlung_datum)}
+              />
             </dl>
           </CardContent>
         </Card>

@@ -11,24 +11,23 @@ export const metadata = {
   title: "Mahnungen",
 }
 
-const SELECT =
-  "*, vertrag:vertraege(vertragsnummer), mieter:kontakte(vorname, nachname, firma)"
+const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
 export default async function MahnungenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ vertrag?: string; mieter?: string }>
+  searchParams: Promise<{ vertrag?: string }>
 }) {
-  const { vertrag, mieter } = await searchParams
+  const { vertrag } = await searchParams
   const supabase = await createServerClient()
 
   let query = supabase
+    .schema("wimus")
     .from("mahnungen")
     .select(SELECT)
     .order("faellig_am", { ascending: false, nullsFirst: false })
 
-  if (vertrag) query = query.eq("vertrag_id", vertrag)
-  if (mieter) query = query.eq("mieter_id", mieter)
+  if (vertrag) query = query.eq("mietvertrag_id", vertrag)
 
   const { data, error } = await query
   const mahnungen = (data ?? []) as unknown as MahnungMitRelationen[]

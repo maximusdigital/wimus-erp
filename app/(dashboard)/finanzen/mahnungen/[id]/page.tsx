@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteMahnungButton } from "@/components/mahnungen/delete-mahnung-button"
 import { formatDate, formatEUR } from "@/lib/utils/format"
-import { kontaktName } from "@/types/kontakt"
 import {
   MAHN_STATUS_LABELS,
   MAHN_STATUS_VARIANT,
@@ -16,8 +15,7 @@ import {
   type MahnungMitRelationen,
 } from "@/types/mahnung"
 
-const SELECT =
-  "*, vertrag:vertraege(vertragsnummer), mieter:kontakte(vorname, nachname, firma)"
+const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -36,6 +34,7 @@ export default async function MahnungDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
+    .schema("wimus")
     .from("mahnungen")
     .select(SELECT)
     .eq("id", id)
@@ -70,7 +69,7 @@ export default async function MahnungDetailPage({
               </Badge>
             </div>
             <p className="text-muted-foreground text-sm">
-              {mahnung.mieter ? kontaktName(mahnung.mieter) : "Kein Mieter"}
+              {mahnung.vertrag?.aktenzeichen ?? "Kein Vertrag"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -97,36 +96,20 @@ export default async function MahnungDetailPage({
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
               <Field label="Stufe" value={titel} />
               <Field
-                label="Mieter"
-                value={
-                  mahnung.mieter_id ? (
-                    <Link
-                      href={`/kontakte/${mahnung.mieter_id}`}
-                      className="hover:underline"
-                    >
-                      {mahnung.mieter ? kontaktName(mahnung.mieter) : "Kontakt"}
-                    </Link>
-                  ) : null
-                }
-              />
-              <Field
                 label="Vertrag"
                 value={
-                  mahnung.vertrag_id ? (
+                  mahnung.mietvertrag_id ? (
                     <Link
-                      href={`/vertraege/${mahnung.vertrag_id}`}
+                      href={`/vertraege/${mahnung.mietvertrag_id}`}
                       className="hover:underline"
                     >
-                      {mahnung.vertrag?.vertragsnummer ?? "Vertrag"}
+                      {mahnung.vertrag?.aktenzeichen ?? "Vertrag"}
                     </Link>
                   ) : null
                 }
               />
               <Field label="Fällig am" value={formatDate(mahnung.faellig_am)} />
-              <Field
-                label="Versendet am"
-                value={formatDate(mahnung.versendet_am)}
-              />
+              <Field label="Mahngericht-AZ" value={mahnung.mahngericht_az} />
             </dl>
           </CardContent>
         </Card>
@@ -147,7 +130,7 @@ export default async function MahnungDetailPage({
                 label="Gesamt"
                 value={
                   <span className="font-medium">
-                    {formatEUR(mahnung.gesamt)}
+                    {formatEUR(mahnung.gesamtforderung)}
                   </span>
                 }
               />

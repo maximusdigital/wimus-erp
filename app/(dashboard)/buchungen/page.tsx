@@ -12,23 +12,23 @@ export const metadata = {
 }
 
 const SELECT =
-  "*, einheit:einheiten(verwendungszweck_code, bezeichnung), objekt:objekte(kuerzel), gast:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt_id, objekt:objekte(kuerzel)), gast:kontakte(vorname, nachname, firmenname)"
 
 export default async function BuchungenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ einheit?: string; objekt?: string; gast?: string }>
+  searchParams: Promise<{ einheit?: string; gast?: string }>
 }) {
-  const { einheit, objekt, gast } = await searchParams
+  const { einheit, gast } = await searchParams
   const supabase = await createServerClient()
 
   let query = supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .select(SELECT)
     .order("checkin", { ascending: false, nullsFirst: false })
 
   if (einheit) query = query.eq("einheit_id", einheit)
-  if (objekt) query = query.eq("objekt_id", objekt)
   if (gast) query = query.eq("gast_id", gast)
 
   const { data, error } = await query

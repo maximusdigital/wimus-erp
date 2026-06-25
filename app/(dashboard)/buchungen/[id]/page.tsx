@@ -18,7 +18,7 @@ import {
 } from "@/types/buchung"
 
 const SELECT =
-  "*, einheit:einheiten(verwendungszweck_code, bezeichnung), objekt:objekte(kuerzel), gast:kontakte(vorname, nachname, firma)"
+  "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt_id, objekt:objekte(kuerzel)), gast:kontakte(vorname, nachname, firmenname)"
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -50,7 +50,8 @@ export default async function BuchungDetailPage({
   const { id } = await params
   const supabase = await createServerClient()
   const { data } = await supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .select(SELECT)
     .eq("id", id)
     .maybeSingle()
@@ -132,12 +133,12 @@ export default async function BuchungDetailPage({
               <Field
                 label="Objekt"
                 value={
-                  buchung.objekt_id ? (
+                  buchung.einheit?.objekt_id ? (
                     <Link
-                      href={`/objekte/${buchung.objekt_id}`}
+                      href={`/objekte/${buchung.einheit.objekt_id}`}
                       className="hover:underline"
                     >
-                      {buchung.objekt?.kuerzel ?? "Objekt"}
+                      {buchung.einheit.objekt?.kuerzel ?? "Objekt"}
                     </Link>
                   ) : null
                 }
@@ -212,7 +213,6 @@ export default async function BuchungDetailPage({
                   ) : null
                 }
               />
-              <Field label="Nuki-Code" value={buchung.nuki_code} />
               <Field label="Tuya-Szene" value={buchung.tuya_szene} />
               <Field
                 label="Gästemappe-Token"
@@ -240,7 +240,7 @@ export default async function BuchungDetailPage({
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <Field label="Betrag" value={formatEUR(buchung.betrag)} />
+              <Field label="Betrag" value={formatEUR(buchung.betrag_brutto)} />
               <Field
                 label="USt"
                 value={
@@ -249,7 +249,7 @@ export default async function BuchungDetailPage({
                     : null
                 }
               />
-              <Field label="CityTax" value={formatEUR(buchung.city_tax)} />
+              <Field label="CityTax" value={formatEUR(buchung.citytax_betrag)} />
             </dl>
           </CardContent>
         </Card>

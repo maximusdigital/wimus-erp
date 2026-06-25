@@ -51,7 +51,7 @@ function emptyValues(prefill?: {
     checkin: "",
     checkout: "",
     personen: "",
-    betrag: "",
+    betrag_brutto: "",
     ust_prozent: "7",
     apartment_pin: "",
     status: "bestaetigt",
@@ -80,7 +80,7 @@ function toFormValues(b: Buchung): BuchungFormValues {
     checkin: toLocalDateTime(b.checkin),
     checkout: toLocalDateTime(b.checkout),
     personen: n(b.personen),
-    betrag: n(b.betrag),
+    betrag_brutto: n(b.betrag_brutto),
     ust_prozent: b.ust_prozent == null ? "7" : String(b.ust_prozent),
     apartment_pin: s(b.apartment_pin),
     status: b.status as BuchungFormValues["status"],
@@ -285,7 +285,7 @@ export function BuchungForm({
 
           <FormField
             control={form.control}
-            name="betrag"
+            name="betrag_brutto"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Betrag (€)</FormLabel>

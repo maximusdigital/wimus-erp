@@ -25,8 +25,8 @@ describe("buchungInsertSchema", () => {
   })
 
   it("betrag/ust dürfen dezimal sein", () => {
-    const r = buchungInsertSchema.parse({ ...valid, betrag: "199.90", ust_prozent: "7" })
-    expect(r.betrag).toBe(199.9)
+    const r = buchungInsertSchema.parse({ ...valid, betrag_brutto: "199.90", ust_prozent: "7" })
+    expect(r.betrag_brutto).toBe(199.9)
     expect(r.ust_prozent).toBe(7)
   })
 

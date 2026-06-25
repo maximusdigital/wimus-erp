@@ -20,7 +20,8 @@ export default async function BuchungBearbeitenPage({
   const supabase = await createServerClient()
 
   const { data } = await supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .select("*")
     .eq("id", id)
     .maybeSingle()

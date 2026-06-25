@@ -5,8 +5,7 @@ import { ChevronLeft } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { loadFinanzenOptions } from "@/lib/finanzen-options"
 import { KautionForm } from "@/components/kautionen/kaution-form"
-import { kontaktName } from "@/types/kontakt"
-import type { Kaution } from "@/types/kaution"
+import type { KautionMitRelationen } from "@/types/kaution"
 
 export const metadata = {
   title: "Kaution bearbeiten",
@@ -21,23 +20,22 @@ export default async function KautionBearbeitenPage({
   const supabase = await createServerClient()
 
   const { data } = await supabase
+    .schema("wimus")
     .from("kautionen")
-    .select("*, mieter:kontakte(vorname, nachname, firma)")
+    .select("*, vertrag:mietvertraege(aktenzeichen)")
     .eq("id", id)
     .maybeSingle()
 
-  const kaution = data as
-    | (Kaution & {
-        mieter: { vorname: string | null; nachname: string | null; firma: string | null } | null
-      })
-    | null
+  const kaution = data as unknown as KautionMitRelationen | null
 
   if (!kaution) {
     notFound()
   }
 
-  const { vertraege, kontakte } = await loadFinanzenOptions()
-  const titel = kaution.mieter ? kontaktName(kaution.mieter) : "Kaution"
+  const { vertraege } = await loadFinanzenOptions()
+  const titel = kaution.vertrag?.aktenzeichen
+    ? `Kaution ${kaution.vertrag.aktenzeichen}`
+    : "Kaution"
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -58,11 +56,7 @@ export default async function KautionBearbeitenPage({
       </div>
 
       <div className="max-w-4xl">
-        <KautionForm
-          kaution={kaution}
-          vertraege={vertraege}
-          kontakte={kontakte}
-        />
+        <KautionForm kaution={kaution} vertraege={vertraege} />
       </div>
     </div>
   )

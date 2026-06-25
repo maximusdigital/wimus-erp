@@ -49,9 +49,9 @@ export function BuchungTabelle({
                 <Link href={`/buchungen/${b.id}`} className="hover:underline">
                   {einheitLabel(b)}
                 </Link>
-                {b.objekt?.kuerzel ? (
+                {b.einheit?.objekt?.kuerzel ? (
                   <span className="text-muted-foreground">
-                    {" "}· {b.objekt.kuerzel}
+                    {" "}· {b.einheit.objekt.kuerzel}
                   </span>
                 ) : null}
               </TableCell>
@@ -63,7 +63,7 @@ export function BuchungTabelle({
                 {b.kanal ? (KANAL_LABELS[b.kanal] ?? b.kanal) : "–"}
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {formatEUR(b.betrag)}
+                {formatEUR(b.betrag_brutto)}
               </TableCell>
               <TableCell>
                 <Badge

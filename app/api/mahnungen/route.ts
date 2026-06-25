@@ -4,22 +4,20 @@ import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { mahnungInsertSchema } from "@/lib/validations/mahnung"
 
-const SELECT =
-  "*, vertrag:vertraege(vertragsnummer), mieter:kontakte(vorname, nachname, firma)"
+const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
   const { searchParams } = request.nextUrl
 
   let query = supabase
+    .schema("wimus")
     .from("mahnungen")
     .select(SELECT)
     .order("faellig_am", { ascending: false, nullsFirst: false })
 
-  for (const key of ["vertrag", "mieter"] as const) {
-    const value = searchParams.get(key)
-    if (value) query = query.eq(`${key}_id`, value)
-  }
+  const vertrag = searchParams.get("vertrag")
+  if (vertrag) query = query.eq("mietvertrag_id", vertrag)
   const status = searchParams.get("status")
   if (status) query = query.eq("status", status)
 
@@ -52,14 +50,15 @@ export async function POST(request: NextRequest) {
   }
 
   // Gesamtforderung serverseitig berechnen.
-  const gesamt =
+  const gesamtforderung =
     (parsed.data.hauptforderung ?? 0) +
     (parsed.data.zinsen ?? 0) +
     (parsed.data.gebuehren ?? 0)
 
   const { data, error } = await supabase
+    .schema("wimus")
     .from("mahnungen")
-    .insert({ ...parsed.data, gesamt, mandant_id: active.id })
+    .insert({ ...parsed.data, gesamtforderung, mandant_id: active.id })
     .select()
     .single()
 

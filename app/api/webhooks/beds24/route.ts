@@ -8,7 +8,7 @@ import { citytaxBetrag } from "@/lib/utils/citytax"
  * Beds24-Webhook (Phase 3, KZV-Vollautomatisierung) – SKELETON.
  *
  * Verifiziert ein geteiltes Secret, legt/aktualisiert die Buchung in
- * public.buchungen_kzv an und kopiert den statischen Keybox-PIN aus der Einheit.
+ * wimus.buchungen an und kopiert den statischen Keybox-PIN aus der Einheit.
  * Läuft OHNE User-Session → Admin-Client (Service-Role, umgeht RLS). Deshalb
  * MUSS jeder Datensatz einer Einheit/Mandant zugeordnet werden.
  *
@@ -63,8 +63,9 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
-  // 2) Einheit auflösen – liefert mandant_id, objekt_id und den Keybox-PIN.
+  // 2) Einheit auflösen – liefert objekt_id und den statischen Keybox-PIN.
   //    Mapping über UUID (einheit_id) oder Verwendungszweck-Code.
+  //    Hinweis: wimus.einheiten trägt keine mandant_id – diese hängt am Objekt.
   const einheitId =
     typeof p.einheit_id === "string" ? p.einheit_id.trim() : null
   const vzCode =
@@ -74,7 +75,6 @@ export async function POST(request: NextRequest) {
 
   type EinheitRow = {
     id: string
-    mandant_id: string
     objekt_id: string | null
     keybox_pin_statisch: string | null
   }
@@ -82,8 +82,9 @@ export async function POST(request: NextRequest) {
 
   if (einheitId || vzCode) {
     const sel = supabase
+      .schema("wimus")
       .from("einheiten")
-      .select("id, mandant_id, objekt_id, keybox_pin_statisch")
+      .select("id, objekt_id, keybox_pin_statisch")
       .limit(1)
     const { data } = einheitId
       ? await sel.eq("id", einheitId).maybeSingle()
@@ -91,27 +92,30 @@ export async function POST(request: NextRequest) {
     einheit = (data as unknown as EinheitRow | null) ?? null
   }
 
-  // mandant_id ist Pflicht. Aus der Einheit, sonst konfigurierter Default.
-  const mandantId = einheit?.mandant_id ?? process.env.BEDS24_DEFAULT_MANDANT_ID
+  // 3) Mandant + Stadt (für CityTax) aus dem Objekt holen.
+  let mandantFromObjekt: string | null = null
+  let stadt: string | null = null
+  if (einheit?.objekt_id) {
+    const { data: objekt } = await supabase
+      .schema("wimus")
+      .from("objekte")
+      .select("mandant_id, stadt")
+      .eq("id", einheit.objekt_id)
+      .maybeSingle()
+    mandantFromObjekt = (objekt?.mandant_id as string | null) ?? null
+    stadt = (objekt?.stadt as string | null) ?? null
+  }
+
+  // mandant_id ist Pflicht. Aus dem Objekt, sonst konfigurierter Default.
+  const mandantId = mandantFromObjekt ?? process.env.BEDS24_DEFAULT_MANDANT_ID
   if (!mandantId) {
     return NextResponse.json(
       {
         error:
-          "Mandant nicht auflösbar – Einheit nicht gefunden und kein BEDS24_DEFAULT_MANDANT_ID gesetzt.",
+          "Mandant nicht auflösbar – Einheit/Objekt nicht gefunden und kein BEDS24_DEFAULT_MANDANT_ID gesetzt.",
       },
       { status: 422 }
     )
-  }
-
-  // 3) Stadt für CityTax aus dem Objekt holen.
-  let ort: string | null = null
-  if (einheit?.objekt_id) {
-    const { data: objekt } = await supabase
-      .from("objekte")
-      .select("ort")
-      .eq("id", einheit.objekt_id)
-      .maybeSingle()
-    ort = (objekt?.ort as string | null) ?? null
   }
 
   const checkin = typeof p.checkin === "string" ? p.checkin : null
@@ -120,19 +124,18 @@ export async function POST(request: NextRequest) {
     p.personen != null ? Number(p.personen) : p.numAdult != null ? Number(p.numAdult) : null
   const betrag = p.betrag != null ? Number(p.betrag) : p.price != null ? Number(p.price) : null
 
-  const cityTax = citytaxBetrag({ stadt: ort, personen, checkin, checkout })
+  const cityTax = citytaxBetrag({ stadt, personen, checkin, checkout })
 
   const row = {
     mandant_id: mandantId,
     einheit_id: einheit?.id ?? null,
-    objekt_id: einheit?.objekt_id ?? null,
     beds24_id: beds24Id,
     kanal: typeof p.kanal === "string" ? p.kanal : (p.referer as string) ?? null,
     checkin,
     checkout,
     personen: Number.isFinite(personen) ? personen : null,
-    betrag: Number.isFinite(betrag) ? betrag : null,
-    city_tax: cityTax,
+    betrag_brutto: Number.isFinite(betrag) ? betrag : null,
+    citytax_betrag: cityTax,
     keybox_pin: einheit?.keybox_pin_statisch ?? null,
     // apartment_pin bleibt offen → wird von n8n (TTLock) nachgetragen.
     status: mapStatus(p.status),
@@ -140,7 +143,8 @@ export async function POST(request: NextRequest) {
 
   // 4) Upsert auf (mandant_id, beds24_id) – idempotent bei Webhook-Retries.
   const { data, error } = await supabase
-    .from("buchungen_kzv")
+    .schema("wimus")
+    .from("buchungen")
     .upsert(row, { onConflict: "mandant_id,beds24_id" })
     .select("id")
     .single()

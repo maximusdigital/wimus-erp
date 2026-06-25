@@ -5,13 +5,13 @@ import { kautionInsertSchema } from "@/lib/validations/kaution"
 
 type Context = { params: Promise<{ id: string }> }
 
-const SELECT =
-  "*, vertrag:vertraege(vertragsnummer), mieter:kontakte(vorname, nachname, firma)"
+const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
 export async function GET(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
   const { data, error } = await supabase
+    .schema("wimus")
     .from("kautionen")
     .select(SELECT)
     .eq("id", id)
@@ -41,6 +41,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
 
   // mandant_id wird nicht verändert; RLS erlaubt Update nur für eigene Mandanten.
   const { data, error } = await supabase
+    .schema("wimus")
     .from("kautionen")
     .update(parsed.data)
     .eq("id", id)
@@ -60,7 +61,11 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
   const { id } = await params
   const supabase = await createServerClient()
 
-  const { error } = await supabase.from("kautionen").delete().eq("id", id)
+  const { error } = await supabase
+    .schema("wimus")
+    .from("kautionen")
+    .delete()
+    .eq("id", id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

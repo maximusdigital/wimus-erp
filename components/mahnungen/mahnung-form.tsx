@@ -18,8 +18,6 @@ import {
   type Mahnung,
 } from "@/types/mahnung"
 import type { VertragOption } from "@/lib/finanzen-options"
-import type { KontaktRef } from "@/types/vertrag"
-import { kontaktName } from "@/types/kontakt"
 import { formatEUR } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,14 +39,13 @@ import {
 
 function emptyValues(prefill?: { vertragId?: string }): MahnungFormValues {
   return {
-    vertrag_id: prefill?.vertragId ?? "",
-    mieter_id: "",
+    mietvertrag_id: prefill?.vertragId ?? "",
     stufe: "1",
     hauptforderung: "",
     zinsen: "",
     gebuehren: "",
     faellig_am: "",
-    versendet_am: "",
+    mahngericht_az: "",
     status: "offen",
   }
 }
@@ -58,14 +55,13 @@ function toFormValues(m: Mahnung): MahnungFormValues {
   const n = (x: number | null) => (x == null ? "" : String(x))
   const d = (x: string | null) => (x ? x.slice(0, 10) : "")
   return {
-    vertrag_id: s(m.vertrag_id),
-    mieter_id: s(m.mieter_id),
+    mietvertrag_id: s(m.mietvertrag_id),
     stufe: String(m.stufe ?? 1),
     hauptforderung: n(m.hauptforderung),
     zinsen: n(m.zinsen),
     gebuehren: n(m.gebuehren),
     faellig_am: d(m.faellig_am),
-    versendet_am: d(m.versendet_am),
+    mahngericht_az: s(m.mahngericht_az),
     status: m.status as MahnungFormValues["status"],
   }
 }
@@ -73,12 +69,10 @@ function toFormValues(m: Mahnung): MahnungFormValues {
 export function MahnungForm({
   mahnung,
   vertraege,
-  kontakte,
   defaultVertragId,
 }: {
   mahnung?: Mahnung
   vertraege: VertragOption[]
-  kontakte: KontaktRef[]
   defaultVertragId?: string
 }) {
   const router = useRouter()
@@ -180,7 +174,7 @@ export function MahnungForm({
 
           <FormField
             control={form.control}
-            name="vertrag_id"
+            name="mietvertrag_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vertrag</FormLabel>
@@ -194,31 +188,6 @@ export function MahnungForm({
                     {vertraege.map((v) => (
                       <SelectItem key={v.id} value={v.id}>
                         {v.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="mieter_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mieter</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Kontakt wählen…" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {kontakte.map((k) => (
-                      <SelectItem key={k.id} value={k.id}>
-                        {kontaktName(k)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -296,12 +265,12 @@ export function MahnungForm({
 
           <FormField
             control={form.control}
-            name="versendet_am"
+            name="mahngericht_az"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Versendet am</FormLabel>
+                <FormLabel>Mahngericht-AZ</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input placeholder="z. B. 12-3456789-0-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

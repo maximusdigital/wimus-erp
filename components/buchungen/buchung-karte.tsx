@@ -44,9 +44,9 @@ export function BuchungKarte({ buchung }: { buchung: BuchungMitRelationen }) {
                 : ""}
             </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span>Betrag: {formatEUR(buchung.betrag)}</span>
-              {buchung.objekt?.kuerzel ? (
-                <span>Objekt: {buchung.objekt.kuerzel}</span>
+              <span>Betrag: {formatEUR(buchung.betrag_brutto)}</span>
+              {buchung.einheit?.objekt?.kuerzel ? (
+                <span>Objekt: {buchung.einheit.objekt.kuerzel}</span>
               ) : null}
             </div>
           </div>

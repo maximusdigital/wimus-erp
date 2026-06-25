@@ -14,7 +14,7 @@ export default async function NeueKautionPage({
   searchParams: Promise<{ vertrag?: string }>
 }) {
   const { vertrag } = await searchParams
-  const { vertraege, kontakte } = await loadFinanzenOptions()
+  const { vertraege } = await loadFinanzenOptions()
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -35,11 +35,7 @@ export default async function NeueKautionPage({
       </div>
 
       <div className="max-w-4xl">
-        <KautionForm
-          vertraege={vertraege}
-          kontakte={kontakte}
-          defaultVertragId={vertrag}
-        />
+        <KautionForm vertraege={vertraege} defaultVertragId={vertrag} />
       </div>
     </div>
   )

@@ -18,6 +18,7 @@ export async function loadBuchungOptions(): Promise<BuchungOptions> {
 
   const [einheitenRes, kontakteRes] = await Promise.all([
     supabase
+      .schema("wimus")
       .from("einheiten")
       .select("id, objekt_id, verwendungszweck_code, bezeichnung")
       .order("verwendungszweck_code", { nullsFirst: false }),

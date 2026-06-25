@@ -11,14 +11,13 @@ const numericString = z
   .refine((v) => !v || !Number.isNaN(Number(v)), { message: "Ungültige Zahl" })
 
 export const mahnungFormSchema = z.object({
-  vertrag_id: z.string().optional(),
-  mieter_id: z.string().optional(),
+  mietvertrag_id: z.string().optional(),
   stufe: z.string().optional(),
   hauptforderung: numericString,
   zinsen: numericString,
   gebuehren: numericString,
   faellig_am: z.string().optional(),
-  versendet_am: z.string().optional(),
+  mahngericht_az: z.string().optional(),
   status: z.enum(MAHN_STATUS),
 })
 
@@ -26,7 +25,7 @@ export type MahnungFormValues = z.infer<typeof mahnungFormSchema>
 
 // ---------------------------------------------------------------------------
 // Server-Insert-Schema: bereinigt + typisiert die rohen Form-Werte.
-// Hinweis: `gesamt` wird serverseitig (API) aus den Teilbeträgen berechnet.
+// Hinweis: `gesamtforderung` wird serverseitig (API) aus den Teilbeträgen berechnet.
 // ---------------------------------------------------------------------------
 const textOrNull = z
   .string()
@@ -56,13 +55,12 @@ const stufeInt = z
   })
 
 export const mahnungInsertSchema = z.object({
-  vertrag_id: uuidOrNull,
-  mieter_id: uuidOrNull,
+  mietvertrag_id: uuidOrNull,
   stufe: stufeInt,
   hauptforderung: numberOrNull,
   zinsen: numberOrNull,
   gebuehren: numberOrNull,
   faellig_am: textOrNull,
-  versendet_am: textOrNull,
+  mahngericht_az: textOrNull,
   status: z.enum(MAHN_STATUS),
 })
