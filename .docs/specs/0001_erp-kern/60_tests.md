@@ -110,3 +110,24 @@ Restbuchwert nach 5×AfA; IST vs PLAN. Mahnwesen 5-stufig: Stufe 1 keine Gebühr
 - Inventar/Assets (`asset_register`) bleibt `public` bis P5 (QR+OCR+AfA).
 - Tremor-Charts (Design V104) durch React-19-Peerkonflikt blockiert (custom KpiCard aktiv).
 - pgTAP (RLS/Trigger DB-seitig) im Supabase-SQL-Editor — separat.
+
+---
+
+## Phase 2 — Forderungsmanagement (wimus.forderungen)
+
+Runnable: `tests/unit/lib/forderungen.test.ts` (11 Tests).
+
+### Abnahme-Testfälle (durchgeführt)
+- **Schadens-Eskalation nach Betrag** (Spec 30_prozesse 3): <50 → Stufe 1 (Kaution
+  direkt); 50–500 → Stufe 2 (Kaution+Mahnung); 500–5.000 → Stufe 3 (Kaution+
+  Versicherung); 5.000–10.000 → Stufe 4 (Versicherung+Mahnbescheid); >10.000 →
+  Stufe 5 (Anwalt). Grenzwerte 50/500/5000/10000 springen jeweils hoch.
+- **Offener Betrag**: betrag − bezahlt_betrag.
+- **Kaution-Verrechnungstopf**: Rest positiv → Rückzahlung; Rest negativ →
+  Nachforderung; exakt aufgehend → 0/0.
+- **CRUD**: /finanzen/forderungen Liste/Neu/Detail/Bearbeiten; API mandant_id
+  serverseitig; kontakt_id Pflicht.
+- **Embed-Validierung als User (200)**: `forderungen` mit
+  `kontakt:kontakte!kontakt_id(...)` (FK-Disambiguierung wegen mehrerer
+  kontakte-FKs: kontakt_id + gutachter_id) + `mietvertrag:mietvertraege(aktenzeichen)`.
+- Build grün, Gesamt-Suite 138 Tests grün.
