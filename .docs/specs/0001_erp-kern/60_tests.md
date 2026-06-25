@@ -166,3 +166,21 @@ Runnable: `tests/unit/lib/bk.test.ts` (13 Tests).
 
 > Offen (nächster Schritt): Abrechnungseinheiten + Kostenverteilungs-Lauf
 > (kostenverteilung_positionen → bk_abrechnungen) nutzen `verteileKosten`.
+
+---
+
+## Phase 2 — BK-Abrechnungslauf (Workflow)
+
+Runnable: `tests/unit/lib/bk-abrechnung.test.ts` (5 Tests).
+
+### Abnahme-Testfälle (durchgeführt)
+- **erstelleAbrechnung**: verteilt Positionen je Schlüssel über die Mitglieder,
+  summiert Kostenanteil je Mietvertrag; Summe geht exakt auf (kostenGesamt).
+- **Saldo** = Vorauszahlung − Kostenanteil (Guthaben positiv / Nachzahlung negativ).
+- **Standard-Schlüssel** greift, wenn die Position keinen hat.
+- **intern_abgerechnet (KZV)** trägt 0.
+- **Workflow-UI** `/betriebskosten`: Abrechnungseinheiten + Mitglieder, Kostenpositionen,
+  Abrechnungs-Vorschau (read-only, nutzt erstelleAbrechnung). Embeds als User
+  validiert (200): abrechnungseinheiten/objekt, mitglieder/einheit+mietvertrag!fk,
+  kostenverteilung_positionen/bk_art.
+- Build + 166 Tests grün. Offen: Speichern in bk_abrechnungen + Nebenkostenspiegel-PDF.

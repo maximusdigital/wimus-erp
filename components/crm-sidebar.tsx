@@ -6,6 +6,7 @@ import {
   BedDouble,
   Building2,
   CalendarClock,
+  Calculator,
   ClipboardList,
   DoorOpen,
   FileText,
@@ -61,6 +62,7 @@ const mainNav: NavItem[] = [
   { title: "Inventar", href: "/inventar", icon: Package },
   { title: "Buchungen", href: "/buchungen", icon: BedDouble },
   { title: "Finanzen", href: "/finanzen", icon: Wallet },
+  { title: "Betriebskosten", href: "/betriebskosten", icon: Calculator },
   { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock },
   { title: "Dokumente", href: "/dokumente", icon: FolderArchive },
 ];
