@@ -184,3 +184,24 @@ Runnable: `tests/unit/lib/bk-abrechnung.test.ts` (5 Tests).
   validiert (200): abrechnungseinheiten/objekt, mitglieder/einheit+mietvertrag!fk,
   kostenverteilung_positionen/bk_art.
 - Build + 166 Tests grün. Offen: Speichern in bk_abrechnungen + Nebenkostenspiegel-PDF.
+
+---
+
+## Phase 2 — BK-Abrechnung: Speichern + Nebenkostenspiegel
+
+Runnable: `tests/unit/lib/betriebskosten-run.test.ts` (4 Tests).
+
+### Abnahme-Testfälle (durchgeführt)
+- **periodeRange**: Jahr "2025" → 01.01.–31.12.; ungültiges Format → null/null.
+- **isUmlageschluessel**: erkennt gültige Schlüssel.
+- **Save-API** `POST /api/betriebskosten/[id]/abrechnung`: rechnet serverseitig neu
+  (gemeinsamer Helper `ladeAbrechnungslauf`), schreibt je Mietvertrag eine Zeile in
+  `bk_abrechnungen` (Status entwurf, nebenkostenspiegel-JSON), idempotent (löscht
+  vorherige Entwürfe). Build-clean.
+- **Druckansicht** `/betriebskosten/[id]/abrechnung/druck`: A4 PrintLayout,
+  Nebenkostenspiegel je Mietvertrag (Positionen → Kostenanteil → abzgl. VZ → Saldo).
+- **UI-Smoke**: 10/10 neue Phase-2/BK-Routen rendern, 0 Konsolenfehler.
+- Build + 169 Tests grün.
+
+> Hinweis: Save-Happy-Path braucht reale Daten (einheiten/mietvertraege/Mitglieder/
+> Positionen); aktuell sind nur objekte/mandanten in wimus migriert.
