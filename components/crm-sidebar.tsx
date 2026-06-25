@@ -61,13 +61,13 @@ const mainNav: NavItem[] = [
   { title: "Inventar", href: "/inventar", icon: Package },
   { title: "Buchungen", href: "/buchungen", icon: BedDouble },
   { title: "Finanzen", href: "/finanzen", icon: Wallet },
+  { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock },
   { title: "Dokumente", href: "/dokumente", icon: FolderArchive },
 ];
 
 // Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.
 const secondaryNav: NavItem[] = [
   { title: "E-Mails", href: "/emails", icon: Mail, soon: true },
-  { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock, soon: true },
   { title: "Bestandsentwicklung", href: "/bestandsentwicklung", icon: TrendingUp, soon: true },
 ];
 

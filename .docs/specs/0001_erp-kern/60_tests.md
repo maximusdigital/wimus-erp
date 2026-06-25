@@ -131,3 +131,18 @@ Runnable: `tests/unit/lib/forderungen.test.ts` (11 Tests).
   `kontakt:kontakte!kontakt_id(...)` (FK-Disambiguierung wegen mehrerer
   kontakte-FKs: kontakt_id + gutachter_id) + `mietvertrag:mietvertraege(aktenzeichen)`.
 - Build grün, Gesamt-Suite 138 Tests grün.
+
+---
+
+## Phase 2 — Fristenmanagement (wimus.fristen)
+
+Runnable: `tests/unit/lib/fristen.test.ts` (10 Tests).
+
+### Abnahme-Testfälle (durchgeführt)
+- **tageBisFaellig**: zukünftig positiv, überfällig negativ, kein Datum → null.
+- **fristAmpel**: erledigt→erledigt; überfällig/≤7T→rot; ≤30T→gelb; >30T→grün.
+- **erinnerungFaellig**: trifft, wenn Resttage in `erinnerung_tage_vorher` (z.B. [30,14,7,1]).
+- **fristInsertSchema**: "30, 14, 7, 1" → number[]; ungültiger frist_typ abgelehnt.
+- **CRUD**: /fristen Liste (Ampel-Punkt) + Neu/Detail/Bearbeiten; Sidebar aktiv.
+- **RLS als User (200)**: `wimus.fristen` lesbar.
+- Build + 148 Tests grün.
