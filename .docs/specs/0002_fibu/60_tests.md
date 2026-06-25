@@ -54,3 +54,25 @@ geaendert: 2026-06-25
 ## E2E (Happy Path)
 
 - Beleg-Upload → OCR → Klassifikation → Vorschlag → Batch-Freigabe → gebucht → Export-Datei.
+
+## Umsetzungsstand (2026-06-26)
+
+Stammdaten-Layer + reine Kernlogik gebaut; Beleg-/Buchungs-Pipeline (OCR/Export)
+folgt nach Fixierung der offenen Punkte (EXTF-Layout, Confidence-Schwellen).
+
+**Umgesetzt (Vitest, `tests/unit/lib/fibu.test.ts`, 13 Tests grün):**
+- ✅ Kontierung Regel-Lookup: Gewerk-Match, Lieferant-Match, Priorität, fehlende Regel → review_flag
+  (`lib/utils/fibu.ts` `kontiere`).
+- ✅ Ergebnisverteilung: 60/40 ganzjährig, unterjähriger Quotenwechsel zeitanteilig,
+  Summe = Ergebnis (Rundungsrest), Verlustverteilung (`ergebnisverteilung`).
+- ✅ Stabile `buchungs_id_extern` (TaxPool-Dublettenerkennung): deterministisch,
+  case-/whitespace-insensitiv, betragssensitiv (`buchungsIdExtern`).
+
+**Migration:** `supabase/migrations/010_fibu_stammdaten.sql` (Schritt 1+2 des Grobplans):
+Firmen-Erweiterung (rechtsform_typ/besteuerungsart/kontenrahmen_ref), `gesellschafter`,
+`beteiligungen`, `fibu_konten`, `kontierungsregeln`, `lieferanten` – je mit RLS
+mandant_isolation. Annahme: Buchungskreis = `firmen` (Spec-OP).
+
+**Offen (nach Fixierung der OPs):** Beleg-/Buchungsvalidierung (netto+ust≈brutto,
+IBAN-Prüfsumme), Gating-Schwellen, E-Rechnungs-Weiche, EXTF-Export, Belege-/Buchungs-DDL
+(Schritt 3), Stammdaten-UI + pgTAP-RLS.
