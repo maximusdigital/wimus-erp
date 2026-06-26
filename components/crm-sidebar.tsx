@@ -15,8 +15,11 @@ import {
   LogOut,
   Mail,
   Package,
+  Receipt,
+  Landmark,
   Settings,
   TrendingUp,
+  Truck,
   Users,
   Wallet,
   type LucideIcon,
@@ -65,6 +68,13 @@ const mainNav: NavItem[] = [
   { title: "Betriebskosten", href: "/betriebskosten", icon: Calculator },
   { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock },
   { title: "Dokumente", href: "/dokumente", icon: FolderArchive },
+];
+
+// FiBu (Spec 0002) – Stammdaten/Kontierung.
+const fibuNav: NavItem[] = [
+  { title: "Gesellschafter", href: "/fibu/gesellschafter", icon: Landmark },
+  { title: "Kontierungsregeln", href: "/fibu/kontierungsregeln", icon: Receipt },
+  { title: "Lieferanten", href: "/fibu/lieferanten", icon: Truck },
 ];
 
 // Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.
@@ -149,6 +159,13 @@ export function CrmSidebar({ user }: { user: SidebarUser }) {
           <SidebarGroupLabel>Hauptmenü</SidebarGroupLabel>
           <SidebarGroupContent>
             <NavMenu items={mainNav} />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>FiBu</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavMenu items={fibuNav} />
           </SidebarGroupContent>
         </SidebarGroup>
 
