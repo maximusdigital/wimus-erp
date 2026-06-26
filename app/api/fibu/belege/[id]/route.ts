@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
       )
     }
     const buchung = buchungAusBeleg(beleg, { akteur_typ: "mensch" })
-    const { error: bErr } = await supabase.from("buchungen").insert(buchung)
+    const { error: bErr } = await supabase.from("fibu_buchungen").insert(buchung)
     if (bErr) {
       const msg =
         bErr.code === "23505"

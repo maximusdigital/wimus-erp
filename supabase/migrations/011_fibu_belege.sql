@@ -1,11 +1,14 @@
 -- =====================================================================
--- Migration 011: FiBu (Spec 0002) – Belege / Buchungen / Korrekturen
+-- Migration 011: FiBu (Spec 0002) – Belege / Buchungssätze / Korrekturen
 -- (Grobplan Schritt 3). Setzt 010 (Stammdaten) voraus.
 --
+-- WICHTIG: wimus.buchungen existiert bereits (KZV-Reservierungen aus dem
+-- Kern-Schema). Die FiBu-Buchungssätze heißen daher fibu_buchungen /
+-- fibu_korrekturen – die KZV-Tabelle bleibt unangetastet.
+--
 -- Buchungskreis = firmen (wie 010). belege.hash UNIQUE = DB-seitige
--- Dublettensicherung; buchungen.buchungs_id_extern stabil (TaxPool-Dedup).
--- ocr_verarbeitung_id bleibt referenzlos (ocr_verarbeitungen lebt in 0001/
--- separat) – nur als Verweis-UUID.
+-- Dublettensicherung; fibu_buchungen.buchungs_id_extern stabil (TaxPool-Dedup).
+-- ocr_verarbeitung_id bleibt referenzlos (ocr_verarbeitungen separat).
 --
 -- Idempotent. Anwenden: Supabase SQL-Editor.
 -- =====================================================================
@@ -61,9 +64,9 @@ CREATE INDEX IF NOT EXISTS idx_belege_firma ON wimus.belege(firma_id);
 CREATE INDEX IF NOT EXISTS idx_belege_datum ON wimus.belege(belegdatum);
 
 -- ---------------------------------------------------------------------
--- buchungen (Eingang)
+-- fibu_buchungen (Eingangs-Buchungssätze – NICHT die KZV-buchungen!)
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS wimus.buchungen (
+CREATE TABLE IF NOT EXISTS wimus.fibu_buchungen (
   id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   mandant_id         UUID NOT NULL REFERENCES wimus.mandanten(id) ON DELETE CASCADE,
   firma_id           UUID REFERENCES wimus.firmen(id) ON DELETE SET NULL,
@@ -84,16 +87,16 @@ CREATE TABLE IF NOT EXISTS wimus.buchungen (
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_buchungen_beleg ON wimus.buchungen(beleg_id);
-CREATE INDEX IF NOT EXISTS idx_buchungen_firma ON wimus.buchungen(firma_id);
+CREATE INDEX IF NOT EXISTS idx_fibu_buchungen_beleg ON wimus.fibu_buchungen(beleg_id);
+CREATE INDEX IF NOT EXISTS idx_fibu_buchungen_firma ON wimus.fibu_buchungen(firma_id);
 
 -- ---------------------------------------------------------------------
--- korrekturen (lernender Loop)
+-- fibu_korrekturen (lernender Loop)
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS wimus.korrekturen (
+CREATE TABLE IF NOT EXISTS wimus.fibu_korrekturen (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   mandant_id UUID NOT NULL REFERENCES wimus.mandanten(id) ON DELETE CASCADE,
-  buchung_id UUID REFERENCES wimus.buchungen(id) ON DELETE CASCADE,
+  buchung_id UUID REFERENCES wimus.fibu_buchungen(id) ON DELETE CASCADE,
   beleg_id   UUID REFERENCES wimus.belege(id) ON DELETE CASCADE,
   feld       TEXT NOT NULL,
   alt_wert   TEXT,
@@ -101,16 +104,16 @@ CREATE TABLE IF NOT EXISTS wimus.korrekturen (
   akteur_id  UUID,
   am         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_korrekturen_beleg ON wimus.korrekturen(beleg_id);
+CREATE INDEX IF NOT EXISTS idx_fibu_korrekturen_beleg ON wimus.fibu_korrekturen(beleg_id);
 
 -- ---------------------------------------------------------------------
--- updated_at-Trigger (wiederverwendet fibu_touch_updated_at aus 010) + RLS
+-- updated_at-Trigger (fibu_touch_updated_at aus 010) + RLS
 -- ---------------------------------------------------------------------
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['belege','buchungen','korrekturen'] LOOP
-    IF t <> 'korrekturen' THEN
+  FOREACH t IN ARRAY ARRAY['belege','fibu_buchungen','fibu_korrekturen'] LOOP
+    IF t <> 'fibu_korrekturen' THEN
       EXECUTE format('DROP TRIGGER IF EXISTS trg_%1$s_touch ON wimus.%1$s', t);
       EXECUTE format('CREATE TRIGGER trg_%1$s_touch BEFORE UPDATE ON wimus.%1$s
                         FOR EACH ROW EXECUTE FUNCTION wimus.fibu_touch_updated_at()', t);
@@ -128,4 +131,4 @@ BEGIN
 END $$;
 
 -- Kontrolle: SELECT tablename FROM pg_tables WHERE schemaname='wimus'
---   AND tablename IN ('belege','buchungen','korrekturen');
+--   AND tablename IN ('belege','fibu_buchungen','fibu_korrekturen');

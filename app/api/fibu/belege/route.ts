@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   // Auto-Buchung (KI) nur wenn die Pipeline es freigibt.
   if (entwurf.auto_buchbar) {
     const buchung = buchungAusBeleg(belegRow as Beleg, { akteur_typ: "ki" })
-    await supabase.from("buchungen").insert(buchung)
+    await supabase.from("fibu_buchungen").insert(buchung)
   }
 
   return NextResponse.json(belegRow, { status: 201 })
