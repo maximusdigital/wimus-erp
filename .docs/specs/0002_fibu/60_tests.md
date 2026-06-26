@@ -71,7 +71,13 @@ folgt nach Fixierung der offenen Punkte (EXTF-Layout, Confidence-Schwellen).
 **Migration:** `supabase/migrations/010_fibu_stammdaten.sql` (Schritt 1+2 des Grobplans):
 Firmen-Erweiterung (rechtsform_typ/besteuerungsart/kontenrahmen_ref), `gesellschafter`,
 `beteiligungen`, `fibu_konten`, `kontierungsregeln`, `lieferanten` – je mit RLS
-mandant_isolation. Annahme: Buchungskreis = `firmen` (Spec-OP).
+mandant_isolation. Annahme: Buchungskreis = `firmen` (Spec-OP). Eingespielt 2026-06-26.
+
+**Stammdaten-UI (gebaut, `/fibu/*`):** CRUD für Gesellschafter (+ Beteiligungen je Firma
+mit Quote/Gültigkeit im Detail), Kontierungsregeln (Match/Soll-Konto/USt/Priorität/Scope)
+und Lieferanten (Alias/USt-ID/IBAN/Standard-Kontierung). Muster wie Fristen (Shadcn +
+react-hook-form/zod, Desktop-Tabelle + Mobile-Karten). API `app/api/fibu/*`. Schema/RLS/
+Embeds live gegen wimus verifiziert; `next build` grün.
 
 **Offen (nach Fixierung der OPs):** Beleg-/Buchungsvalidierung (netto+ust≈brutto,
 IBAN-Prüfsumme), Gating-Schwellen, E-Rechnungs-Weiche, EXTF-Export, Belege-/Buchungs-DDL
