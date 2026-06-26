@@ -87,6 +87,11 @@ Embeds live gegen wimus verifiziert; `next build` grün.
   immer Mensch. Standardannahme (OP-2): confidence ≥ 0.95 UND brutto ≤ 200 €
   (überschreibbar).
 
-**Offen (nach Fixierung der OPs):** E-Rechnungs-Weiche (ZUGFeRD/XRechnung-Parse),
-EXTF-Buchungsstapel-Export (OP-1: Feldlayout), Belege-/Buchungs-DDL (Schritt 3,
-OCR-abhängig), Belege-/Buchungs-UI + pgTAP-RLS.
+**E-Rechnungs-Weiche (Vitest, `tests/unit/lib/erechnung.test.ts`, 13 Tests):**
+- ✅ `istErechnung`/`parseErechnung`: CII (ZUGFeRD/XRechnung) + UBL (XRechnung)
+  deterministisch geparst (Belegnummer/Datum/netto/USt/brutto/Lieferant/USt-ID),
+  confidence 1.0; unstrukturiert → null → OCR-Pfad (`lib/utils/erechnung.ts`).
+  Dependency-frei (Local-Name-Extraktion, kein XML-Parser-Dep).
+
+**Offen (nach Fixierung der OPs):** EXTF-Buchungsstapel-Export (OP-1: Feldlayout),
+Belege-/Buchungs-DDL (Schritt 3, OCR-abhängig), Belege-/Buchungs-UI + pgTAP-RLS.
