@@ -74,6 +74,7 @@ const mainNav: NavItem[] = [
 
 // FiBu (Spec 0002) – Stammdaten/Kontierung.
 const fibuNav: NavItem[] = [
+  { title: "Belege", href: "/fibu/belege", icon: FileText },
   { title: "Gesellschafter", href: "/fibu/gesellschafter", icon: Landmark },
   { title: "Kontenrahmen", href: "/fibu/konten", icon: BookOpen },
   { title: "Kontierungsregeln", href: "/fibu/kontierungsregeln", icon: Receipt },

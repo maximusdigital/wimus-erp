@@ -25,6 +25,7 @@ const HAUPTSEITEN: string[] = [
   "/betriebskosten/positionen",
   "/fristen",
   "/dokumente",
+  "/fibu/belege",
   "/fibu/gesellschafter",
   "/fibu/konten",
   "/fibu/kontierungsregeln",

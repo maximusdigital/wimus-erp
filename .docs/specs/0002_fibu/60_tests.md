@@ -103,6 +103,17 @@ Embeds live gegen wimus verifiziert; `next build` grün.
 Feststellungs-Vorschau (firma + Periode + Ergebnis → `ergebnisverteilung`, zeitanteilig,
 Summenkontrolle). 22/22 eingeloggte Playwright-Grobtests grün.
 
-**Offen (echte Anbindung/Entscheidung nötig):** Belege-/Buchungs-DDL (Schritt 3,
-OCR-abhängig, 0001) + Belege-/Buchungs-UI; Export-Anbindung an echte Buchungen;
-pgTAP-RLS. Volles EXTF-Spaltenlayout (OP-1).
+**Belegerkennungs-Pipeline (Mistral angebunden):**
+- ✅ `lib/integrations/mistral.ts`: `mistralOcr` (mistral-ocr-latest), `mistralExtrahiere`
+  (JSON-Mode). Verbindung verifiziert.
+- ✅ `lib/fibu/beleg-pipeline.ts` `verarbeiteBeleg`: E-Rechnungs-Weiche | OCR+KI →
+  Validierung → Kontierung → Gating; `review_flag`=Defekte, `auto_buchbar`=Gating
+  (Suggest not Autobook). 6 Tests (Deps injiziert).
+- ✅ Migration `011_fibu_belege.sql` (belege/buchungen/korrekturen, RLS, GoBD-Versionierung,
+  hash UNIQUE, buchungs_id_extern UNIQUE).
+- ✅ UI `/fibu/belege`: Upload (PDF/Bild/XML) → Pipeline; Buchungsfreigabe-Cockpit
+  (Ampel, KI-Vorschlag, Freigeben→Buchung / Ablehnen). API `app/api/fibu/belege`.
+
+**Offen:** Migration 011 einspielen (dann Live-End-to-End-OCR-Test); Einheiten-/Firma-
+Zuordnung des Belegs (derzeit firma_id null → review); EXTF-Export an echte Buchungen
+anbinden (OP-1 Layout); pgTAP-RLS.
