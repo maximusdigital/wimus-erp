@@ -79,6 +79,14 @@ und Lieferanten (Alias/USt-ID/IBAN/Standard-Kontierung). Muster wie Fristen (Sha
 react-hook-form/zod, Desktop-Tabelle + Mobile-Karten). API `app/api/fibu/*`. Schema/RLS/
 Embeds live gegen wimus verifiziert; `next build` grün.
 
-**Offen (nach Fixierung der OPs):** Beleg-/Buchungsvalidierung (netto+ust≈brutto,
-IBAN-Prüfsumme), Gating-Schwellen, E-Rechnungs-Weiche, EXTF-Export, Belege-/Buchungs-DDL
-(Schritt 3), Stammdaten-UI + pgTAP-RLS.
+**Belegprüfung & Gating (Vitest, `tests/unit/lib/fibu-beleg.test.ts`, 14 Tests):**
+- ✅ `pruefeBeleg`: netto+USt≈brutto, USt≈netto×Satz (7 %/19 %), Datum plausibel
+  (Zukunft/1970 → review_flag), 1-Cent-Toleranz (`lib/utils/fibu-beleg.ts`).
+- ✅ `ibanGueltig`: ISO-13616 mod-97 (gültige DE-IBAN ok, manipuliert → false).
+- ✅ `gating`: Confidence + Betrag → auto-buchbar vs. review; Betrag über Schwelle
+  immer Mensch. Standardannahme (OP-2): confidence ≥ 0.95 UND brutto ≤ 200 €
+  (überschreibbar).
+
+**Offen (nach Fixierung der OPs):** E-Rechnungs-Weiche (ZUGFeRD/XRechnung-Parse),
+EXTF-Buchungsstapel-Export (OP-1: Feldlayout), Belege-/Buchungs-DDL (Schritt 3,
+OCR-abhängig), Belege-/Buchungs-UI + pgTAP-RLS.
