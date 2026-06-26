@@ -42,8 +42,9 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 - Phase 2 Finanzen (extern): OP-Management, CAMT/finAPI, Invoice Ninja, Zammad
   (nativer Teil Mahnwesen/Forderungen/Fristen/BK steht, s. „Steht")
 - Modulübergreifende UI-Konventionen + Datenintegrität (001_erp_400_design/20_datenmodell) als
-  Konvention dokumentiert, Code-Umsetzung (RowActions/Inline-Edit/Undo/Audit-Timeline,
-  UI-Dublettenprüfung/Sperren/Audit-Log) noch offen — Backlog
+  Konvention dokumentiert. **`<RowActions>` umgesetzt + in den Hauptlisten ausgerollt
+  (2026-06-27).** Code-Umsetzung von Inline-Edit/Undo-Toast/Audit-Timeline/Bulk-Aktionen +
+  UI-Dublettenprüfung/Sperren/Audit-Log noch offen — Backlog
 
 ## Ideen / als Nächstes
 
@@ -92,9 +93,10 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
   `001_erp_000_konzept.md` jetzt abgedeckt.
 - OP-2: CLAUDE.md wird in Spec referenziert, liegt aber nicht als migrierte Datei vor —
   gehört ins Repo, nicht in die Specs.
-- OP-3: Migrations-SQL (001–005) als `.txt` referenziert; liegt separat, nicht in Specs.
-- OP-4: `organisationen` + `kontakte.organisation_id` ins Datenmodell aufgenommen (für CRM
-  0003); Migration im Repo noch einzuspielen.
+- OP-3: Migrations-SQL „005" (BK/Fristen/Forderungen/Mietrecht) liegt als `.txt` unter
+  `.docs/specs/ALT/word/`, noch nicht als getrackte `004/005`-`.sql` im Repo (Repo-Hygiene).
+- ~~OP-4: `organisationen` + `kontakte.organisation_id`~~ → **erledigt 2026-06-27**: als
+  Migration `012_organisationen.sql` gebaut + eingespielt (RLS, Trigger). Genutzt von CRM 0003.
 
 ## Meilensteine & Versionen
 
@@ -115,6 +117,7 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 00:45 | Spec-Sync: RowActions/Test-Setup/organisationen(012) als umgesetzt, Migrations-Range 001–013 | 000_konzept, 200, 400, 600 |
 | 2026-06-26 14:30 | organisationen + kontakte.organisation_id (externe Firmen, für CRM 0003) | 001_erp_200_datenmodell, 001_erp_000_konzept |
 | 2026-06-25 | Datenintegrität ergänzt (Dubletten/Sperren/Propagation/Audit) | 001_erp_200_datenmodell |
 | 2026-06-25 | UI-Konventionen ergänzt (RowActions/Inline-Edit/Bulk/Undo/Touch) | 001_erp_400_design |

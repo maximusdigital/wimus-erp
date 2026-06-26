@@ -1,14 +1,18 @@
 ---
 gehoert_zu: 0001
 dokument: Datenmodell
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 quelle: 20260624_WIMUS_IT_ERP_21_Datenmodell_Docs_V502.docx
 ---
 
 # 0001 — Datenmodell
 
 > Version & Status des Moduls stehen in `001_erp_000_konzept.md`.
-> Schema: `wimus` · ~130 Tabellen (nach V501+V502) · idempotente Migrationen 001–005.
+> Schema: `wimus` · ~130 Tabellen (nach V501+V502) · idempotente Migrationen 001–013
+> (002 Vollschema, 003 KZV, 006–009 Grants/RLS/Cutover, 010/011 FiBu, 012 organisationen,
+> 013 CRM). Die Kern-DDL aus „005" (BK/Fristen/Forderungen/Mietrecht) liegt nur als
+> `.docs/specs/ALT/word/..._005_Migration_V100_sql.txt`, noch nicht als getrackte
+> `004/005`-`.sql` im Repo (offener Punkt Repo-Hygiene).
 > Konvention: PK = `UUID PRIMARY KEY DEFAULT gen_random_uuid()`, FK = Fremdschlüssel.
 
 ## Kern 1: Kostenverteilung

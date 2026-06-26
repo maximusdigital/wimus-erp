@@ -7,7 +7,7 @@ geaendert: 2026-06-27
 # 0003 — Design
 
 > Version & Status des Moduls stehen in `003_crm_000_konzept.md`.
-> Folgt Kern-Design-System (0001 `003_crm_400_design.md`): Shadcn + Tremor, Token-Farben, 4px-Grid,
+> Folgt Kern-Design-System (`001_erp_400_design.md`): Shadcn + Recharts, Token-Farben, 4px-Grid,
 > deutsche Labels, Mobile 390px. UI-Vorbilder: Pipedrive (siehe Hinweise je Abschnitt).
 
 ## 1. Kanban-Board (Deal-Pipeline)

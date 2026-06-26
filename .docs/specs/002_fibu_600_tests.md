@@ -1,13 +1,13 @@
 ---
 gehoert_zu: 0002
 dokument: Tests
-geaendert: 2026-06-25
+geaendert: 2026-06-27
 ---
 
 # 0002 — Tests
 
 > Version & Status des Moduls stehen in `002_fibu_000_konzept.md`.
-> Test-Stack siehe 0001 `002_fibu_600_tests.md` (Vitest, Playwright, supertest, pgTAP).
+> Test-Stack siehe Kern `001_erp_600_tests.md` (Vitest, Playwright, supertest, pgTAP).
 
 ## Priorität 1 — kritische Geschäftslogik (Unit)
 

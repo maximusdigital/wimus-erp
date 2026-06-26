@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0001
 dokument: Design
-geaendert: 2026-06-25
+geaendert: 2026-06-27
 quelle: 20260624_WIMUS_IT_ERP_40_DesignSystem_Docs_V104.docx
 ---
 
@@ -71,15 +71,19 @@ ocr, mobile (Komponenten-Sets siehe Tabelle oben).
 
 ## UI-Konventionen (Listen, Aktionen, Bearbeitung)
 
-> **Umsetzungsstand (2026-06-26): Soll-Konvention, Code-Umsetzung offen (Backlog).**
-> Aktuelle Listen nutzen Row-Link + getrennte Bearbeiten/Löschen-Buttons und einen
-> Lösch-Dialog. `<RowActions>` (3-stufiges Schema), Inline-Edit, Bulk-Aktionen, Undo statt
-> Vorab-Dialog, Audit-Timeline und Tastatur-Nav sind noch NICHT implementiert.
+> **Umsetzungsstand (2026-06-27): `<RowActions>` umgesetzt + ausgerollt.**
+> Die 3-stufige Komponente (`components/shared/row-actions.tsx`: Bearbeiten-Icon + Primär +
+> Kebab sekundär + destruktiv mit hard/soft/storno-Wortwahl) ist in den Hauptlisten im
+> Einsatz (objekte, einheiten, kontakte, fristen, inventar/assets, FiBu-Stammdaten, CRM).
+> **Noch offen (Backlog):** Inline-Edit, Bulk-Aktionen (Checkbox-Spalte), Undo-Toast statt
+> Vorab-Dialog, Audit-Timeline, Tastatur-Nav.
+> Hinweis Prop-Signatur: Code nutzt `destructive: {kind: 'hard'|'soft'|'storno'}` (nicht
+> `deletable`).
 >
 > Version & Status des Moduls stehen in `001_erp_000_konzept.md`.
 > Verbindliche, modulübergreifende UI-Patterns. Alle Module (FiBu 0002 etc.) folgen diesen.
-> Folgt dem Design System (`001_erp_400_design.md`): Shadcn + Tremor, Token-Farben, 4px-Grid,
-> deutsche Labels, Mobile 390px.
+> Folgt dem Design System (`001_erp_400_design.md`): Shadcn + Recharts (Tremor projektweit
+> abgelöst, React-19-kompatibel), Token-Farben, 4px-Grid, deutsche Labels, Mobile 390px.
 
 ## 1. Zeilen-Interaktion (Listen/Tabellen)
 

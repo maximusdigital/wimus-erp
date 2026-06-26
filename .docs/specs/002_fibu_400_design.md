@@ -1,14 +1,15 @@
 ---
 gehoert_zu: 0002
 dokument: Design
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0002 — Design
 
 > Version & Status des Moduls stehen in `002_fibu_000_konzept.md`.
-> Folgt dem Design System des Kerns (0001 `002_fibu_400_design.md`): Shadcn + Tremor, Token-Farben,
-> 4px-Grid, deutsche Labels. Erweitert das OCR-Prüf-Pattern.
+> Folgt dem Design System des Kerns (`001_erp_400_design.md`): Shadcn + Recharts (Tremor
+> projektweit abgelöst, React-19-kompatibel), Token-Farben, 4px-Grid, deutsche Labels.
+> Erweitert das OCR-Prüf-Pattern.
 
 > **Umsetzungsstand (2026-06-26):** Gebaut: `/fibu/belege`-Cockpit (Upload PDF/Bild/XML →
 > Pipeline; Tabelle mit Ampel 🟢/🔴; Buchen/Ablehnen; Mobile-Karten) + Feldkorrektur-API;
@@ -29,7 +30,7 @@ Erweiterung der OCR-Prüfansicht (0001) um Kontierung + Batch:
 - Inline-Korrektur der Kontierungsfelder; Klick auf Beleg → PDF-Preview (Split-View).
 - Footer: [Ablehnen] [Einzeln prüfen] [Batch freigeben] (pro Einheit, da Konten/Export
   mandantengebunden).
-- Tremor ProgressBar: Anteil auto-fähig vs. Review.
+- Fortschritts-Balken (Recharts/CSS): Anteil auto-fähig vs. Review.
 
 ## 2. Review-Queues
 
@@ -48,7 +49,13 @@ Gesellschafter, Einheiten (rechtsform_typ), Beteiligungen mit Gültigkeitszeitr�
 
 ## 5. Finanz-/Bank-Cockpit (Reporting-Ebene)
 
-Tremor-Dashboards (Anschluss an 0001 Finanzen-/OCR-Dashboards):
+> **Umsetzungsstand (2026-06-27):** GuV-Auswertung gebaut — `lib/fibu/guv.ts`
+> (`aggregateGuV`, SKR03-Heuristik 4xxx Aufwand / 8xxx Ertrag), Seite
+> `app/(dashboard)/fibu/auswertung/` (Firma-/Zeitraum-Filter, Ertrag/Aufwand, Ergebnis,
+> Balkenchart via Recharts, Browser-Print). Offen: BWA/Bilanz-Kurzform, KPIs, Scope-Selektor,
+> gebrandetes A4-PDF (`print-layout.tsx`) und Bankenmappe.
+
+Recharts-Dashboards (Anschluss an 0001 Finanzen-/OCR-Dashboards):
 
 - **Standard-Reports:** BWA, GuV, Bilanz-Kurzform — je Einheit + konsolidiert, Zeitreihen,
   als gebrandetes PDF (print-layout.tsx A4). Hinweis „kein testierter Abschluss".
@@ -62,7 +69,7 @@ Tremor-Dashboards (Anschluss an 0001 Finanzen-/OCR-Dashboards):
 - **Bankenmappe (Ein-Klick):** kuratiertes PDF (Objektübersicht + KPIs + GuV-/Cashflow-
   Grafik + Zeitreihen), markenkonform, direkt an Bank weitergebbar.
 
-Technik: Tremor + Recharts; Daten aus Supabase; neuer Baustein = PDF-Export.
+Technik: Recharts; Daten aus Supabase; neuer Baustein = gebrandeter PDF-Export.
 
 ## 6. KI-Controlling-Sichten
 

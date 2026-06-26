@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0002
 dokument: Datenmodell
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0002 — Datenmodell
@@ -66,8 +66,10 @@ soll_konto, haben_logik (k1→bank), ust_satz/steuerschluessel, prioritaet, akti
 Workspace = Default, einheit = Override. In ERP-UI pflegbar.
 
 ### lieferanten / kreditoren
-mandant_id FK, firma_id FK NULL, name, alias[], ustid, iban, standard_gewerk, standard_konto,
-fuzzy_match_keys. Aliasse (DM→Reinigung, LIDL→Deko etc.).
+mandant_id FK, firma_id FK NULL, name, alias[] (TEXT[]), ustid, iban, standard_gewerk,
+standard_konto. Umgesetzt (Migration 010): Fuzzy-Match läuft über `alias[]` —
+kein separates `fuzzy_match_keys`-Feld. Aliasse (DM→Reinigung, LIDL→Deko etc.),
+Matching in `lib/fibu/lieferant-match.ts`.
 
 ## Belege & Buchungen
 
