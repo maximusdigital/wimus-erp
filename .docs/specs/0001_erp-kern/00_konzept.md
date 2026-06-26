@@ -5,7 +5,7 @@ status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abg
 version: 5.0.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: erp-kern
 erstellt: 2026-06-23
-geaendert: 2026-06-25
+geaendert: 2026-06-26
 abhaengt_von: []
 ---
 
@@ -64,6 +64,10 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 - 2026-06-24: Mistral OCR für ALLE Eingangs- und Ausgangsdokumente; Output Markdown +
   strukturiertes JSON + direkte DB-Feldbefüllung mit Confidence-Scoring.
 - 2026-06-24: Tremor-Komponenten je Seite/Projekttyp verbindlich festgelegt.
+- 2026-06-26: **Tremor verworfen → Recharts 3.** `@tremor/react` verlangt react@^18,
+  Projekt läuft auf React 19 (Peer-Konflikt + Laufzeitrisiko). Recharts ist React-19-nativ
+  (Tremor baut ohnehin darauf). Charts: `components/charts/wimus-charts.tsx` (Balken/Donut,
+  WIMUS-Palette); custom `KpiCard` bleibt. „Tremor" in den Specs = Recharts-basierte Charts.
 - 2026-06-23: Channel-Routing mit Lock-Mechanik (KI/MA), Kollisionsstrategie
   erst_ki_dann_mensch, Eskalation bei Konfidenz < 0.70.
 - 2026-06-25: Modulübergreifende UI-Konventionen (Abschnitt „UI-Konventionen" in
@@ -77,6 +81,10 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
   (Sperren/Propagieren/Versionieren/Warnen); Feld-Edit-Stufen inline/detail/gesperrt;
   Audit-Pflicht. Generalisiert vorhandene Muster (konversation_locks, Akteure,
   gueltig_ab-Versionierung).
+- 2026-06-26: `organisationen` (externe Geschäftsfirmen) + `kontakte.organisation_id` ins
+  Datenmodell — Grund: CRM-Pipelines (0003) brauchen externe Firmen relational (mehrere
+  Ansprechpartner je Firma). Bewusste Trennung INNEN (`firmen`/Mandant) vs. AUSSEN
+  (`organisationen`); amoCRM vermischt beides in „Companies".
 
 ## Offene Punkte
 
@@ -85,6 +93,8 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 - OP-2: CLAUDE.md wird in Spec referenziert, liegt aber nicht als migrierte Datei vor —
   gehört ins Repo, nicht in die Specs.
 - OP-3: Migrations-SQL (001–005) als `.txt` referenziert; liegt separat, nicht in Specs.
+- OP-4: `organisationen` + `kontakte.organisation_id` ins Datenmodell aufgenommen (für CRM
+  0003); Migration im Repo noch einzuspielen.
 
 ## Meilensteine & Versionen
 
@@ -97,3 +107,15 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 > Migriert aus den Word-Bestandsdokumenten (Stand 23./24.06.2026) ins neue Spec-System.
 > Versionsnummer übernimmt höchste Bestands-Version (V502 → 5.0.0-Linie).
+
+## Änderungshistorie
+
+> Laufendes Protokoll aller Änderungen am Modul (neueste oben). Vorgang ≤ 100 Zeichen.
+> Frühere Einträge ohne Uhrzeit (nicht erfasst); ab 2026-06-26 mit Uhrzeit.
+
+| Datum/Zeit | Vorgang | Betroffen |
+|------------|---------|-----------|
+| 2026-06-26 14:30 | organisationen + kontakte.organisation_id (externe Firmen, für CRM 0003) | 20_datenmodell, 00_konzept |
+| 2026-06-25 | Datenintegrität ergänzt (Dubletten/Sperren/Propagation/Audit) | 20_datenmodell |
+| 2026-06-25 | UI-Konventionen ergänzt (RowActions/Inline-Edit/Bulk/Undo/Touch) | 40_design |
+| 2026-06-25 | Migration aus 5 Word-Specs ins Spec-System (V502/V501/V104/V101) | alle |

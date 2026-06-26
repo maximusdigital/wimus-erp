@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatEUR } from "@/lib/utils/format"
+import { DonutChart } from "@/components/charts/wimus-charts"
 import { ergebnisverteilung, type Beteiligung } from "@/lib/utils/fibu"
 
 export const metadata = {
@@ -178,7 +179,16 @@ export default async function FeststellungPage({
               Ergebnis eingeben und „Berechnen" klicken.
             </p>
           ) : (
-            <div className="rounded-lg border">
+            <div className="flex flex-col gap-4">
+              <DonutChart
+                data={verteilung.map((v) => ({
+                  name: namen.get(v.gesellschafter_id) ?? v.gesellschafter_id,
+                  anteil: v.anteil_betrag,
+                }))}
+                nameKey="name"
+                wertKey="anteil"
+              />
+              <div className="rounded-lg border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -216,6 +226,7 @@ export default async function FeststellungPage({
                   </TableRow>
                 </TableFooter>
               </Table>
+              </div>
             </div>
           )}
         </CardContent>

@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { PrintButton } from "@/components/fibu/print-button"
+import { BalkenChart } from "@/components/charts/wimus-charts"
 import { aggregateGuV, type GuvBuchung } from "@/lib/fibu/guv"
 import { formatEUR } from "@/lib/utils/format"
 
@@ -91,6 +92,21 @@ export default async function AuswertungPage({
           </form>
         </CardContent>
       </Card>
+
+      {guv.aufwendungen.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Aufwendungen je Konto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BalkenChart
+              data={guv.aufwendungen}
+              kategorie="konto"
+              serien={[{ key: "betrag", label: "Aufwand" }]}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>

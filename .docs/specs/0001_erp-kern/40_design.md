@@ -12,9 +12,14 @@ quelle: 20260624_WIMUS_IT_ERP_40_DesignSystem_Docs_V104.docx
 
 ## 1. UI-Stack
 
+> **Umsetzung (2026-06-26): „Tremor" = Recharts.** `@tremor/react` ist nicht
+> React-19-kompatibel (s. Decision-Log 00_konzept) → Charts via **Recharts 3**
+> (`components/charts/wimus-charts.tsx`, WIMUS-Palette); KPI-Cards = custom `KpiCard`.
+> Alle „Tremor"-Nennungen unten sinngemäß als Recharts-basierte Charts lesen.
+
 - Formulare & Layout: Shadcn/UI (Inputs, Select, Dialog, Tabs, Table, Navigation, Sidebar)
-- Charts & Visualisierungen: Tremor (@tremor/react) (KPI-Cards, Charts, BarList, Tracker,
-  Sparklines, ProgressBar)
+- Charts & Visualisierungen: Recharts 3 (ehem. Tremor) — Balken/Donut/Linie, KPI-Cards
+  (custom), ProgressBar/Tracker als schlanke Eigenbauten
 - WIMUS-spezifisch: Custom (AktenzeichenBadge, DmsButton, StatusBadge, AddressBlock etc.)
 
 ## 2. Design-Tokens

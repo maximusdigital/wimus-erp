@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { KpiCard } from "@/components/ui/kpi-card"
+import { BalkenChart } from "@/components/charts/wimus-charts"
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import { kontaktName } from "@/types/kontakt"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -96,6 +97,23 @@ async function ladeDashboardDaten() {
     .filter((v) => v.status === "aktiv")
     .reduce((sum, v) => sum + (warmmiete(v) ?? 0), 0)
 
+  // Portfolio-Marktwert je Objekt (für das Chart).
+  const { data: objekteWerte } = await supabase
+    .from("objekte")
+    .select("kuerzel, marktwert_sprengnetter, marktwert_pricehubble")
+    .order("kuerzel")
+  type OW = {
+    kuerzel: string | null
+    marktwert_sprengnetter: number | null
+    marktwert_pricehubble: number | null
+  }
+  const portfolio = ((objekteWerte ?? []) as OW[])
+    .map((o) => ({
+      kuerzel: o.kuerzel ?? "?",
+      marktwert: o.marktwert_sprengnetter ?? o.marktwert_pricehubble ?? 0,
+    }))
+    .filter((o) => o.marktwert > 0)
+
   return {
     objekteCount,
     einheitenCount,
@@ -104,6 +122,7 @@ async function ladeDashboardDaten() {
     aktivCount,
     letzteVertraege,
     sollmiete,
+    portfolio,
   }
 }
 
@@ -116,6 +135,7 @@ export default async function DashboardPage() {
     aktivCount,
     letzteVertraege,
     sollmiete,
+    portfolio,
   } = await ladeDashboardDaten()
 
   const kpis: Kpi[] = [
@@ -181,6 +201,24 @@ export default async function DashboardPage() {
           </Link>
         ))}
       </section>
+
+      {portfolio.length > 0 ? (
+        <section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Portfolio — Marktwert je Objekt</CardTitle>
+              <CardDescription>Aktuelle Bewertung (Sprengnetter / PriceHubble)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BalkenChart
+                data={portfolio}
+                kategorie="kuerzel"
+                serien={[{ key: "marktwert", label: "Marktwert" }]}
+              />
+            </CardContent>
+          </Card>
+        </section>
+      ) : null}
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
