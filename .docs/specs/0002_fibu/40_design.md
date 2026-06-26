@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0002
 dokument: Design
-geaendert: 2026-06-25
+geaendert: 2026-06-26
 ---
 
 # 0002 — Design
@@ -60,3 +60,14 @@ Technik: Tremor + Recharts; Daten aus Supabase; neuer Baustein = PDF-Export.
 
 Narrativ-Panel (Stufe 1: KI-Kommentar zu KPIs), Alert-Inbox (Stufe 2: Frühwarnungen +
 Vorschläge), Agent-Konfiguration (Autonomiestufe pro Scope). Eskalation via sipgate/WhatsApp.
+
+## UI-Konventionen (FiBu-spezifisch)
+
+> Basis: Kern, Abschnitt „UI-Konventionen" in `0001_erp-kern/40_design.md`.
+> Hier nur FiBu-Spezifika.
+
+- **Primäraktion Belege/Buchungen:** Freigeben/Buchen (neben Bearbeiten). Kebab:
+  Duplizieren, Drucken, DMS, AZ kopieren, als Dublette markieren. Destruktiv: Stornieren.
+- **Bulk:** Mehrfachauswahl im Freigabe-Cockpit → „Batch freigeben" pro Einheit.
+- **Inline-Edit:** Kontierungs-Konto, K1/K2, Steuerschlüssel direkt in der Cockpit-Tabelle.
+- **Audit-Timeline:** Status-Maschinen-Verlauf je Beleg in der Detailansicht sichtbar.

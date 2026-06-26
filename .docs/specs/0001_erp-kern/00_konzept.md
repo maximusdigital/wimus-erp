@@ -58,6 +58,17 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 - 2026-06-24: Tremor-Komponenten je Seite/Projekttyp verbindlich festgelegt.
 - 2026-06-23: Channel-Routing mit Lock-Mechanik (KI/MA), Kollisionsstrategie
   erst_ki_dann_mensch, Eskalation bei Konfidenz < 0.70.
+- 2026-06-25: Modulübergreifende UI-Konventionen (Abschnitt „UI-Konventionen" in
+  `40_design.md`): Row-Klick → Detail, Hover-Aktionen Muster A + optionaler Kebab,
+  wiederverwendbare `<RowActions>`, Duplizieren = Volldatensatz ohne Unique-Felder,
+  Bulk-Aktionen, Inline-Edit nur wo zulässig, Optimistic UI, Undo, Empty States,
+  Audit-Timeline, Tastatur-Nav, Touch.
+- 2026-06-25: Datenintegrität als Abschnitt in `20_datenmodell.md`: zweistufige
+  Dublettenprüfung (DB-UNIQUE + UI-Vorabprüfung) mit Block/Warnung-Matrix; drei getrennte
+  Sperr-Typen (Beziehung/Status-GoBD/Concurrency-Lock); Propagation in vier Verhalten
+  (Sperren/Propagieren/Versionieren/Warnen); Feld-Edit-Stufen inline/detail/gesperrt;
+  Audit-Pflicht. Generalisiert vorhandene Muster (konversation_locks, Akteure,
+  gueltig_ab-Versionierung).
 
 ## Offene Punkte
 

@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0001
 dokument: Datenmodell
-geaendert: 2026-06-24
+geaendert: 2026-06-25
 quelle: 20260624_WIMUS_IT_ERP_21_Datenmodell_Docs_V502.docx
 ---
 
@@ -149,3 +149,128 @@ VARCHAR[], gelesen_am TIMESTAMPTZ, vorgang_id FK, zammad_ticket_id VARCHAR(100).
 - `v_offene_forderungen` – alle offenen Forderungen mit Tage überfällig
 - `kopfzahl_einheit(einheit_id, datum)` – Personen je Einheit zum Stichtag
 - `kopfzahl_gruppe(gruppe_id, datum)` – Personen gesamt je Abrechnungseinheit
+
+---
+
+## Datenintegrität (Dubletten, Sperren, Propagation, Audit)
+
+> Version & Status des Moduls stehen in `00_konzept.md`.
+> Querschnitt-Thema: betrifft Datenmodell (Constraints/Trigger), Prozesse (Regeln/Audit)
+> und UI (Sperranzeige, Konsequenz-Dialoge). Modulübergreifend verbindlich.
+> Verallgemeinert drei vorhandene Kern-Muster: Lock-Mechanik (`konversation_locks`),
+> Akteure-Modell (Audit-Träger), Versionierung mit `gueltig_ab` (citytax, brennwerte,
+> beteiligungen).
+
+## A. Dublettenprüfung
+
+Zwei Mechaniken, immer kombiniert:
+
+- **DB-Ebene (hart):** UNIQUE-Constraints für echte Eindeutigkeiten. Sicherung, die nie
+  versagt (auch bei Race Conditions/Import). `ON CONFLICT DO NOTHING` für idempotente Importe.
+- **UI-Ebene (weich, vor Submit):** Vorabprüfung, die mögliche (auch unscharfe) Dubletten
+  findet und anzeigt: „Ähnlicher Eintrag existiert: … — Trotzdem anlegen / Bestehenden
+  öffnen?". Fängt Fuzzy-Fälle, die ein Constraint nicht erkennt.
+
+DB-Constraint allein → hässliche Fehler, keine Fuzzy-Erkennung. UI-Prüfung allein → durch
+gleichzeitiges Speichern umgehbar. Beides zusammen = robust.
+
+### Dubletten-Matrix je Entität
+
+| Entität | Schlüssel | Verhalten | Mechanik |
+|---------|-----------|-----------|----------|
+| Belege (FiBu) | Datei-Hash | **Block** | DB UNIQUE(hash) |
+| Belege (FiBu) | Lieferant + Belegnr. + Betrag + Datum | **Warnung** (Korrektur/Zweitausfertigung möglich) | UI-Vorabprüfung |
+| Buchungen | Soll/Haben + Betrag + Datum + buchungs_id | **Warnung** | UI |
+| Buchungen | buchungs_id_extern | **Block** | DB UNIQUE |
+| Kontakte | Name+GebDatum / E-Mail / IBAN / USt-ID | **Warnung** (nie Block, echte Namensgleichheit) | UI Fuzzy-Match |
+| Objekte | Adresse (Straße+Nr+PLZ, normalisiert) | **Warnung** | UI (adresse-block normalisiert) |
+| Einheiten | Objekt + Bezeichnung | **Block** | DB UNIQUE(objekt_id,bezeichnung) |
+| Verträge | Einheit + Mieter + überlappender Zeitraum | **Warnung** (außer WG) | UI/Trigger |
+| Zähler | Zählernummer | **Block** | DB UNIQUE |
+| Vorgänge/Schäden | Einheit + Schadenstyp + Zeitfenster | **Warnung** (Doppelmeldung über 2 Kanäle) | UI |
+| Fristen | Bezug + Frist-Typ + Fälligkeit | **Block/Skip** (auto-Fristen idempotent) | DB/n8n |
+| Kreditoren/Lieferanten | USt-ID / IBAN / Name-Fuzzy | **Warnung** + FiBu-Fuzzy-Match | UI |
+| Zahlungseingänge (CAMT/finAPI) | finapi_transaktion_id | **Block** | DB UNIQUE |
+
+> Fuzzy-Match nötig bei Kontakten/Lieferanten („Müller GmbH" = „Mueller GmbH" = „Müller
+> G.m.b.H."). Verhindert, dass Forderungen auf mehrere Karteien derselben Person zerfallen.
+
+## B. Bearbeitungssperren — drei getrennte Typen
+
+Diese drei NICHT vermischen — sie werden unterschiedlich aufgelöst.
+
+### B1. Beziehungs-Sperre (referenzielle Integrität)
+
+Datensatz darf nicht frei geändert/gelöscht werden, WEIL andere darauf verweisen (aktiver
+Mietvertrag, gebuchte Belege, laufende BK-Abrechnung an einer Einheit). Nicht „verboten",
+sondern „kontrolliert, mit Konsequenz-Anzeige". Auflösung: siehe Propagations-Matrix (C).
+
+### B2. Status-Sperre (GoBD/Unveränderbarkeit)
+
+Datensatz in finalem Status darf gar nicht mehr editiert werden — nur storniert/neu
+versioniert. Betrifft: gebuchte Buchung, versendete BK-Abrechnung/Mahnung, exportierter
+Beleg, abgeschlossene Übergabe. Hart, gesetzlich. Auflösung: Storno (Buchung) /
+Archivieren+Neuversion (Beleg), nie Überschreiben.
+
+### B3. Concurrency-Lock (gleichzeitige Bearbeitung)
+
+Zwei Akteure (Mensch + Mensch, oder Mensch + KI-Agent) wollen denselben Datensatz
+gleichzeitig ändern. Übertragung der bestehenden `konversation_locks`-Mechanik auf
+Datensätze: Lock mit Akteur + Timestamp. UI zeigt „wird gerade bearbeitet von X". Optimistic
+Locking (Versionsfeld/`updated_at`-Vergleich) verhindert verlorenes Überschreiben:
+zweiter Speichern erkennt veränderten Stand → Hinweis statt stilles Überschreiben.
+
+## C. Propagation — vier Verhaltensweisen
+
+Wird ein Feld geändert, an dem etwas hängt, gilt pro Feld pro Entität eine von vier
+Regeln. Jede Änderung mit referenziellen Folgen ist **audit-pflichtig** (Akteur, alt/neu,
+betroffene Bereiche).
+
+| Verhalten | Bedeutung | Beispiel |
+|-----------|-----------|----------|
+| **Sperren** | Änderung nicht zulassen, solange Beziehung aktiv | Zählernummer mit hängenden Abrechnungen |
+| **Propagieren** | Änderung zulassen, nachgelagerte Felder mitziehen + Audit | Lieferant umbenannt → in offenen Belegen aktualisieren |
+| **Versionieren** | Änderung als neue Version ab Stichtag; alte Werte bleiben für historische Daten gültig | CityTax-Satz, Brennwert, Beteiligungsquote, Miethöhe |
+| **Warnen** | Änderung zulassen, Konsequenzen vorher anzeigen | „betrifft 12 Datensätze in 3 Bereichen — fortfahren?" |
+
+### Leitlinien zur Zuordnung
+
+- **Stammdaten mit Zeitbezug** (Sätze, Preise, Quoten, Mieten) → fast immer **Versionieren**
+  mit `gueltig_ab/bis`. Historische Buchungen/Abrechnungen behalten den damaligen Wert.
+  (Vorhandenes Muster: citytax_saetze, brennwerte, beteiligungen.)
+- **Identifizierende Felder** (Zählernummer, Einheit-Bezeichnung, Belegnummer) → **Sperren**,
+  sobald referenziert.
+- **Beschreibende Felder ohne Rechenfolge** (Name, Telefon, Notiz) → **Propagieren** oder frei.
+- **Felder mit Rechenfolge in Abrechnungen** (Fläche, MEA, Umlageschlüssel) → **Warnen** +
+  ggf. Versionieren (ab welcher Periode gilt der neue Wert?).
+
+### Feld-Edit-Stufen (steuert auch Inline-Edit, s. Abschnitt „UI-Konventionen" in `40_design.md`)
+
+Jedes Feld trägt eine Edit-Stufe:
+- `inline` — frei, sofort in der Liste editierbar (Status, Tags, Notiz, K1 im Cockpit).
+- `detail` — nur in Detailansicht, ggf. mit Warnung/Konsequenz-Dialog.
+- `gesperrt` — nur via Storno/Versionierung (GoBD-final oder hart referenziert).
+
+## D. Audit (GoBD-Pflicht)
+
+- Jede Änderung mit referenziellen/finanziellen Folgen wird protokolliert: Akteur
+  (Mensch/KI), Feld, alt-Wert, neu-Wert, Zeitpunkt, betroffene Bereiche/Datensätze.
+- Träger ist das Akteure-Modell (0001). Anzeige als Timeline in der Detailansicht
+  (Abschnitt „UI-Konventionen" in `40_design.md` Punkt 8).
+- Unveränderbar: Audit-Einträge werden nie überschrieben/gelöscht.
+
+## E. Umsetzungshinweise
+
+- **DB-Trigger** für referenzielle Sperren und Propagation (nicht nur App-Logik —
+  Race-sicher).
+- **Optimistic Locking** über Versionsspalte/`updated_at` auf editierbaren Tabellen.
+- **Konsequenz-Vorschau** als wiederverwendbare UI-Komponente („Diese Änderung betrifft …").
+- **Versionierungs-Pattern** generalisieren: Tabellen mit zeitbezogenen Stammwerten nach dem
+  `gueltig_ab/bis`-Muster (wie citytax_saetze) statt Überschreiben.
+
+## F. Modul-Bezug
+
+- FiBu (0002): Beleg-Hash-Block, Kreditoren-Fuzzy, Storno statt Löschen bei Buchungen,
+  buchungs_id_extern-UNIQUE → verweisen auf dieses Dokument.
+- Alle Module nutzen `<RowActions>` (`deletable`-Prop spiegelt B2/Storno-Logik) und die
+  Feld-Edit-Stufen.

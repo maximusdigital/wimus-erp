@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0002
 dokument: Datenmodell
-geaendert: 2026-06-25
+geaendert: 2026-06-26
 ---
 
 # 0002 — Datenmodell
@@ -95,3 +95,19 @@ exportiert, fehler, dublette, abgelehnt. Übergänge protokolliert (Akteur + Tim
 belege, buchungen, konten strikt nach `einheit_id` row-level getrennt. Akteur kann für
 mehrere Einheiten berechtigt sein; Daten bleiben getrennt (externer Beraterblick auf
 einzelne Einheit möglich).
+
+## Datenintegrität (FiBu-spezifisch)
+
+> Basis: Kern, Abschnitt „Datenintegrität" in `0001_erp-kern/20_datenmodell.md`.
+> Hier nur FiBu-Spezifika.
+
+- **Block (DB-UNIQUE):** `belege.hash` (exakt gleiche Datei); `buchungen.buchungs_id_extern`
+  (TaxPool-Dublettenerkennung); Zahlungseingänge `finapi_transaktion_id`.
+- **Warnung (UI-Vorabprüfung):** Lieferant + Belegnr. + Betrag + Datum (Korrektur/
+  Zweitausfertigung möglich); Kreditoren via USt-ID/IBAN/Name-Fuzzy.
+- **Status-Sperre (GoBD):** gebuchte Buchung → nur Storno; exportierter Beleg → nur
+  Archivieren + Neuversion (`version`/`vorgaenger_beleg_id`), nie Überschreiben.
+- **Feld-Edit-Stufen:** Kontierungs-Konto/K1/K2 im Freigabe-Cockpit = `inline`;
+  Betrag/Belegnummer = `detail`; gebuchte/exportierte Felder = `gesperrt`.
+- **Duplizieren:** beim Kopieren NICHT mitnehmen: Belegnummer, hash, buchungs_id_extern,
+  externe IDs.
