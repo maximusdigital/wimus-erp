@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.3.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.4.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-27
@@ -51,7 +51,12 @@ nur über definierte Confidence- und Betragsschwellen.
 - **Feststellungs-Vorschau:** firma + Periode → Ergebnisverteilung (zeitanteilig, Summenkontrolle).
 - **GuV-Auswertung (2026-06-27):** `lib/fibu/guv.ts` (`aggregateGuV`, SKR03-Heuristik
   4xxx Aufwand / 8xxx Ertrag) + Seite `/fibu/auswertung` (Firma-/Zeitraum-Filter, Ertrag/
-  Aufwand je Konto, Ergebnis, Balkenchart via **Recharts**, Browser-Print) + Tests.
+  Aufwand je Konto, Ergebnis, Balkenchart via **Recharts**) + Tests.
+- **Gebrandeter A4-Druck (2026-06-27):** `/fibu/auswertung/druck` (PrintLayout + WIMUS-
+  Briefkopf `components/fibu/report-kopf.tsx`) — GuV als druck-/PDF-fertige A4-Seite.
+- **Reporting-/Konsolidierungs-Tabellen (Migration 015):** `feststellungen`,
+  `auswertungs_scopes`, `objekt_tags`, `reporting_taxonomie` mit RLS angelegt
+  (Auswertungs-UI folgt). `ocr_verarbeitungen` als Kern-Tabelle gebaut (Migration 014).
 - **Lieferant-Fuzzy-Match:** `lib/fibu/lieferant-match.ts` (`matchLieferant`, Alias/
   Normalisierung) leitet `firma_id` aus dem erkannten Lieferanten ab (in `/api/fibu/belege`).
 - **RowActions/Kebab** in allen FiBu-Stammdaten-Listen ausgerollt (Kern-Komponente).
@@ -137,6 +142,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.4.0 | 2026-06-27 | in_arbeit | Reporting-Tabellen gebaut (Migration 015: feststellungen/auswertungs_scopes/objekt_tags/reporting_taxonomie + RLS), ocr_verarbeitungen (014); gebrandeter A4-GuV-Druck (`/fibu/auswertung/druck`). |
 | 0.3.0 | 2026-06-27 | in_arbeit | Reporting-Ergänzung: GuV-Auswertung (`lib/fibu/guv.ts` + `/fibu/auswertung`, Recharts), Lieferant-Fuzzy-Match → firma_id, RowActions/Kebab in FiBu-Listen. Tremor projektweit durch Recharts abgelöst. |
 | 0.2.0 | 2026-06-26 | in_arbeit | Stammdaten-Layer + Kernlogik gebaut & getestet: Migration 010/011, Kontierung, Ergebnisverteilung, Belegprüfung, E-Rechnungs-Weiche, EXTF-Kern, Beleg-Pipeline, Freigabe-Cockpit, Feststellungs-Vorschau |
 | 0.1.0 | 2026-06-25 | in_arbeit | Erstentwurf Grobspec: Pipeline, Mehrmandanten/Gesellschafter, Feststellungs-Vorschau, TaxPool-Export, Bank-Cockpit, KI-Controlling |
@@ -148,6 +154,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 01:10 | v0.4.0: Reporting-Tabellen (015) + ocr_verarbeitungen (014) gebaut, gebrandeter A4-GuV-Druck | 000,200,400 |
 | 2026-06-27 00:50 | Spec-Sync 0.3.0: GuV/Recharts/Lieferant-Match/RowActions als Steht, OP-6 teilw. gelöst, Tremor→Recharts | 000,200,400 |
 | 2026-06-26 | Build-Stand 0.2.0: firmen-Buchungskreis, Gating, EXTF-Kern, fibu_buchungen | 000,200,400,600 |
 | 2026-06-25 | Erstentwurf Grobspec FiBu (Pipeline, Mehrmandanten, TaxPool-Export, Bank-Cockpit) | alle |

@@ -27,8 +27,10 @@ Maßgeblich gegenüber dem Grobentwurf unten — Code = Wahrheit:
   Kind-Tabellen ohne `mandant_id` (`fibu_korrekturen`) isolieren über die Elterntabelle.
 - **Gebaut (Migration 010/011):** `gesellschafter`, `beteiligungen`, `fibu_konten`,
   `kontierungsregeln`, `lieferanten`, `belege`, `fibu_buchungen`, `fibu_korrekturen`.
-- **Nur spezifiziert, NICHT gebaut:** `feststellungen` (real: nur Live-Vorschau-Berechnung
-  ohne Tabelle), `auswertungs_scopes`, `objekt_tags`, `reporting_taxonomie`.
+- **Gebaut (Migration 015, 2026-06-27):** `feststellungen` (jetzt persistierbar, nicht nur
+  Live-Vorschau), `auswertungs_scopes`, `objekt_tags`, `reporting_taxonomie` — je mit RLS.
+  Buchungskreis als `firma_id` (statt „einheit_id" der Grobspec). Schreib-/Lese-Code in der
+  App folgt schrittweise (Tabellen stehen bereit).
 
 ## Organisations- & Steuerstruktur
 
@@ -47,8 +49,9 @@ gesellschafter_id FK, einheit_id FK, quote DECIMAL(7,4), gueltig_ab DATE, guelti
 (NULL=aktuell). Basis für periodengenaue Ergebnisverteilung.
 
 ### feststellungen (Controlling-Vorschau, nicht steuerverbindlich)
-> Status: **nicht als Tabelle gebaut** — real nur Live-Vorschau-Berechnung
-> (`/fibu/feststellung` + `ergebnisverteilung`), keine Persistenz.
+> Status: **als Tabelle gebaut (Migration 015)** — Persistenz der Vorschau möglich; die
+> Live-Berechnung (`/fibu/feststellung` + `ergebnisverteilung`) bleibt zusätzlich.
+> Buchungskreis = `firma_id` (nicht `einheit_id`).
 einheit_id FK, periode_von/bis DATE, ermitteltes_ergebnis DECIMAL(14,2),
 verteilung JSONB (je gesellschafter_id: anteil_quote, anteil_betrag, zeitanteilig),
 erstellt_am, akteur_id FK.
@@ -100,7 +103,7 @@ akteur_id, am TIMESTAMPTZ. Häufung → Kontierungsregel-Vorschlag.
 
 ## Auswertungs-Scopes (Konsolidierung)
 
-> Status: **noch nicht gebaut** (Backlog). Die folgenden Tabellen sind nur spezifiziert.
+> Status: **gebaut (Migration 015)** — Tabellen + RLS stehen; Auswertungs-UI/Code folgt.
 
 ### auswertungs_scopes
 name, einheiten_set UUID[], k1_set TEXT[] (oder Tag-Filter), zeitraum_typ, optionen JSONB

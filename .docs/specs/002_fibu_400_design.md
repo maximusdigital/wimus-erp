@@ -52,8 +52,10 @@ Gesellschafter, Einheiten (rechtsform_typ), Beteiligungen mit Gültigkeitszeitr�
 > **Umsetzungsstand (2026-06-27):** GuV-Auswertung gebaut — `lib/fibu/guv.ts`
 > (`aggregateGuV`, SKR03-Heuristik 4xxx Aufwand / 8xxx Ertrag), Seite
 > `app/(dashboard)/fibu/auswertung/` (Firma-/Zeitraum-Filter, Ertrag/Aufwand, Ergebnis,
-> Balkenchart via Recharts, Browser-Print). Offen: BWA/Bilanz-Kurzform, KPIs, Scope-Selektor,
-> gebrandetes A4-PDF (`print-layout.tsx`) und Bankenmappe.
+> Balkenchart via Recharts). **Gebrandetes A4-PDF gebaut:** Druckseite
+> `/fibu/auswertung/druck` auf `components/layouts/print-layout.tsx` + WIMUS-Briefkopf
+> (`components/fibu/report-kopf.tsx`). Offen: BWA/Bilanz-Kurzform, KPIs, Scope-Selektor und
+> Bankenmappe (Ein-Klick-Voll-PDF — hängt an der noch ungebauten KPI-/DSCR-Ebene).
 
 Recharts-Dashboards (Anschluss an 0001 Finanzen-/OCR-Dashboards):
 

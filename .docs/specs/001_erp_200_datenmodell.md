@@ -8,11 +8,12 @@ quelle: 20260624_WIMUS_IT_ERP_21_Datenmodell_Docs_V502.docx
 # 0001 — Datenmodell
 
 > Version & Status des Moduls stehen in `001_erp_000_konzept.md`.
-> Schema: `wimus` · ~130 Tabellen (nach V501+V502) · idempotente Migrationen 001–013
+> Schema: `wimus` · ~130 Tabellen (nach V501+V502) · idempotente Migrationen 001–016
 > (002 Vollschema, 003 KZV, 006–009 Grants/RLS/Cutover, 010/011 FiBu, 012 organisationen,
-> 013 CRM). Die Kern-DDL aus „005" (BK/Fristen/Forderungen/Mietrecht) liegt nur als
-> `.docs/specs/ALT/word/..._005_Migration_V100_sql.txt`, noch nicht als getrackte
-> `004/005`-`.sql` im Repo (offener Punkt Repo-Hygiene).
+> 013 CRM, 014 ocr_verarbeitungen, 015 FiBu-Reporting, 016 Mietanpassung-Dublette).
+> Die „005"-Kern-DDL (BK/Fristen/Forderungen/Mietrecht) ist live angewandt, aber noch
+> nicht als getrackte `004*.sql` im Repo — Source-of-Truth ist bis dahin die Live-DB
+> (Nachziehung via `pg_dump`, OP-3 im Konzept). Das Archiv `ALT/` ist NICHT maßgeblich.
 > Konvention: PK = `UUID PRIMARY KEY DEFAULT gen_random_uuid()`, FK = Fremdschlüssel.
 
 ## Kern 1: Kostenverteilung
@@ -115,6 +116,10 @@ projekt_id FK, gemeinde VARCHAR(100), satz_pro_nacht DECIMAL(6,2), gueltig_ab/bi
 (NULL=aktuell), quelle VARCHAR(255), paperless_id.
 
 ### ocr_verarbeitungen
+> **Gebaut (2026-06-27, Migration 014):** Tabelle mit RLS angelegt; ENUM-Felder als TEXT
+> (offene Wertelisten), `geprueft_von` bare UUID. `belege.ocr_verarbeitung_id` bleibt
+> bewusst referenzlos (Spec 0002).
+
 mandant_id FK, paperless_id VARCHAR(100), dokument_typ ENUM (mietvertrag/
 eingangsrechnung/…), ocr_raw_md TEXT (Markdown Volltext), ocr_structured JSONB (Felder +
 Confidence), ocr_confidence DECIMAL(3,2), ocr_seiten INT, ki_modell VARCHAR(50),

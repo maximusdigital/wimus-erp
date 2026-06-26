@@ -55,12 +55,20 @@ iPhone 13 (390px), webServer npm run dev.
 
 ## Ordnerstruktur
 
-tests/setup.ts; tests/unit/lib/ (citytax, afa, mahnwesen, aktenzeichen, mietanpassung);
-tests/unit/utils/ (formatter, datums); tests/integration/auth/ (login, mfa, rls,
-middleware); tests/integration/api/ (beds24-webhook, citytax-api, ttlock);
-tests/integration/db/ (pgTAP: trigger.sql, rls-policies.sql, fk-constraints.sql);
-tests/e2e/ (auth, objekte, buchung-kzv, gaestemappe, vorgang); tests/fixtures/ (seed-data,
-mock-buchung, mock-objekt).
+> **Ist-Stand (2026-06-27, 32 Dateien / 259 Tests grün):**
+
+- `tests/setup.ts`
+- `tests/unit/lib/` — Geschäftslogik: citytax, afa, mahnwesen, mahnlauf, aktenzeichen,
+  verwendungszweck, relations, forderungen, fristen, bk, bk-abrechnung, betriebskosten-run,
+  fibu, fibu-beleg, erechnung, extf, extf-export, beleg-pipeline, lieferant-match, guv, crm
+- `tests/unit/lib/validations/` — finanzen, buchung, einheit-vertrag, kontakt, objekt, vorgang-asset
+- `tests/unit/utils/` — format
+- `tests/integration/api/` — beds24-webhook, dms
+- `tests/e2e/` — `auth.setup.ts`, `smoke.spec.ts`, `authenticated.spec.ts`
+
+> **Noch offen (Soll, nicht angelegt):** `tests/integration/auth/` (login/mfa/rls/middleware),
+> `tests/integration/db/` (pgTAP trigger/rls/fk), breitere `tests/e2e/`-Flows (objekte,
+> buchung-kzv, gaestemappe, vorgang), `tests/fixtures/`.
 
 ## Testfälle Priorität 1 (Auswahl)
 

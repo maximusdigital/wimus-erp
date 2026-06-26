@@ -1,3 +1,6 @@
+import Link from "next/link"
+import { Printer } from "lucide-react"
+
 import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { PrintButton } from "@/components/fibu/print-button"
 import { BalkenChart } from "@/components/charts/wimus-charts"
 import { aggregateGuV, type GuvBuchung } from "@/lib/fibu/guv"
 import { formatEUR } from "@/lib/utils/format"
@@ -60,7 +62,17 @@ export default async function AuswertungPage({
             {firmaName} · {von} bis {bis} · Controlling-Sicht (kein testierter Abschluss)
           </p>
         </div>
-        <PrintButton />
+        <Button
+          variant="outline"
+          render={
+            <Link
+              href={`/fibu/auswertung/druck?firma_id=${firmaId}&von=${von}&bis=${bis}`}
+            />
+          }
+        >
+          <Printer />
+          <span>A4-Druck / PDF</span>
+        </Button>
       </div>
 
       <Card className="print:hidden">
