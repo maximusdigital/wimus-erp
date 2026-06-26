@@ -114,6 +114,14 @@ Summenkontrolle). 22/22 eingeloggte Playwright-Grobtests grün.
 - ✅ UI `/fibu/belege`: Upload (PDF/Bild/XML) → Pipeline; Buchungsfreigabe-Cockpit
   (Ampel, KI-Vorschlag, Freigeben→Buchung / Ablehnen). API `app/api/fibu/belege`.
 
-**Offen:** Migration 011 einspielen (dann Live-End-to-End-OCR-Test); Einheiten-/Firma-
-Zuordnung des Belegs (derzeit firma_id null → review); EXTF-Export an echte Buchungen
-anbinden (OP-1 Layout); pgTAP-RLS.
+**Live verifiziert (2026-06-26):** E-Rechnung-Upload → erkannt → kontiert (4240) →
+Freigabe → `fibu_buchungen` (Soll 4240/Haben 1600, stabile ID); Mistral-OCR auf echtem
+PDF → 200 + Text.
+
+**DATEV-Export angebunden:** `lib/fibu/extf-export.ts` (`mapBuchungZuExtf`/`baueExtfExport`,
+4 Tests) → API `GET /api/fibu/export?firma_id&von&bis` liefert EXTF-CSV (Windows-1252,
+Download); UI `/fibu/export` (Firma + Zeitraum). Live-Download getestet (CSV enthält
+EXTF-Header + Buchung).
+
+**Offen:** Einheiten-/Firma-Zuordnung des Belegs (derzeit firma_id null → review);
+volles EXTF-116-Spalten-Layout (OP-1); n8n-Eingangskanäle (belege@/Caya); pgTAP-RLS.
