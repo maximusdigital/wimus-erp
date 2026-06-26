@@ -5,9 +5,14 @@ import { defineConfig, devices } from "@playwright/test"
  *
  * - baseURL localhost:3000, headless (CI auf Coolify + lokal Windows).
  * - Tests unter tests/e2e/.
+ * - "setup" meldet sich einmal an und legt den Auth-State ab; das Projekt
+ *   "authenticated" nutzt ihn für die eingeloggten Grobtests.
  * - Mobile-Projekt (390px) für die Responsive-Prüfungen (Kap. 6.2).
- * - webServer startet die App automatisch, wenn nicht bereits gestartet.
+ * - webServer startet die App automatisch, wenn nicht bereits gestartet
+ *   (reuseExistingServer nutzt einen laufenden Dev-Server).
  */
+const STORAGE = "tests/e2e/.auth/user.json"
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -21,12 +26,26 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
+      // Unauthentifizierte Smoke-Tests (Redirect, Login-Seite).
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: [/auth\.setup\.ts/, /authenticated\.spec\.ts/],
     },
     {
       name: "mobile",
       use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } },
+      testIgnore: [/auth\.setup\.ts/, /authenticated\.spec\.ts/],
+    },
+    {
+      // Eingeloggte Grobtests über alle Hauptseiten.
+      name: "authenticated",
+      testMatch: /authenticated\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"], storageState: STORAGE },
+      dependencies: ["setup"],
     },
   ],
   webServer: {
