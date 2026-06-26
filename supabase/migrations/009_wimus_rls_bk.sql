@@ -1,29 +1,38 @@
 -- =====================================================================
 -- Migration 009: RLS-Policies (mandant_isolation) für die BK-Tabellen
 --
--- Befund 2026-06-26: bk_arten / abrechnungseinheiten / kostenverteilung_
--- positionen / bk_abrechnungen / abrechnungseinheit_mitglieder haben RLS
--- aktiv (aus Migration 005), aber KEINE Policy → der angemeldete Nutzer
--- sieht 0 Zeilen (Service-Role umgeht RLS). 008 deckte nur forderungen/
--- fristen u.a. ab. Diese Migration ergänzt die BK-Tabellen.
+-- Befund 2026-06-26: BK-Tabellen (aus Migration 005) haben RLS aktiv, aber
+-- KEINE Policy → der angemeldete Nutzer sieht 0 Zeilen (Service-Role umgeht
+-- RLS). 008 deckte nur forderungen/fristen u.a. ab.
+--
+-- Achtung: nicht alle BK-Tabellen haben mandant_id. Kind-Tabellen werden
+-- über ihre Eltern isoliert:
+--   bk_berechnungslogiken     → bk_art_id  → bk_arten.mandant_id
+--   bk_abrechnungs_positionen → abrechnung_id → bk_abrechnungen.mandant_id
+--   abrechnungseinheit_mitglieder → abrechnungseinheit_id → abrechnungseinheiten.mandant_id
 --
 -- Idempotent. Anwenden: Supabase SQL-Editor.
 -- =====================================================================
 
 SET search_path TO wimus, public;
 
--- Tabellen MIT mandant_id → Standard-Isolation.
+-- Tabellen MIT mandant_id → Standard-Isolation (Spalten-Existenz wird geprüft,
+-- damit die Migration nie an einer mandant_id-losen Tabelle scheitert).
 DO $$
 DECLARE
   t text;
   tabs text[] := ARRAY[
-    'bk_arten','bk_berechnungslogiken','abrechnungseinheiten',
-    'kostenverteilung_positionen','bk_abrechnungen','bk_abrechnungs_positionen',
-    'mietpreiserhoehungen','kautionsabrechnungen','vertrags_parameter_definitionen'
+    'bk_arten','abrechnungseinheiten','kostenverteilung_positionen',
+    'bk_abrechnungen','mietpreiserhoehungen','kautionsabrechnungen',
+    'vertrags_parameter_definitionen'
   ];
 BEGIN
   FOREACH t IN ARRAY tabs LOOP
     IF to_regclass('wimus.'||t) IS NULL THEN CONTINUE; END IF;
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='wimus' AND table_name=t AND column_name='mandant_id'
+    ) THEN CONTINUE; END IF;
     EXECUTE format('ALTER TABLE wimus.%I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS mandant_isolation ON wimus.%I', t);
     EXECUTE format($f$
@@ -35,8 +44,37 @@ BEGIN
   END LOOP;
 END $$;
 
--- abrechnungseinheit_mitglieder → kein mandant_id, Isolation über die
--- Abrechnungseinheit.
+-- Kind-Tabellen ohne mandant_id → Isolation über die Elterntabelle.
+
+-- bk_berechnungslogiken → bk_arten
+ALTER TABLE wimus.bk_berechnungslogiken ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mandant_isolation ON wimus.bk_berechnungslogiken;
+CREATE POLICY mandant_isolation ON wimus.bk_berechnungslogiken
+  FOR ALL TO authenticated
+  USING (bk_art_id IN (
+    SELECT id FROM wimus.bk_arten
+    WHERE mandant_id IN (SELECT mandant_id FROM public.user_mandanten WHERE user_id = auth.uid())
+  ))
+  WITH CHECK (bk_art_id IN (
+    SELECT id FROM wimus.bk_arten
+    WHERE mandant_id IN (SELECT mandant_id FROM public.user_mandanten WHERE user_id = auth.uid())
+  ));
+
+-- bk_abrechnungs_positionen → bk_abrechnungen
+ALTER TABLE wimus.bk_abrechnungs_positionen ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mandant_isolation ON wimus.bk_abrechnungs_positionen;
+CREATE POLICY mandant_isolation ON wimus.bk_abrechnungs_positionen
+  FOR ALL TO authenticated
+  USING (abrechnung_id IN (
+    SELECT id FROM wimus.bk_abrechnungen
+    WHERE mandant_id IN (SELECT mandant_id FROM public.user_mandanten WHERE user_id = auth.uid())
+  ))
+  WITH CHECK (abrechnung_id IN (
+    SELECT id FROM wimus.bk_abrechnungen
+    WHERE mandant_id IN (SELECT mandant_id FROM public.user_mandanten WHERE user_id = auth.uid())
+  ));
+
+-- abrechnungseinheit_mitglieder → abrechnungseinheiten
 ALTER TABLE wimus.abrechnungseinheit_mitglieder ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS mandant_isolation ON wimus.abrechnungseinheit_mitglieder;
 CREATE POLICY mandant_isolation ON wimus.abrechnungseinheit_mitglieder
