@@ -1,4 +1,19 @@
+import { readFileSync } from "node:fs"
+
 import { defineConfig, devices } from "@playwright/test"
+
+// .env.local laden (u. a. E2E_EMAIL/E2E_PASSWORD für das Auth-Setup).
+// Kein dotenv-Dep nötig; nur fehlende Keys werden gesetzt.
+try {
+  for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/)
+    if (m && !(m[1] in process.env)) {
+      process.env[m[1]] = m[2].replace(/^["']|["']$/g, "")
+    }
+  }
+} catch {
+  // .env.local optional – CI setzt die Variablen direkt.
+}
 
 /**
  * Playwright-Konfiguration (Testing 50, Kap. 6–7).
