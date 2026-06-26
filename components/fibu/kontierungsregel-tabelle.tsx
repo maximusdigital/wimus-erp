@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -30,11 +31,12 @@ export function KontierungsregelTabelle({
             <TableHead>USt</TableHead>
             <TableHead>Geltung</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {regeln.map((r) => (
-            <TableRow key={r.id} className="hover:bg-muted/50">
+            <TableRow key={r.id} className="group hover:bg-muted/50">
               <TableCell className="tabular-nums text-muted-foreground">
                 {r.prioritaet}
               </TableCell>
@@ -60,6 +62,16 @@ export function KontierungsregelTabelle({
                 <StatusBadge status={r.aktiv ? "aktiv" : "inaktiv"}>
                   {r.aktiv ? "Aktiv" : "Inaktiv"}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/fibu/kontierungsregeln/${r.id}`}
+                  destructive={{
+                    kind: "hard",
+                    deleteUrl: `/api/fibu/kontierungsregeln/${r.id}`,
+                    description: `Regel "${r.match}" wird dauerhaft gelöscht.`,
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

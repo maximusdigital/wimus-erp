@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -26,11 +27,12 @@ export function LieferantTabelle({
             <TableHead>Std-Gewerk</TableHead>
             <TableHead>Std-Konto</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {lieferanten.map((l) => (
-            <TableRow key={l.id} className="hover:bg-muted/50">
+            <TableRow key={l.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link
                   href={`/fibu/lieferanten/${l.id}`}
@@ -52,6 +54,16 @@ export function LieferantTabelle({
                 <StatusBadge status={l.aktiv ? "aktiv" : "inaktiv"}>
                   {l.aktiv ? "Aktiv" : "Inaktiv"}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/fibu/lieferanten/${l.id}`}
+                  destructive={{
+                    kind: "hard",
+                    deleteUrl: `/api/fibu/lieferanten/${l.id}`,
+                    description: `Lieferant "${l.name}" wird dauerhaft gelöscht.`,
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

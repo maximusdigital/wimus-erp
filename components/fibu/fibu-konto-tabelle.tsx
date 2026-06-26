@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -28,11 +29,12 @@ export function FibuKontoTabelle({ konten }: { konten: FibuKontoMitFirma[] }) {
             <TableHead>USt</TableHead>
             <TableHead>Firma</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {konten.map((k) => (
-            <TableRow key={k.id} className="hover:bg-muted/50">
+            <TableRow key={k.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium tabular-nums">
                 <Link href={`/fibu/konten/${k.id}`} className="hover:underline">
                   {k.kontonummer}
@@ -55,6 +57,16 @@ export function FibuKontoTabelle({ konten }: { konten: FibuKontoMitFirma[] }) {
                 <StatusBadge status={k.aktiv ? "aktiv" : "inaktiv"}>
                   {k.aktiv ? "Aktiv" : "Inaktiv"}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/fibu/konten/${k.id}`}
+                  destructive={{
+                    kind: "hard",
+                    deleteUrl: `/api/fibu/konten/${k.id}`,
+                    description: `Konto ${k.kontonummer} wird dauerhaft gelöscht.`,
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

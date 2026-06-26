@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -29,11 +30,12 @@ export function GesellschafterTabelle({
             <TableHead>Steuerliche ID</TableHead>
             <TableHead>Ort</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {gesellschafter.map((g) => (
-            <TableRow key={g.id} className="hover:bg-muted/50">
+            <TableRow key={g.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link
                   href={`/fibu/gesellschafter/${g.id}`}
@@ -55,6 +57,16 @@ export function GesellschafterTabelle({
                 <StatusBadge status={g.aktiv ? "aktiv" : "inaktiv"}>
                   {g.aktiv ? "Aktiv" : "Inaktiv"}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/fibu/gesellschafter/${g.id}/bearbeiten`}
+                  destructive={{
+                    kind: "hard",
+                    deleteUrl: `/api/fibu/gesellschafter/${g.id}`,
+                    description: `"${g.name}" und zugehörige Beteiligungen werden gelöscht.`,
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}
