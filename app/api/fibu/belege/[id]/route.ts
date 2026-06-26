@@ -102,6 +102,22 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: "Keine Änderungen." }, { status: 422 })
   }
+
+  // Lernender Loop (Spec 0002 §1): geänderte Felder als korrekturen protokollieren.
+  const vorher = beleg as unknown as Record<string, unknown>
+  const korrekturen = Object.entries(patch)
+    .filter(([f, v]) => String(vorher[f] ?? "") !== String(v ?? ""))
+    .map(([f, v]) => ({
+      mandant_id: beleg.mandant_id,
+      beleg_id: id,
+      feld: f,
+      alt_wert: vorher[f] == null ? null : String(vorher[f]),
+      neu_wert: v == null ? null : String(v),
+    }))
+  if (korrekturen.length > 0) {
+    await supabase.from("fibu_korrekturen").insert(korrekturen)
+  }
+
   const { data, error } = await supabase
     .from("belege")
     .update(patch)

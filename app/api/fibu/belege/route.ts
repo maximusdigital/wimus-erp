@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { verarbeiteBeleg } from "@/lib/fibu/beleg-pipeline"
 import { buchungAusBeleg } from "@/lib/fibu/buchung"
+import { matchLieferant, type LieferantKandidat } from "@/lib/fibu/lieferant-match"
 import { mistralOcr, mistralExtrahiere } from "@/lib/integrations/mistral"
 import type { Kontierungsregel } from "@/lib/utils/fibu"
 import type { Beleg } from "@/types/beleg"
@@ -71,9 +72,25 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Lieferant-Matching → firma_id (Buchungskreis), lieferant_id, Standard-Konto-Fallback.
+  const { data: liefData } = await supabase
+    .from("lieferanten")
+    .select("id, name, alias, firma_id, standard_konto, standard_gewerk")
+  const treffer = matchLieferant(
+    entwurf.lieferant_name,
+    (liefData ?? []) as LieferantKandidat[]
+  )
+  const sollKonto = entwurf.soll_konto ?? treffer?.standard_konto ?? null
+  // Lieferant-Standardkonto füllt die Kontierungslücke → Review-Grund entfernen.
+  const reviewGruende = sollKonto
+    ? entwurf.review_gruende.filter((g) => !g.startsWith("Keine Kontierungsregel"))
+    : entwurf.review_gruende
+  const reviewFlag = reviewGruende.length > 0
+
   const insert = {
     mandant_id: active.id,
-    firma_id: null,
+    firma_id: treffer?.firma_id ?? null,
+    lieferant_id: treffer?.lieferant_id ?? null,
     hash,
     kanal,
     ist_erechnung: entwurf.quelle === "erechnung",
@@ -82,19 +99,19 @@ export async function POST(request: NextRequest) {
     lieferant_name: entwurf.lieferant_name,
     lieferant_ustid: entwurf.lieferant_ustid,
     iban: entwurf.iban,
-    gewerk: entwurf.gewerk,
     netto: entwurf.netto,
     brutto: entwurf.brutto,
     ust_satz: entwurf.ust_satz,
     ust_betrag: entwurf.ust_betrag,
-    soll_konto: entwurf.soll_konto,
+    soll_konto: sollKonto,
     steuerschluessel: entwurf.steuerschluessel,
+    gewerk: entwurf.gewerk ?? treffer?.standard_gewerk ?? null,
     k1: entwurf.k1,
     confidence_ocr: entwurf.confidence_ocr,
     confidence_extraktion: entwurf.confidence_extraktion,
     confidence_kontierung: entwurf.confidence_kontierung,
-    review_flag: entwurf.review_flag,
-    review_gruende: entwurf.review_gruende,
+    review_flag: reviewFlag,
+    review_gruende: reviewGruende,
     status: entwurf.status,
   }
 
