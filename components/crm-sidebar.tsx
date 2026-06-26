@@ -13,7 +13,10 @@ import {
   BookOpen,
   Download,
   FolderArchive,
+  GitBranch,
+  Inbox,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Mail,
   Package,
@@ -21,6 +24,8 @@ import {
   Receipt,
   Landmark,
   Settings,
+  SlidersHorizontal,
+  Target,
   TrendingUp,
   Truck,
   Users,
@@ -83,6 +88,15 @@ const fibuNav: NavItem[] = [
   { title: "Auswertung", href: "/fibu/auswertung", icon: PieChart },
   { title: "Feststellung", href: "/fibu/feststellung", icon: PieChart },
   { title: "DATEV-Export", href: "/fibu/export", icon: Download },
+];
+
+// CRM (Spec 0003) – Leads & Deal-Pipelines.
+const crmNav: NavItem[] = [
+  { title: "Pipeline", href: "/crm", icon: Target },
+  { title: "Lead-Inbox", href: "/crm/leads", icon: Inbox },
+  { title: "Aktivitäten", href: "/crm/aktivitaeten", icon: ListChecks },
+  { title: "Pipelines", href: "/crm/pipelines", icon: GitBranch },
+  { title: "Datenfelder", href: "/crm/datenfelder", icon: SlidersHorizontal },
 ];
 
 // Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.
@@ -174,6 +188,13 @@ export function CrmSidebar({ user }: { user: SidebarUser }) {
           <SidebarGroupLabel>FiBu</SidebarGroupLabel>
           <SidebarGroupContent>
             <NavMenu items={fibuNav} />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Vertrieb (CRM)</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavMenu items={crmNav} />
           </SidebarGroupContent>
         </SidebarGroup>
 
