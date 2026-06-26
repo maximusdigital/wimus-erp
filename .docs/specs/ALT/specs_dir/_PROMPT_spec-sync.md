@@ -6,10 +6,8 @@
 
 ## Aufgabe
 
-Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen flach in
-`.docs/specs/` als `MMM_kuerzel_DDD_name.md` (z.B. `001_erp_200_datenmodell.md`); ein Modul
-= alle Dateien mit gleichem `MMM_kuerzel`-Präfix. Arbeite Modul für Modul (aktuell: `001_erp`,
-`002_fibu`, `003_crm`).
+Prüfe für jedes Modul unter `.docs/specs/<NNNN_modul>/`, ob Spec und Repository
+übereinstimmen. Arbeite Modul für Modul (aktuell: `0001_erp-kern`, `0002_fibu`).
 
 ## Vorgehen je Modul
 
@@ -21,16 +19,16 @@ Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen fl
      jederzeit über `git restore`/`git checkout` wiederherstellbar.
    - Erst wenn der Sicherungspunkt steht, mit Schritt 1 fortfahren. Bei unklarem Git-Status
      NICHT weitermachen, sondern mich fragen.
-1. **Lies zuerst die `*_000_konzept`-Datei** (Stand, Decision-Log, offene Punkte, Version) und
+1. **Lies zuerst `00_konzept.md`** (Stand, Decision-Log, offene Punkte, Version) und
    danach die Detail-Dateien (`10`–`60`).
 2. **Gleiche gegen die Realität ab:**
-   - `*_200_datenmodell` ↔ tatsächliche Migrationen (`supabase/migrations/*.sql`) und
+   - `20_datenmodell.md` ↔ tatsächliche Migrationen (`supabase/migrations/*.sql`) und
      das Live-Schema `wimus`.
-   - `*_100_architektur` / `*_300_prozesse` ↔ tatsächlicher Code (`lib/**`, `app/**`,
+   - `10_architektur.md` / `30_prozesse.md` ↔ tatsächlicher Code (`lib/**`, `app/**`,
      API-Routen, n8n-Flows soweit referenziert).
-   - `*_400_design` ↔ tatsächliche UI/Komponenten (RowActions, Inline-Edit, Cockpits).
-   - `*_500_migration` ↔ vorhandene Migrationsdateien + Reihenfolge (falls vorhanden).
-   - `*_600_tests` ↔ vorhandene Tests + letzter grüner Lauf (`npm run test:run`).
+   - `40_design.md` ↔ tatsächliche UI/Komponenten (RowActions, Inline-Edit, Cockpits).
+   - `50_migration.md` ↔ vorhandene Migrationsdateien + Reihenfolge.
+   - `60_tests.md` ↔ vorhandene Tests + letzter grüner Lauf (`npm run test:run`).
 3. **Erstelle einen Abgleich-Bericht** (NICHT sofort ändern) mit drei Kategorien je Fund:
    - **A) Code ist weiter als Spec** → Spec nachziehen (Code = Wahrheit). Beispiel: neue
      Tabelle/Funktion gebaut, steht nicht in der Spec.
@@ -42,27 +40,23 @@ Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen fl
 ## Regeln (verbindlich)
 
 - **Nichts blind überschreiben.** Erst den Bericht zeigen, dann auf meine Freigabe handeln.
-- **Spec-Dateinamen sind stabil** (Schema `MMM_kuerzel_DDD_name.md`). Keine neuen Nummern,
-  kein Umbenennen, keine Datums-/Versionssuffixe im Dateinamen.
-- **Version lebt NUR in der `*_000_konzept`-Datei** (Frontmatter + Meilenstein-Tabelle). Andere Dateien
+- **Spec-Dateinamen sind stabil** (`00_konzept` … `60_tests`). Keine neuen Nummern, kein
+  Umbenennen, keine Datums-/Versionssuffixe im Dateinamen.
+- **Version lebt NUR in `00_konzept.md`** (Frontmatter + Meilenstein-Tabelle). Andere Dateien
   tragen nur `gehoert_zu` + `geaendert`. Beim Nachziehen einer Detail-Datei nur `geaendert`
   aktualisieren, NICHT die Modulversion.
 - **Decision-Log nur ergänzen, nie löschen.** Jede beim Bauen getroffene Implementierungs-
   Entscheidung als datierte Zeile ergänzen (Grund nennen).
-- **Änderungshistorie pflegen.** Jede inhaltliche Spec-Änderung zusätzlich als Zeile in den
-  Abschnitt „Änderungshistorie" der `*_000_konzept`-Datei eintragen (Datum/Uhrzeit, Vorgang
-  ≤ 100 Zeichen, betroffene Doku; neueste oben). Keine Datenmodell-/Inhaltsänderung ohne
-  Konzept-Nachtrag.
 - **Querschnitt-Konventionen** (UI, Datenintegrität) stehen ausführlich im Kern
-  (`001_erp_400_design.md`, `001_erp_200_datenmodell.md`). Module führen nur ihre Spezifika als
+  (`0001/40_design.md`, `0001/20_datenmodell.md`). Module führen nur ihre Spezifika als
   Abschnitt in ihren eigenen `40`/`20` und verweisen auf den Kern. Beim Nachziehen diese
   Trennung wahren.
 - **Kategorie A (Spec nachziehen):** Spec-Datei so editieren, dass sie den realen Code
-  beschreibt; Stand in der `*_000_konzept`-Datei (Steht/In Arbeit) und ggf. Decision-Log aktualisieren.
+  beschreibt; Stand in `00_konzept.md` (Steht/In Arbeit) und ggf. Decision-Log aktualisieren.
 - **Kategorie B (Code fehlt):** NICHT einfach die Spec löschen. Als offenen Punkt / „In Arbeit"
   vermerken und mir vorlegen, ob gebaut oder Spec angepasst werden soll.
 - **Meilenstein:** Wenn ein zusammenhängender Stand fertig + getestet ist, schlage einen
-  Versionssprung in der `*_000_konzept`-Datei vor (Minor = Ergänzung, Major = Umbau) mit Changelog-Zeile.
+  Versionssprung in `00_konzept.md` vor (Minor = Ergänzung, Major = Umbau) mit Changelog-Zeile.
 - **KEIN Commit ohne grüne Tests.** Vor jedem Commit (auch dem Sicherungs-Commit, falls er
   Code berührt): `npm run test:run` UND `npm run build` müssen grün sein. Bei Rot: NICHT
   committen, sondern Fehler melden und mir vorlegen. Wenn eine A-Änderung (Spec folgt Code)

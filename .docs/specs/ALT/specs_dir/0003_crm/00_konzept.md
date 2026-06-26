@@ -108,5 +108,6 @@ Mieter-Gewinnung (ALFA CAMPUS/LZV), KZV-Anfragen (ALFA APARTMENTS).
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-26 15:30 | Kanban-Tech-Basis ergänzt (dnd-kit, Shadcn-Vorlage, memo-Pattern) | 40_design |
 | 2026-06-26 15:00 | Verknüpfungsmodell + Pipedrive-UI + Custom Fields eingearbeitet | 00,10,20,30,40,50 |
 | 2026-06-26 14:00 | Grobspec 0003 erstellt (Lead-Inbox + Deal-Kanban, amoCRM-Ablösung) | alle |

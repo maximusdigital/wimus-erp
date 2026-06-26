@@ -21,6 +21,14 @@ geaendert: 2026-06-26
   Owner-Avatar; Stalled → Warn-Symbol (wie Pipedrive ⚠ auf der Karte).
 - Mobile (390px): Stage-Auswahl + Kartenliste (kein Drag erzwingen).
 
+> **Tech-Basis Kanban:** dnd-kit (2026-Standard, A11y/Tastatur/Touch out of the box).
+> Visuelle Vorlage: `Georgegriff/react-dnd-kit-tailwind-shadcn-ui` (GitHub) — exakt unser
+> Stack (React + dnd-kit + Tailwind + shadcn/ui), barrierefreies Board als Startpunkt.
+> Alternative höhere Abstraktion: hello-pangea/dnd (gepflegter react-beautiful-dnd-Fork).
+> **Performance-Pflicht:** Kanban-State NICHT komplett auf Top-Ebene halten (sonst rendert
+> jede Karte bei jedem Drag neu) → React.memo + stabile IDs; bei 500+ Karten Spalten-State
+> separat (z.B. zustand-Slice je Spalte).
+
 ## 2. Deal-Detailansicht (stark an Pipedrive Bild 4–7)
 
 - **Kopfzeile:** Deal-Titel, Owner + Follower, Buttons **Gewonnen** (grün) / **Verloren**
