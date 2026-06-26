@@ -66,6 +66,11 @@ ocr, mobile (Komponenten-Sets siehe Tabelle oben).
 
 ## UI-Konventionen (Listen, Aktionen, Bearbeitung)
 
+> **Umsetzungsstand (2026-06-26): Soll-Konvention, Code-Umsetzung offen (Backlog).**
+> Aktuelle Listen nutzen Row-Link + getrennte Bearbeiten/Löschen-Buttons und einen
+> Lösch-Dialog. `<RowActions>` (3-stufiges Schema), Inline-Edit, Bulk-Aktionen, Undo statt
+> Vorab-Dialog, Audit-Timeline und Tastatur-Nav sind noch NICHT implementiert.
+>
 > Version & Status des Moduls stehen in `00_konzept.md`.
 > Verbindliche, modulübergreifende UI-Patterns. Alle Module (FiBu 0002 etc.) folgen diesen.
 > Folgt dem Design System (`40_design.md`): Shadcn + Tremor, Token-Farben, 4px-Grid,

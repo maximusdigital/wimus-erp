@@ -154,6 +154,11 @@ VARCHAR[], gelesen_am TIMESTAMPTZ, vorgang_id FK, zammad_ticket_id VARCHAR(100).
 
 ## Datenintegrität (Dubletten, Sperren, Propagation, Audit)
 
+> **Umsetzungsstand (2026-06-26): Soll-Konvention, Code-Umsetzung teilweise (Backlog).**
+> Real vorhanden: DB-UNIQUE-Constraints (z. B. `belege.hash`, `fibu_buchungen.buchungs_id_extern`)
+> und RLS-Isolation. NICHT umgesetzt: UI-Vorabprüfung (Warn-Dubletten), generelle Status-/
+> Concurrency-Sperren, Propagations-Verhalten und ein durchgängiges Audit-Log.
+>
 > Version & Status des Moduls stehen in `00_konzept.md`.
 > Querschnitt-Thema: betrifft Datenmodell (Constraints/Trigger), Prozesse (Regeln/Audit)
 > und UI (Sperranzeige, Konsequenz-Dialoge). Modulübergreifend verbindlich.

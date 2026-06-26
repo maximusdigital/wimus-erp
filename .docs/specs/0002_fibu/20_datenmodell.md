@@ -11,6 +11,25 @@ geaendert: 2026-06-26
 > `objekte`/`einheiten`, `kontakte`. Konvention: PK UUID DEFAULT gen_random_uuid(), FK.
 > Grobentwurf — Feldlisten werden zur Feinspec verdichtet; DDL als Migration (download-only).
 
+## Implementierungsstand (real, Stand 2026-06-26)
+
+Maßgeblich gegenüber dem Grobentwurf unten — Code = Wahrheit:
+
+- **Buchungskreis = `firmen`** (FK `firma_id`), KEINE neue `einheiten`-Tabelle. Die
+  Steuermerkmale (`rechtsform_typ`, `besteuerungsart`, `kontenrahmen_ref`) wurden additiv an
+  `wimus.firmen` ergänzt (Migration 010). `steuernummer`/`ust_id`/`datev_*`/`wirtschaftsjahr_start`
+  waren bereits an `firmen` vorhanden. Wo unten „einheit_id" steht, ist real `firma_id` gemeint.
+- **Reale Tabellennamen:** `fibu_buchungen`, `fibu_konten`, `fibu_korrekturen`.
+  Grund: `wimus.buchungen` ist bereits durch die **KZV-Reservierungen** belegt (gast/checkin/
+  beds24/pin) — Namenskollision. `belege` heißt wie spezifiziert.
+- **RLS:** `mandant_isolation` über `mandant_id` + `public.user_mandanten` (nicht „nach
+  einheit_id"). Jede FiBu-Tabelle trägt `mandant_id` (RLS) + `firma_id` (Buchungskreis).
+  Kind-Tabellen ohne `mandant_id` (`fibu_korrekturen`) isolieren über die Elterntabelle.
+- **Gebaut (Migration 010/011):** `gesellschafter`, `beteiligungen`, `fibu_konten`,
+  `kontierungsregeln`, `lieferanten`, `belege`, `fibu_buchungen`, `fibu_korrekturen`.
+- **Nur spezifiziert, NICHT gebaut:** `feststellungen` (real: nur Live-Vorschau-Berechnung
+  ohne Tabelle), `auswertungs_scopes`, `objekt_tags`, `reporting_taxonomie`.
+
 ## Organisations- & Steuerstruktur
 
 ### gesellschafter
@@ -28,30 +47,36 @@ gesellschafter_id FK, einheit_id FK, quote DECIMAL(7,4), gueltig_ab DATE, guelti
 (NULL=aktuell). Basis für periodengenaue Ergebnisverteilung.
 
 ### feststellungen (Controlling-Vorschau, nicht steuerverbindlich)
+> Status: **nicht als Tabelle gebaut** — real nur Live-Vorschau-Berechnung
+> (`/fibu/feststellung` + `ergebnisverteilung`), keine Persistenz.
 einheit_id FK, periode_von/bis DATE, ermitteltes_ergebnis DECIMAL(14,2),
 verteilung JSONB (je gesellschafter_id: anteil_quote, anteil_betrag, zeitanteilig),
 erstellt_am, akteur_id FK.
 
 ## Kontenrahmen & Regeln
 
-### konten / kontenrahmen
-einheit_id FK (oder workspace-vererbt), kontonummer, bezeichnung, kontoart ENUM
+### konten / kontenrahmen  → real `fibu_konten`
+mandant_id FK, firma_id FK (NULL=alle), kontonummer, bezeichnung, kontoart ENUM
 (soll/haben/automatik), skr_basis ENUM (skr03/skr04/euer), ust_automatik. Pro
 rechtsform_typ unterschiedlich (GmbH-SKR ≠ EÜR-Konten).
 
 ### kontierungsregeln
-scope ENUM (workspace/einheit), einheit_id FK NULL, gewerk/leistung-Match,
+mandant_id FK, scope ENUM (workspace/einheit), firma_id FK NULL (real; „einheit"), gewerk/leistung-Match (Feld `match`),
 soll_konto, haben_logik (k1→bank), ust_satz/steuerschluessel, prioritaet, aktiv BOOL.
 Workspace = Default, einheit = Override. In ERP-UI pflegbar.
 
 ### lieferanten / kreditoren
-einheit_id FK, name, alias[], ustid, iban, standard_gewerk, standard_konto,
+mandant_id FK, firma_id FK NULL, name, alias[], ustid, iban, standard_gewerk, standard_konto,
 fuzzy_match_keys. Aliasse (DM→Reinigung, LIDL→Deko etc.).
 
 ## Belege & Buchungen
 
 ### belege (versioniert, GoBD)
-einheit_id FK (Pflicht), ocr_verarbeitung_id FK → 0001.ocr_verarbeitungen, hash UNIQUE
+> Real zusätzlich denormalisiert (aus der Pipeline): `lieferant_name`, `lieferant_ustid`,
+> `iban`, `gewerk`, `soll_konto`, `steuerschluessel`, `review_gruende TEXT[]`. `klasse` real
+> Freitext (kein ENUM/CHECK). `firma_id` (Buchungskreis) nullable; `mandant_id` Pflicht (RLS).
+> `ocr_verarbeitung_id` referenzlose UUID (ocr_verarbeitungen separat).
+mandant_id FK (Pflicht), firma_id FK, ocr_verarbeitung_id, hash UNIQUE
 (Idempotenz), original_ref (unveränderbar), kanal ENUM (email/gdrive/upload/whatsapp),
 ist_erechnung BOOL, klasse ENUM (rechnung/abrechnung/kassenbeleg/tankbeleg/mahnwesen/
 zahlungsbeleg/gutschrift/abschlagsplan/vertragsunterlage/sonstiges), belegnummer, belegdatum
@@ -60,17 +85,20 @@ ust_betrag, k1, k2, positionen JSONB (optional), confidence_ocr/confidence_extra
 confidence_kontierung DECIMAL(3,2), review_flag BOOL, status ENUM (siehe Status-Maschine),
 version INT, vorgaenger_beleg_id FK (Korrektur = neue Version).
 
-### buchungen (Eingang)
-beleg_id FK, einheit_id FK (Pflicht), datum DATE, soll_konto, haben_konto, betrag_brutto,
+### buchungen (Eingang)  → real `fibu_buchungen` (NICHT `buchungen` = KZV!)
+beleg_id FK, mandant_id FK (Pflicht), firma_id FK, datum DATE, soll_konto, haben_konto, betrag_brutto,
 ust_schluessel, k1 (Pflicht), k2, buchungstext (max 60), buchungs_id_extern (stabil, für
 TaxPool-Dublettenerkennung), akteur_id FK, akteur_typ ENUM (mensch/ki), gebucht_am
 TIMESTAMPTZ, exportiert_am TIMESTAMPTZ.
 
-### korrekturen (lernender Loop)
-buchung_id FK, feld, alt_wert, neu_wert, akteur_id FK, am TIMESTAMPTZ. Häufung →
-Kontierungsregel-Vorschlag.
+### korrekturen (lernender Loop)  → real `fibu_korrekturen`
+mandant_id FK, buchung_id FK (→ fibu_buchungen), beleg_id FK, feld, alt_wert, neu_wert,
+akteur_id, am TIMESTAMPTZ. Häufung → Kontierungsregel-Vorschlag.
+> Tabelle gebaut; Schreiben/Auswerten (Regelvorschlag) im Code noch offen.
 
 ## Auswertungs-Scopes (Konsolidierung)
+
+> Status: **noch nicht gebaut** (Backlog). Die folgenden Tabellen sind nur spezifiziert.
 
 ### auswertungs_scopes
 name, einheiten_set UUID[], k1_set TEXT[] (oder Tag-Filter), zeitraum_typ, optionen JSONB
@@ -92,9 +120,15 @@ exportiert, fehler, dublette, abgelehnt. Übergänge protokolliert (Akteur + Tim
 
 ## RLS
 
-belege, buchungen, konten strikt nach `einheit_id` row-level getrennt. Akteur kann für
-mehrere Einheiten berechtigt sein; Daten bleiben getrennt (externer Beraterblick auf
-einzelne Einheit möglich).
+> Real umgesetzt als `mandant_isolation` (FOR ALL TO authenticated) über `mandant_id` +
+> `public.user_mandanten` — analog zum gesamten wimus-Schema. Tabellen ohne `mandant_id`
+> (`fibu_korrekturen`) isolieren über die Elterntabelle. Die unten beschriebene Trennung
+> „nach einheit_id" ist konzeptionell; technisch trägt jede Zeile `firma_id` (Buchungskreis)
+> zusätzlich zur `mandant_id`.
+
+belege, fibu_buchungen, fibu_konten strikt mandanten-/firmengetrennt. Akteur kann für
+mehrere Firmen berechtigt sein; Daten bleiben getrennt (externer Beraterblick auf
+einzelne Firma möglich).
 
 ## Datenintegrität (FiBu-spezifisch)
 

@@ -30,12 +30,20 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 - Phase 0 Fundament: CLAUDE.md, DB-Schema, Auth+MFA, Mandanten, RLS, Seed
 - Phase 1 Core Immobilien: Objekte, Einheiten, Kontakte, Verträge, Dashboard
+- Cutover public→wimus abgeschlossen (App läuft auf `wimus`); Org-Modell Workspace→Firma→Projekt
+- Phase 2 (nativer Teil, getestet): Forderungsmanagement, Fristen/Termine, Mahnlauf
+  (5-stufig), Betriebskosten-Abrechnung (Kostenverteilung/Umlageschlüssel, A4-Druck)
+- Eingeloggte Playwright-Grobtests über alle Hauptseiten (Pflicht nach jedem Umbau)
 - Stack produktiv: Next.js 16 / Supabase self-hosted / n8n / Coolify / amoCRM / Beds24+Pricelabs
-- ~130 Tabellen im Schema `wimus`, idempotente Migrationen 001–005
+- ~130 Tabellen im Schema `wimus`, idempotente Migrationen (aktuell bis 011)
 
 ## In Arbeit
 
-- Phase 2 Finanzen & Kommunikation: OP-Management, CAMT, Mahnwesen, Invoice Ninja, Zammad
+- Phase 2 Finanzen (extern): OP-Management, CAMT/finAPI, Invoice Ninja, Zammad
+  (nativer Teil Mahnwesen/Forderungen/Fristen/BK steht, s. „Steht")
+- Modulübergreifende UI-Konventionen + Datenintegrität (40_design/20_datenmodell) als
+  Konvention dokumentiert, Code-Umsetzung (RowActions/Inline-Edit/Undo/Audit-Timeline,
+  UI-Dublettenprüfung/Sperren/Audit-Log) noch offen — Backlog
 
 ## Ideen / als Nächstes
 

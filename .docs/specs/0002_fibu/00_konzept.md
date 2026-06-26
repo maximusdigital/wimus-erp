@@ -106,6 +106,9 @@ nur über definierte Confidence- und Betragsschwellen.
   Spalten) statt vollem 116-Spalten-Layout. Volles Layout bleibt OP-1 bis Live-Anbindung.
 - 2026-06-26: **E-Rechnungs-Parser dependency-frei** (Local-Name-Extraktion, kein XML-Lib-Dep)
   für CII + UBL. Grund: schlanke Build, keine Fremd-Abhängigkeit für simples Feld-Mapping.
+- 2026-06-26: **FiBu-Buchungssätze heißen `fibu_buchungen`** (+ `fibu_konten`,
+  `fibu_korrekturen`). Grund: `wimus.buchungen` ist bereits durch die KZV-Reservierungen
+  belegt (Namenskollision). KZV-Tabelle bleibt unangetastet. `belege` wie spezifiziert.
 
 ## Offene Punkte
 

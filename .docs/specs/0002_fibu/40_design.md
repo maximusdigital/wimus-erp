@@ -10,6 +10,14 @@ geaendert: 2026-06-26
 > Folgt dem Design System des Kerns (0001 `40_design.md`): Shadcn + Tremor, Token-Farben,
 > 4px-Grid, deutsche Labels. Erweitert das OCR-Prüf-Pattern.
 
+> **Umsetzungsstand (2026-06-26):** Gebaut: `/fibu/belege`-Cockpit (Upload PDF/Bild/XML →
+> Pipeline; Tabelle mit Ampel 🟢/🔴; Buchen/Ablehnen; Mobile-Karten) + Feldkorrektur-API;
+> Stammdaten-UI (Gesellschafter/Beteiligungen, Kontierungsregeln, Lieferanten, Kontenrahmen);
+> DATEV-Export-Seite; Feststellungs-Vorschau. **Noch offen (Backlog):** Inline-Korrektur in
+> der Cockpit-Tabelle, PDF-Split-Preview, Batch-/Mehrfachfreigabe, ProgressBar auto/review,
+> Einheiten-Filter-Tree, Audit-Timeline, Bank-/Finanz-Cockpit (Abschnitt 5) und
+> KI-Controlling-Sichten (Abschnitt 6).
+
 ## 1. Buchungsfreigabe-Cockpit
 
 Erweiterung der OCR-Prüfansicht (0001) um Kontierung + Batch:
