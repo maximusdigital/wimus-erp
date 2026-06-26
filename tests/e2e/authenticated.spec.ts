@@ -30,6 +30,7 @@ const HAUPTSEITEN: string[] = [
   "/fibu/konten",
   "/fibu/kontierungsregeln",
   "/fibu/lieferanten",
+  "/fibu/auswertung",
   "/fibu/feststellung",
   "/fibu/export",
 ]
