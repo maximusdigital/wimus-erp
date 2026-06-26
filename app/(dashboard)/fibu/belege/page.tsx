@@ -1,8 +1,10 @@
+import Link from "next/link"
 import { FileText } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { BelegBatchFreigeben } from "@/components/fibu/beleg-batch"
 import {
   Table,
   TableBody,
@@ -38,6 +40,9 @@ export default async function BelegePage() {
 
   const belege = (data ?? []) as BelegMitFirma[]
   const offen = belege.filter((b) => b.status !== "gebucht" && b.status !== "abgelehnt")
+  const freigebbar = offen.filter((b) => !!b.soll_konto && !b.review_flag)
+  const review = offen.filter((b) => b.review_flag)
+  const okQuote = offen.length > 0 ? Math.round((freigebbar.length / offen.length) * 100) : 0
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -52,6 +57,21 @@ export default async function BelegePage() {
       </div>
 
       <BelegUpload />
+
+      {offen.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+          <div className="min-w-[200px] flex-1">
+            <div className="text-muted-foreground mb-1 flex justify-between text-xs">
+              <span>{freigebbar.length} buchbar · {review.length} Review</span>
+              <span>{okQuote}%</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-full bg-success" style={{ width: `${okQuote}%` }} />
+            </div>
+          </div>
+          <BelegBatchFreigeben ids={freigebbar.map((b) => b.id)} />
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
@@ -101,7 +121,9 @@ export default async function BelegePage() {
                       />
                     </TableCell>
                     <TableCell className="font-medium">
-                      {b.lieferant_name ?? "–"}
+                      <Link href={`/fibu/belege/${b.id}`} className="hover:underline">
+                        {b.lieferant_name ?? "(ohne Lieferant)"}
+                      </Link>
                       {b.ist_erechnung ? (
                         <span className="text-success ml-1 text-xs">E-Rechnung</span>
                       ) : null}
@@ -142,12 +164,15 @@ export default async function BelegePage() {
               <Card key={b.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 font-medium">
+                    <Link
+                      href={`/fibu/belege/${b.id}`}
+                      className="flex items-center gap-2 font-medium hover:underline"
+                    >
                       <span
                         className={`inline-block size-2.5 rounded-full ${AMPEL[ampel(b)]}`}
                       />
-                      {b.lieferant_name ?? "–"}
-                    </span>
+                      {b.lieferant_name ?? "(ohne Lieferant)"}
+                    </Link>
                     <StatusBadge status={b.status}>
                       {BELEG_STATUS_LABELS[b.status] ?? b.status}
                     </StatusBadge>
