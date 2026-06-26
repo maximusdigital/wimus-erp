@@ -33,7 +33,8 @@ Mieter-Gewinnung (ALFA CAMPUS/LZV), KZV-Anfragen (ALFA APARTMENTS).
     `crm_deal_aktivitaeten`, `crm_leads` (Schema `wimus`, RLS `mandant_isolation`).
   - Kern-Erweiterung `organisationen` + `kontakte.organisation_id` (Migration 012).
   - **Deal-Kanban** `/crm` (native HTML5-DnD + Stage-Dropdown je Karte, Pipeline-Umschalter,
-    Summe/Anzahl, Stalled-Warnung, Tage-in-Stage).
+    **Mandanten-/Einheit-Filter**, **Ansicht-Umschalter Kanban/Liste**, Summe/Anzahl,
+    Stalled-Warnung, Tage-in-Stage). Forecast-Ansicht später (Reporting).
   - **Lead-Inbox** `/crm/leads` (Liste, Konvertieren-Dialog, Verwerfen + Grund).
   - **Deal-Detail** `/crm/deals/[id]` (Stage-Fortschritt, Zusammenfassung + gewichteter Wert,
     Custom-Fields, Aktivitäten anlegen/abhaken, Verlauf aus Stage-Historie, Gewonnen/Verloren).
@@ -139,6 +140,7 @@ Mieter-Gewinnung (ALFA CAMPUS/LZV), KZV-Anfragen (ALFA APARTMENTS).
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 01:35 | Board: Mandanten-/Einheit-Filter + Ansicht-Umschalter Kanban/Liste ergänzt | 000_konzept, Code |
 | 2026-06-27 00:30 | MVP implementiert (Mig. 012/013, API, UI, lib+Tests); Spec nachgezogen | alle + Code |
 | 2026-06-26 15:30 | Kanban-Tech-Basis ergänzt (dnd-kit, Shadcn-Vorlage, memo-Pattern) | 003_crm_400_design |
 | 2026-06-26 15:00 | Verknüpfungsmodell + Pipedrive-UI + Custom Fields eingearbeitet | 000,100,200,300,400,500 |

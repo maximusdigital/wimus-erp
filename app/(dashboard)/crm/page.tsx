@@ -6,8 +6,9 @@ import { formatEUR } from "@/lib/utils/format"
 import { markeLabel } from "@/lib/crm/constants"
 import { Button } from "@/components/ui/button"
 import { KanbanBoard } from "@/components/crm/kanban-board"
-import { PipelineUmschalter } from "@/components/crm/pipeline-umschalter"
-import type { DealMitBezug, Pipeline, PipelineStage } from "@/types/crm"
+import { DealListe } from "@/components/crm/deal-liste"
+import { BoardControls } from "@/components/crm/board-controls"
+import type { DealMitBezug, FirmaRef, Pipeline, PipelineStage } from "@/types/crm"
 
 export const metadata = { title: "CRM – Pipeline" }
 
@@ -16,18 +17,25 @@ type PipelineMitStages = Pipeline & { stages: PipelineStage[] }
 export default async function CrmBoardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pipeline?: string }>
+  searchParams: Promise<{ pipeline?: string; firma?: string; ansicht?: string }>
 }) {
-  const { pipeline: pipelineParam } = await searchParams
+  const { pipeline: pipelineParam, firma: firmaParam, ansicht: ansichtParam } =
+    await searchParams
   const supabase = await createServerClient()
 
-  const { data: pipelinesRaw } = await supabase
-    .from("crm_pipelines")
-    .select("*, stages:crm_pipeline_stages(*)")
-    .eq("aktiv", true)
-    .order("sortierung", { ascending: true })
+  const [{ data: pipelinesRaw }, { data: firmenRaw }] = await Promise.all([
+    supabase
+      .from("crm_pipelines")
+      .select("*, stages:crm_pipeline_stages(*)")
+      .eq("aktiv", true)
+      .order("sortierung", { ascending: true }),
+    supabase.from("firmen").select("id, name, kuerzel").order("name"),
+  ])
 
   const pipelines = (pipelinesRaw ?? []) as PipelineMitStages[]
+  const firmen = (firmenRaw ?? []) as FirmaRef[]
+  const firmaId = firmaParam ?? ""
+  const ansicht: "kanban" | "liste" = ansichtParam === "liste" ? "liste" : "kanban"
 
   if (pipelines.length === 0) {
     return (
@@ -51,13 +59,15 @@ export default async function CrmBoardPage({
     pipelines.find((p) => p.default_pipeline) ??
     pipelines[0]
 
-  const { data: dealsRaw } = await supabase
+  let dealsQuery = supabase
     .from("crm_deals")
     .select(
       "*, kontakt:kontakte(id, vorname, nachname), organisation:organisationen(id, name), stage:crm_pipeline_stages(id, name, ist_gewonnen, ist_verloren, stalled_tage)"
     )
     .eq("pipeline_id", aktiv.id)
     .eq("status", "offen")
+  if (firmaId) dealsQuery = dealsQuery.eq("firma_id", firmaId)
+  const { data: dealsRaw } = await dealsQuery
 
   const deals = (dealsRaw ?? []) as DealMitBezug[]
   const summe = deals.reduce((acc, d) => acc + (d.wert ?? 0), 0)
@@ -67,8 +77,14 @@ export default async function CrmBoardPage({
       <Header />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <PipelineUmschalter pipelines={pipelines} aktivId={aktiv.id} />
+        <div className="flex flex-wrap items-center gap-3">
+          <BoardControls
+            pipelines={pipelines}
+            aktivPipelineId={aktiv.id}
+            firmen={firmen}
+            firmaId={firmaId}
+            ansicht={ansicht}
+          />
           <span className="text-sm text-muted-foreground">
             {markeLabel(aktiv.marke)} · {deals.length} offen · {formatEUR(summe)}
           </span>
@@ -78,7 +94,11 @@ export default async function CrmBoardPage({
         </Button>
       </div>
 
-      <KanbanBoard stages={aktiv.stages} deals={deals} />
+      {ansicht === "liste" ? (
+        <DealListe deals={deals} stages={aktiv.stages} />
+      ) : (
+        <KanbanBoard stages={aktiv.stages} deals={deals} />
+      )}
     </div>
   )
 }
