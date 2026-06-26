@@ -1,0 +1,823 @@
+-- ============================================================
+-- WIMUS ERP – Migration 005: BK, WG, Forderungen, Fristen
+-- Stand: 24. Juni 2026
+-- IDEMPOTENT: safe to re-run
+--
+-- Repo-Hygiene (2026-06-27, OP-3 0001): lag bislang nur als loses .txt im Archiv
+-- (.docs/specs/ALT/word/) und war live angewandt, aber NICHT als getrackte
+-- Migration. Hier 1:1 ins Repo übernommen (vollständig idempotent: alle CREATE
+-- TABLE/INDEX mit IF NOT EXISTS, Funktionen/Views CREATE OR REPLACE, Seeds
+-- ON CONFLICT DO NOTHING → erneutes Anwenden ist ein No-Op). RLS folgt in 009.
+-- ============================================================
+
+SET search_path TO wimus, public;
+
+-- ============================================================
+-- KERN 1: BETRIEBSKOSTEN & KOSTENVERTEILUNG
+-- ============================================================
+
+-- BK-Arten (§2 BetrKV Bibliothek)
+CREATE TABLE IF NOT EXISTS wimus.bk_arten (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  bezeichnung           VARCHAR(100) NOT NULL,
+  code                  VARCHAR(30),
+  kategorie             VARCHAR(30) CHECK (kategorie IN (
+    'heizung','warmwasser','wasser','strom','gas','fernwaerme',
+    'aufzug','muell','reinigung','aussen','versicherung',
+    'hausmeister','sonstige')),
+  betrkv_nr             VARCHAR(20),       -- z.B. "§2 Nr.4a"
+  standard_schluessel   VARCHAR(20) CHECK (standard_schluessel IN (
+    'kopfzahl','flaeche','einheit','verbrauch','miteigentum','individuell')),
+  umlagefaehig          BOOLEAN DEFAULT TRUE,
+  hkvo_pflichtig        BOOLEAN DEFAULT FALSE,
+  hkvo_verbrauch_pct    DECIMAL(5,2) DEFAULT 70.00,
+  verbrauchsabhaengig   BOOLEAN DEFAULT FALSE,
+  zaehlerpflicht        BOOLEAN DEFAULT FALSE,
+  aktiv                 BOOLEAN DEFAULT TRUE,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- BK-Berechnungslogiken
+CREATE TABLE IF NOT EXISTS wimus.bk_berechnungslogiken (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  bk_art_id             UUID NOT NULL REFERENCES wimus.bk_arten(id),
+  bezeichnung           VARCHAR(100),
+  eingangs_typ          VARCHAR(20) CHECK (eingangs_typ IN (
+    'zaehler','rechnung','pauschal','prozent_basis','bescheid')),
+  zaehler_einheit       VARCHAR(10) CHECK (zaehler_einheit IN (
+    'kwh','m3','mwh','gj','liter','kg')),
+  umrechnung_aktiv      BOOLEAN DEFAULT FALSE,
+  -- Gas
+  brennwert             DECIMAL(8,4),      -- kWh/m³
+  zustandszahl          DECIMAL(6,4),
+  -- Öl/Pellets
+  heizwert              DECIMAL(8,4),      -- kWh/Liter oder kWh/kg
+  abrechnungs_einheit   VARCHAR(10),       -- nach Umrechnung immer kWh
+  preis_typ             VARCHAR(20) CHECK (preis_typ IN (
+    'arbeitspreis','grund_plus_arbeit','pauschal')),
+  preis_einheit         VARCHAR(20),
+  -- Prozentuale Basis
+  prozent_von_art_id    UUID REFERENCES wimus.bk_arten(id),
+  prozent_wert          DECIMAL(5,2),
+  gueltig_ab            DATE,
+  gueltig_bis           DATE,
+  aktiv                 BOOLEAN DEFAULT TRUE,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Brennwerte (versioniert je Versorger)
+CREATE TABLE IF NOT EXISTS wimus.brennwerte (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  versorgervertrag_id   UUID NOT NULL REFERENCES wimus.versorgervertraege(id),
+  gueltig_von           DATE NOT NULL,
+  gueltig_bis           DATE,
+  brennwert             DECIMAL(8,4),      -- kWh/m³
+  zustandszahl          DECIMAL(6,4),
+  quelle                VARCHAR(255),      -- Jahresabrechnung Versorger
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Abrechnungseinheiten (universell: WG/Zählergruppe/Heizkreis/BK-Gruppe)
+CREATE TABLE IF NOT EXISTS wimus.abrechnungseinheiten (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  objekt_id             UUID NOT NULL REFERENCES wimus.objekte(id),
+  bezeichnung           VARCHAR(100) NOT NULL,
+  typ                   VARCHAR(20) CHECK (typ IN (
+    'wg','zaehlergruppe','heizkreis','bk_gruppe','sonstige')),
+  standard_schluessel   VARCHAR(20) CHECK (standard_schluessel IN (
+    'kopfzahl','flaeche','einheit','verbrauch','miteigentum','individuell')),
+  aktiv                 BOOLEAN DEFAULT TRUE,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Abrechnungseinheit-Mitglieder
+CREATE TABLE IF NOT EXISTS wimus.abrechnungseinheit_mitglieder (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  abrechnungseinheit_id UUID NOT NULL REFERENCES wimus.abrechnungseinheiten(id),
+  einheit_id            UUID NOT NULL REFERENCES wimus.einheiten(id),
+  kontakt_id            UUID REFERENCES wimus.kontakte(id),
+  mietvertrag_id        UUID REFERENCES wimus.mietvertraege(id),
+  rolle                 VARCHAR(20) CHECK (rolle IN (
+    'hauptmieter','mitbewohner','eigentuemer')),
+  schluessel_override   VARCHAR(20) CHECK (schluessel_override IN (
+    'kopfzahl','flaeche','einheit','verbrauch','miteigentum','individuell')),
+  fester_anteil_pct     DECIMAL(7,4),
+  intern_abgerechnet    BOOLEAN DEFAULT FALSE,
+  einzug_datum          DATE,
+  auszug_datum          DATE,
+  gueltig_von           DATE,
+  gueltig_bis           DATE,
+  aktiv                 BOOLEAN DEFAULT TRUE,
+  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(abrechnungseinheit_id, einheit_id)
+);
+
+-- Zähler-Verknüpfung mit Abrechnungseinheit
+ALTER TABLE wimus.zaehler
+  ADD COLUMN IF NOT EXISTS abrechnungseinheit_id UUID
+    REFERENCES wimus.abrechnungseinheiten(id),
+  ADD COLUMN IF NOT EXISTS fernauslesbar BOOLEAN DEFAULT FALSE;
+
+-- Kostenverteilung-Positionen (ALLE BK-Arten, ALLE Quellen)
+CREATE TABLE IF NOT EXISTS wimus.kostenverteilung_positionen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  objekt_id             UUID NOT NULL REFERENCES wimus.objekte(id),
+  bk_art_id             UUID NOT NULL REFERENCES wimus.bk_arten(id),
+  abrechnungseinheit_id UUID REFERENCES wimus.abrechnungseinheiten(id),
+  -- Quelle
+  quelle                VARCHAR(20) CHECK (quelle IN (
+    'zaehler','rechnung','weg_extern','pauschal','prozent_basis','bescheid')),
+  -- Zähler-basiert
+  zaehler_id            UUID REFERENCES wimus.zaehler(id),
+  zaehlerstand_von_id   UUID REFERENCES wimus.zaehlerstaende(id),
+  zaehlerstand_bis_id   UUID REFERENCES wimus.zaehlerstaende(id),
+  verbrauch_einheit     DECIMAL(12,4),
+  verbrauch_kwh         DECIMAL(12,4),    -- nach Umrechnung
+  preis_pro_einheit     DECIMAL(10,6),
+  -- Rechnung/Bescheid
+  lieferant_id          UUID REFERENCES wimus.kontakte(id),
+  rechnungsdatum        DATE,
+  -- Periode
+  leistung_von          DATE,
+  leistung_bis          DATE,
+  -- Betrag
+  betrag_netto          DECIMAL(10,2),
+  betrag_brutto         DECIMAL(10,2),
+  ust_prozent           DECIMAL(5,2) DEFAULT 0,
+  -- Besonderheiten
+  umlagefaehig          BOOLEAN DEFAULT TRUE,
+  nicht_umlagefaehig_anteil DECIMAL(7,4),
+  leerstand_anteil      DECIMAL(7,4),
+  intern_anteil         DECIMAL(7,4),
+  intercompany          BOOLEAN DEFAULT FALSE,
+  -- Klassifizierung WEG-Extern
+  weg_abrechnung_id     UUID,
+  ki_klassifiziert      BOOLEAN DEFAULT FALSE,
+  manuell_geprueft      BOOLEAN DEFAULT FALSE,
+  -- Abrechnung
+  bk_abrechnung_id      UUID,
+  abgerechnet           BOOLEAN DEFAULT FALSE,
+  abrechnungsperiode    VARCHAR(7),       -- "2026-01"
+  paperless_id          VARCHAR(100),
+  notiz                 TEXT,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_kvpos_objekt
+  ON wimus.kostenverteilung_positionen(objekt_id);
+CREATE INDEX IF NOT EXISTS idx_kvpos_periode
+  ON wimus.kostenverteilung_positionen(leistung_von, leistung_bis);
+CREATE INDEX IF NOT EXISTS idx_kvpos_abgerechnet
+  ON wimus.kostenverteilung_positionen(abgerechnet);
+
+-- BK-Abrechnungen (Jahresabschluss-Dokument)
+CREATE TABLE IF NOT EXISTS wimus.bk_abrechnungen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  objekt_id             UUID REFERENCES wimus.objekte(id),
+  einheit_id            UUID REFERENCES wimus.einheiten(id),
+  mietvertrag_id        UUID NOT NULL REFERENCES wimus.mietvertraege(id),
+  typ                   VARCHAR(20) CHECK (typ IN (
+    'jahresabschluss','zwischenabrechnung','sonderumlage')),
+  periode_von           DATE,
+  periode_bis           DATE,
+  vorauszahlung_gesamt  DECIMAL(10,2),
+  kosten_gesamt         DECIMAL(10,2),
+  saldo                 DECIMAL(10,2),   -- positiv=Nachzahlung, neg=Guthaben
+  nebenkostenspiegel    JSONB,
+  status                VARCHAR(20) DEFAULT 'entwurf',
+  verschickt_am         TIMESTAMPTZ,
+  aktenzeichen          VARCHAR(50),
+  paperless_id          VARCHAR(100),
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- BK-Abrechnungs-Positionen
+CREATE TABLE IF NOT EXISTS wimus.bk_abrechnungs_positionen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  abrechnung_id         UUID NOT NULL REFERENCES wimus.bk_abrechnungen(id),
+  bk_art_id             UUID NOT NULL REFERENCES wimus.bk_arten(id),
+  gesamtkosten          DECIMAL(10,2),
+  umlageschluessel      VARCHAR(20),
+  anteil_zaehler        DECIMAL(10,4),
+  anteil_nenner         DECIMAL(10,4),
+  anteil_pct            DECIMAL(7,4),
+  betrag_mieter         DECIMAL(10,2),
+  kvpos_ids             UUID[],
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- BK-Pauschalen-Anpassungen (§560 BGB)
+CREATE TABLE IF NOT EXISTS wimus.bk_pauschalen_anpassungen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mietvertrag_id        UUID NOT NULL REFERENCES wimus.mietvertraege(id),
+  alter_betrag          DECIMAL(10,2),
+  neuer_betrag          DECIMAL(10,2),
+  delta_pct             DECIMAL(5,2),
+  grund                 TEXT,
+  ankuendigung_am       DATE,
+  wirksam_ab            DATE,
+  email_gesendet_am     TIMESTAMPTZ,
+  vorgang_id            UUID REFERENCES wimus.vorgaenge(id),
+  status                VARCHAR(20) CHECK (status IN (
+    'vorgeschlagen','genehmigt','gesendet','wirksam','abgelehnt'))
+    DEFAULT 'vorgeschlagen',
+  ausgeloest_durch      VARCHAR(20) CHECK (ausgeloest_durch IN (
+    'ki_auto','manuell')),
+  hochrechnung_basis    JSONB,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- WEG-Abrechnungen extern
+CREATE TABLE IF NOT EXISTS wimus.weg_abrechnungen_extern (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  objekt_id             UUID NOT NULL REFERENCES wimus.objekte(id),
+  einheit_id            UUID REFERENCES wimus.einheiten(id),
+  weg_hv_id             UUID REFERENCES wimus.kontakte(id),
+  abrechnungsjahr       INT,
+  periode_von           DATE,
+  periode_bis           DATE,
+  hausgeld_soll         DECIMAL(10,2),
+  abrechnungsergebnis   DECIMAL(10,2),
+  ruecklage_anteil      DECIMAL(10,2),
+  erhalten_am           DATE,
+  geprueft_am           DATE,
+  geprueft_von          UUID REFERENCES wimus.akteure(id),
+  paperless_id          VARCHAR(100),
+  in_bk_uebernommen     BOOLEAN DEFAULT FALSE,
+  bk_abrechnung_id      UUID REFERENCES wimus.bk_abrechnungen(id),
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- WEG-Abrechnungs-Positionen extern
+CREATE TABLE IF NOT EXISTS wimus.weg_abrechnungs_extern_positionen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  weg_abrechnung_id     UUID NOT NULL REFERENCES wimus.weg_abrechnungen_extern(id),
+  bezeichnung           VARCHAR(255),
+  betrag                DECIMAL(10,2),
+  umlagefaehig          BOOLEAN,
+  bk_art_id             UUID REFERENCES wimus.bk_arten(id),
+  ist_ruecklage         BOOLEAN DEFAULT FALSE,
+  ist_verwaltungskosten BOOLEAN DEFAULT FALSE,
+  ist_instandhaltung    BOOLEAN DEFAULT FALSE,
+  miteigentumsanteil_pct DECIMAL(7,4),
+  betrag_einheit        DECIMAL(10,2),
+  an_mieter_weitergeben BOOLEAN DEFAULT FALSE,
+  ki_klassifiziert      BOOLEAN DEFAULT FALSE,
+  manuell_geprueft      BOOLEAN DEFAULT FALSE,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- WEG-Wirtschaftspläne
+CREATE TABLE IF NOT EXISTS wimus.weg_wirtschaftsplaene (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  verwaltungsvertrag_id UUID,
+  objekt_id             UUID NOT NULL REFERENCES wimus.objekte(id),
+  wirtschaftsjahr       INT,
+  positionen            JSONB,
+  gesamtvolumen         DECIMAL(15,2),
+  ruecklage_anteil      DECIMAL(10,2),
+  hausgeld_gesamt       DECIMAL(10,2),
+  beschlossen_am        DATE,
+  gueltig_ab            DATE,
+  paperless_id          VARCHAR(100),
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- WEG-Hausgeld-Sollstellungen
+CREATE TABLE IF NOT EXISTS wimus.weg_hausgeld_sollstellungen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wirtschaftsplan_id    UUID NOT NULL REFERENCES wimus.weg_wirtschaftsplaene(id),
+  einheit_id            UUID NOT NULL REFERENCES wimus.einheiten(id),
+  eigentuemer_id        UUID NOT NULL REFERENCES wimus.kontakte(id),
+  betrag_monatlich      DECIMAL(10,2),
+  ruecklage_monatlich   DECIMAL(10,2),
+  gesamt_monatlich      DECIMAL(10,2),
+  letzte_zahlung_am     DATE,
+  saldo                 DECIMAL(10,2),
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- View: Anteilsberechnung (flaeche und einheit)
+CREATE OR REPLACE VIEW wimus.v_kostenverteilung_anteile AS
+SELECT
+  kp.id                     AS position_id,
+  kp.bk_art_id,
+  kp.betrag_brutto          AS gesamtkosten,
+  kp.abrechnungseinheit_id,
+  aem.einheit_id,
+  e.bezeichnung             AS einheit_name,
+  e.flaeche,
+  aem.intern_abgerechnet,
+  COALESCE(aem.schluessel_override, ae.standard_schluessel) AS schluessel,
+  CASE WHEN aem.intern_abgerechnet THEN 0
+  ELSE
+    CASE COALESCE(aem.schluessel_override, ae.standard_schluessel)
+      WHEN 'flaeche' THEN
+        e.flaeche / NULLIF(
+          SUM(e2.flaeche) FILTER (WHERE NOT aem2.intern_abgerechnet)
+          OVER (PARTITION BY kp.id), 0) * kp.betrag_brutto
+      WHEN 'einheit' THEN
+        kp.betrag_brutto / NULLIF(
+          COUNT(*) FILTER (WHERE NOT aem2.intern_abgerechnet)
+          OVER (PARTITION BY kp.id), 0)
+      WHEN 'individuell' THEN
+        aem.fester_anteil_pct / 100 * kp.betrag_brutto
+      ELSE NULL  -- kopfzahl/verbrauch: Laufzeit-Berechnung
+    END
+  END AS betrag_anteil
+FROM wimus.kostenverteilung_positionen kp
+JOIN wimus.abrechnungseinheiten ae ON kp.abrechnungseinheit_id = ae.id
+JOIN wimus.abrechnungseinheit_mitglieder aem ON aem.abrechnungseinheit_id = ae.id
+JOIN wimus.abrechnungseinheit_mitglieder aem2 ON aem2.abrechnungseinheit_id = ae.id
+JOIN wimus.einheiten e ON aem.einheit_id = e.id
+JOIN wimus.einheiten e2 ON aem2.einheit_id = e2.id
+WHERE aem.aktiv = TRUE;
+
+-- Kopfzahl-Funktionen
+CREATE OR REPLACE FUNCTION wimus.kopfzahl_einheit(
+  p_einheit_id UUID, p_datum DATE DEFAULT CURRENT_DATE
+) RETURNS INT AS $$
+  SELECT COUNT(*)::INT
+  FROM wimus.abrechnungseinheit_mitglieder
+  WHERE einheit_id = p_einheit_id
+    AND aktiv = TRUE
+    AND (einzug_datum IS NULL OR einzug_datum <= p_datum)
+    AND (auszug_datum IS NULL OR auszug_datum >= p_datum);
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION wimus.kopfzahl_gruppe(
+  p_gruppe_id UUID, p_datum DATE DEFAULT CURRENT_DATE
+) RETURNS INT AS $$
+  SELECT COUNT(*)::INT
+  FROM wimus.abrechnungseinheit_mitglieder
+  WHERE abrechnungseinheit_id = p_gruppe_id
+    AND aktiv = TRUE
+    AND (einzug_datum IS NULL OR einzug_datum <= p_datum)
+    AND (auszug_datum IS NULL OR auszug_datum >= p_datum);
+$$ LANGUAGE sql STABLE;
+
+-- ============================================================
+-- KERN 2: FRISTENMANAGEMENT
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS wimus.fristen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  frist_typ             VARCHAR(30) CHECK (frist_typ IN (
+    'bk_anpassung','mieterhoehung','modernisierung','kuendigung',
+    'raeumung','kautionsabrechnung','gewaehrleistung',
+    'wartung_rauchmelder','wartung_aufzug','wartung_gas',
+    'wartung_legionellen','staffelmiete','indexmiete',
+    'behördlich','verjährung','sonstige')) NOT NULL,
+  -- Bezug (polymorphisch)
+  bezug_typ             VARCHAR(30),
+  bezug_id              UUID,
+  bezeichnung           VARCHAR(255),
+  start_datum           DATE,
+  faellig_am            DATE NOT NULL,
+  erinnerung_tage_vorher INT[] DEFAULT '{30,14,7,1}',
+  -- Eskalation
+  eskalation_akteur_id  UUID REFERENCES wimus.akteure(id),
+  aktion_typ            VARCHAR(20) CHECK (aktion_typ IN (
+    'email','whatsapp','vorgang','zammad','alert')),
+  vorlage_id            UUID REFERENCES wimus.vorlagen(id),
+  -- Status
+  status                VARCHAR(20) CHECK (status IN (
+    'offen','erledigt','verpasst','eskaliert'))
+    DEFAULT 'offen',
+  erledigt_am           TIMESTAMPTZ,
+  vorgang_id            UUID REFERENCES wimus.vorgaenge(id),
+  automatisch_erstellt  BOOLEAN DEFAULT FALSE,
+  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_fristen_faellig
+  ON wimus.fristen(faellig_am)
+  WHERE status = 'offen';
+
+CREATE OR REPLACE VIEW wimus.v_faellige_fristen AS
+SELECT
+  f.*,
+  f.faellig_am - CURRENT_DATE AS tage_bis_faelligkeit
+FROM wimus.fristen f
+WHERE f.status = 'offen'
+  AND f.faellig_am <= CURRENT_DATE + INTERVAL '30 days'
+ORDER BY f.faellig_am ASC;
+
+-- ============================================================
+-- KERN 3: FORDERUNGSMANAGEMENT
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS wimus.forderungen (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id            UUID NOT NULL REFERENCES wimus.mandanten(id),
+  -- Bezug
+  mietvertrag_id        UUID REFERENCES wimus.mietvertraege(id),
+  buchung_id            UUID REFERENCES wimus.buchungen(id),
+  einheit_id            UUID REFERENCES wimus.einheiten(id),
+  kontakt_id            UUID NOT NULL REFERENCES wimus.kontakte(id),
+  -- Art der Forderung
+  forderung_typ         VARCHAR(30) CHECK (forderung_typ IN (
+    'miete','bk_nachzahlung','bk_pauschale_delta',
+    'sachschaden','reinigung_zusatz','nutzungsausfall',
+    'mietausfall','renovierungskosten','gutachterkosten',
+    'anwaltskosten','hausgeld','citytax','sonstige')) NOT NULL,
+  -- Schaden-Details
+  schaden_typ           VARCHAR(30) CHECK (schaden_typ IN (
+    'boden','wand','sanitaer','inventar','tuer',
+    'fenster','kueche','rauchen','sonstige')),
+  schaden_beschreibung  TEXT,
+  schaden_festgestellt_am DATE,
+  schaden_fotos         VARCHAR(100)[],   -- paperless_ids
+  gutachter_id          UUID REFERENCES wimus.kontakte(id),
+  vorgang_id            UUID REFERENCES wimus.vorgaenge(id),
+  -- Nutzungsausfall §546a
+  nutzungsausfall_von   DATE,
+  nutzungsausfall_bis   DATE,
+  nutzungsausfall_tage  INT,
+  nutzungsausfall_satz  DECIMAL(10,2),   -- Tagesmiete
+  §546a_anwendbar       BOOLEAN DEFAULT FALSE,
+  -- Versicherung
+  versicherungsfall     BOOLEAN DEFAULT FALSE,
+  versicherung_id       UUID REFERENCES wimus.versicherungen(id),
+  versicherung_az       VARCHAR(100),
+  versicherung_betrag   DECIMAL(10,2),
+  selbstbehalt          DECIMAL(10,2),
+  -- Betrag
+  betrag               DECIMAL(10,2) NOT NULL,
+  faellig_am           DATE NOT NULL,
+  -- Zahlung
+  bezahlt_am           DATE,
+  bezahlt_betrag       DECIMAL(10,2),
+  -- Kaution
+  kaution_verrechnet   BOOLEAN DEFAULT FALSE,
+  kaution_betrag       DECIMAL(10,2),
+  -- Mahnwesen
+  mahnstufe            INT DEFAULT 0,
+  mahnung_id           UUID REFERENCES wimus.mahnungen(id),
+  -- Status
+  status               VARCHAR(20) CHECK (status IN (
+    'offen','teilbezahlt','bezahlt','kaution_verrechnet',
+    'abgeschrieben','storniert')) DEFAULT 'offen',
+  -- Belege
+  paperless_id         VARCHAR(100),
+  rechnung_id          VARCHAR(100),     -- Invoice Ninja
+  finapi_transaktion_id VARCHAR(100),
+  aktenzeichen         VARCHAR(50),
+  notiz                TEXT,
+  created_at           TIMESTAMPTZ DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_forderungen_kontakt
+  ON wimus.forderungen(kontakt_id);
+CREATE INDEX IF NOT EXISTS idx_forderungen_status
+  ON wimus.forderungen(status);
+CREATE INDEX IF NOT EXISTS idx_forderungen_faellig
+  ON wimus.forderungen(faellig_am)
+  WHERE status IN ('offen','teilbezahlt');
+
+-- Kautionsabrechnungen
+CREATE TABLE IF NOT EXISTS wimus.kautionsabrechnungen (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id           UUID NOT NULL REFERENCES wimus.mandanten(id),
+  mietvertrag_id       UUID NOT NULL REFERENCES wimus.mietvertraege(id),
+  kaution_id           UUID NOT NULL REFERENCES wimus.kautionen(id),
+  auszugsdatum         DATE,
+  -- Kaution
+  kaution_betrag       DECIMAL(10,2),
+  zinsen               DECIMAL(10,2),
+  kaution_gesamt       DECIMAL(10,2),
+  -- Forderungen
+  forderungen_gesamt   DECIMAL(10,2),
+  -- Ergebnis
+  saldo                DECIMAL(10,2),   -- positiv=Rückzahlung, neg=Nachforderung
+  -- Status
+  status               VARCHAR(20) CHECK (status IN (
+    'entwurf','versendet','bezahlt','mahnung','storniert'))
+    DEFAULT 'entwurf',
+  versendet_am         DATE,
+  bezahlt_am           DATE,
+  frist_abrechnung     DATE,            -- 6 Monate nach Auszug
+  paperless_id         VARCHAR(100),
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE OR REPLACE VIEW wimus.v_offene_forderungen AS
+SELECT
+  f.*,
+  k.vorname || ' ' || k.nachname AS kontakt_name,
+  e.bezeichnung                   AS einheit_name,
+  f.faellig_am - CURRENT_DATE    AS tage_ueberfaellig
+FROM wimus.forderungen f
+LEFT JOIN wimus.kontakte k ON f.kontakt_id = k.id
+LEFT JOIN wimus.einheiten e ON f.einheit_id = e.id
+WHERE f.status IN ('offen','teilbezahlt')
+ORDER BY f.faellig_am ASC;
+
+-- ============================================================
+-- MIETRECHT
+-- ============================================================
+
+-- Mieterhöhungen
+CREATE TABLE IF NOT EXISTS wimus.mietpreiserhoehungen (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id           UUID NOT NULL REFERENCES wimus.mandanten(id),
+  mietvertrag_id       UUID NOT NULL REFERENCES wimus.mietvertraege(id),
+  typ                  VARCHAR(20) CHECK (typ IN (
+    'vergleichsmiete','modernisierung','staffel',
+    'index','einvernehmlich')) NOT NULL,
+  alter_betrag         DECIMAL(10,2),
+  neuer_betrag         DECIMAL(10,2),
+  delta_pct            DECIMAL(5,2),
+  delta_absolut        DECIMAL(10,2),
+  ankuendigung_am      DATE,
+  wirksam_ab           DATE NOT NULL,
+  gesetzliche_grundlage VARCHAR(30),    -- §558/§559/§557a/§557b
+  -- §558 Zustimmung
+  zustimmung_erforderlich BOOLEAN DEFAULT FALSE,
+  zustimmung_mieter    BOOLEAN,
+  zustimmung_am        DATE,
+  zustimmungsfrist     DATE,
+  -- §559 Modernisierung
+  modernisierungskosten DECIMAL(15,2),
+  umlagesatz_pct       DECIMAL(5,2) DEFAULT 8.00,
+  -- Kommunikation
+  brief_gesendet_am    DATE,
+  vorgang_id           UUID REFERENCES wimus.vorgaenge(id),
+  frist_id             UUID REFERENCES wimus.fristen(id),
+  -- Status
+  status               VARCHAR(20) CHECK (status IN (
+    'vorgeschlagen','angekuendigt','zugestimmt',
+    'wirksam','abgelehnt','widerrufen'))
+    DEFAULT 'vorgeschlagen',
+  paperless_id         VARCHAR(100),
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- VPI-Daten (Destatis, monatlich)
+CREATE TABLE IF NOT EXISTS wimus.vpi_daten (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  periode      DATE NOT NULL UNIQUE,    -- Monatsanfang
+  index_wert   DECIMAL(8,2) NOT NULL,
+  basis_jahr   INT DEFAULT 2020,
+  quelle       VARCHAR(255),            -- destatis.de
+  importiert_am TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Vertrags-Parameter Definitionen
+CREATE TABLE IF NOT EXISTS wimus.vertrags_parameter_definitionen (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id           UUID NOT NULL REFERENCES wimus.mandanten(id),
+  bezeichnung          VARCHAR(100) NOT NULL,
+  code                 VARCHAR(50) UNIQUE NOT NULL,
+  typ                  VARCHAR(20) CHECK (typ IN (
+    'betrag','prozent','text','datum','boolean','zahl')),
+  einheit              VARCHAR(30),
+  standard_wert        VARCHAR(255),
+  gesetzliche_grundlage VARCHAR(50),
+  beschreibung         TEXT,
+  aktiv                BOOLEAN DEFAULT TRUE,
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Vertrags-Parameter Werte
+CREATE TABLE IF NOT EXISTS wimus.vertrags_parameter_werte (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mietvertrag_id       UUID NOT NULL REFERENCES wimus.mietvertraege(id),
+  parameter_id         UUID NOT NULL REFERENCES wimus.vertrags_parameter_definitionen(id),
+  wert                 VARCHAR(255),
+  created_at           TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(mietvertrag_id, parameter_id)
+);
+
+-- CityTax Sätze (versioniert)
+CREATE TABLE IF NOT EXISTS wimus.citytax_saetze (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  projekt_id           UUID NOT NULL REFERENCES wimus.projekte(id),
+  gemeinde             VARCHAR(100) NOT NULL,
+  satz_pro_nacht       DECIMAL(6,2) NOT NULL,
+  gueltig_ab           DATE NOT NULL,
+  gueltig_bis          DATE,
+  quelle               VARCHAR(255),
+  paperless_id         VARCHAR(100),
+  aktiv                BOOLEAN DEFAULT TRUE,
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- CityTax Seed-Daten
+INSERT INTO wimus.vertrags_parameter_definitionen
+  (mandant_id, bezeichnung, code, typ, einheit, standard_wert, gesetzliche_grundlage)
+SELECT
+  m.id,
+  param.bezeichnung, param.code, param.typ,
+  param.einheit, param.standard_wert, param.grundlage
+FROM wimus.mandanten m
+CROSS JOIN (VALUES
+  ('Kleinreparaturgrenze','kleinreparatur_grenze','betrag','EUR','100','§535 BGB'),
+  ('Kleinreparatur Jahresgrenze','kleinreparatur_jahresgrenze','betrag','EUR','200','§535 BGB'),
+  ('Gerätepauschale','geraetepauschale','betrag','EUR/Monat','25','Vertraglich'),
+  ('Haustier-Kaution','haustier_kaution','betrag','EUR','500','Vertraglich'),
+  ('Schönheitsreparatur-Frist','schoenheitsrep_frist_jahre','zahl','Jahre','3','BGH'),
+  ('Staffelmiete-Intervall','staffel_intervall_monate','zahl','Monate','12','§557a BGB'),
+  ('Kündigungsfrist Mieter','kuendigungsfrist_monate','zahl','Monate','3','§573c BGB')
+) AS param(bezeichnung, code, typ, einheit, standard_wert, grundlage)
+ON CONFLICT (code) DO NOTHING;
+
+-- ============================================================
+-- VERWALTUNGSVERTRÄGE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS wimus.verwaltungsvertraege (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id           UUID NOT NULL REFERENCES wimus.mandanten(id),
+  auftraggeber_id      UUID NOT NULL REFERENCES wimus.kontakte(id),
+  verwaltungsart       VARCHAR(20) CHECK (verwaltungsart IN (
+    'mietverwaltung','weg_verwaltung','sev','kzv')),
+  objekt_id            UUID REFERENCES wimus.objekte(id),
+  einheit_id           UUID REFERENCES wimus.einheiten(id),
+  vertragsbeginn       DATE,
+  vertragsende         DATE,
+  kuendigungsfrist     INT DEFAULT 3,
+  verguetungsmodell    VARCHAR(20) CHECK (verguetungsmodell IN (
+    'prozentual','pauschal','gemischt','erfolg')),
+  satz_prozent         DECIMAL(5,2),
+  satz_pauschal        DECIMAL(10,2),
+  satz_je_einheit      DECIMAL(10,2),
+  wirtschaftsplan_betrag DECIMAL(10,2),
+  ruecklage_anteil     DECIMAL(5,2),
+  hausgeld_anteil      DECIMAL(10,2),
+  sonderhonorar_etv    DECIMAL(10,2),
+  sonderhonorar_sitzung DECIMAL(10,2),
+  status               VARCHAR(20) DEFAULT 'aktiv',
+  paperless_id         VARCHAR(100),
+  aktiv                BOOLEAN DEFAULT TRUE,
+  created_at           TIMESTAMPTZ DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS wimus.verwaltungsverguetungen (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  verwaltungsvertrag_id UUID NOT NULL REFERENCES wimus.verwaltungsvertraege(id),
+  periode_von          DATE,
+  periode_bis          DATE,
+  nettomiete_periode   DECIMAL(10,2),
+  einheiten_anzahl     INT,
+  betrag_verwaltung    DECIMAL(10,2),
+  betrag_sonderhonorar DECIMAL(10,2),
+  betrag_auslagen      DECIMAL(10,2),
+  betrag_gesamt        DECIMAL(10,2),
+  ust_prozent          DECIMAL(5,2) DEFAULT 19.00,
+  rechnung_id          VARCHAR(100),
+  status               VARCHAR(20) DEFAULT 'offen',
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- ALTER TABLE: BESTEHENDE TABELLEN ERWEITERN
+-- ============================================================
+
+ALTER TABLE wimus.mietvertraege
+  ADD COLUMN IF NOT EXISTS bk_modell VARCHAR(20)
+    CHECK (bk_modell IN ('pauschale','vorauszahlung'))
+    DEFAULT 'vorauszahlung',
+  ADD COLUMN IF NOT EXISTS bk_auto_check BOOLEAN DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS bk_check_schwelle_pct DECIMAL(5,2) DEFAULT 15.00,
+  ADD COLUMN IF NOT EXISTS index_config JSONB,
+  ADD COLUMN IF NOT EXISTS beds24_buchung_id UUID REFERENCES wimus.buchungen(id),
+  ADD COLUMN IF NOT EXISTS auto_erstellt BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS auto_erstellt_am TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS ust_pflichtig BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS citytax_betrag DECIMAL(10,2);
+
+ALTER TABLE wimus.buchungen
+  ADD COLUMN IF NOT EXISTS mietvertrag_id UUID REFERENCES wimus.mietvertraege(id),
+  ADD COLUMN IF NOT EXISTS rechnung_id VARCHAR(100);
+
+ALTER TABLE wimus.vorgaenge
+  ADD COLUMN IF NOT EXISTS massnahme_typ VARCHAR(20)
+    CHECK (massnahme_typ IN ('instandhaltung','modernisierung','instandsetzung'));
+
+ALTER TABLE wimus.kontakte
+  ADD COLUMN IF NOT EXISTS portal_aktiv BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS portal_aktiviert_am TIMESTAMPTZ;
+
+-- ============================================================
+-- MIETER-PORTAL NACHRICHTEN
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS wimus.portal_nachrichten (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mandant_id           UUID NOT NULL REFERENCES wimus.mandanten(id),
+  mietvertrag_id       UUID REFERENCES wimus.mietvertraege(id),
+  kontakt_id           UUID NOT NULL REFERENCES wimus.kontakte(id),
+  richtung             VARCHAR(10) CHECK (richtung IN ('eingehend','ausgehend')),
+  typ                  VARCHAR(30) CHECK (typ IN (
+    'abrechnung','mieterhoehung','bk_anpassung','kuendigung',
+    'handwerker','allgemein','schadensmeldung','mahnung','dokument')),
+  betreff              VARCHAR(255),
+  inhalt               TEXT,
+  dokument_ids         VARCHAR(100)[],
+  gelesen_am           TIMESTAMPTZ,
+  vorgang_id           UUID REFERENCES wimus.vorgaenge(id),
+  zammad_ticket_id     VARCHAR(100),
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- RLS AKTIVIEREN
+-- ============================================================
+
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOR t IN SELECT unnest(ARRAY[
+    'bk_arten','bk_berechnungslogiken','brennwerte',
+    'abrechnungseinheiten','abrechnungseinheit_mitglieder',
+    'kostenverteilung_positionen','bk_abrechnungen',
+    'bk_abrechnungs_positionen','bk_pauschalen_anpassungen',
+    'weg_abrechnungen_extern','weg_abrechnungs_extern_positionen',
+    'weg_wirtschaftsplaene','weg_hausgeld_sollstellungen',
+    'fristen','forderungen','kautionsabrechnungen',
+    'mietpreiserhoehungen','vpi_daten',
+    'vertrags_parameter_definitionen','vertrags_parameter_werte',
+    'citytax_saetze','verwaltungsvertraege','verwaltungsverguetungen',
+    'portal_nachrichten'
+  ]) LOOP
+    EXECUTE format('ALTER TABLE wimus.%I ENABLE ROW LEVEL SECURITY', t);
+  END LOOP;
+END $$;
+
+-- ============================================================
+-- UPDATED_AT TRIGGER
+-- ============================================================
+
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOR t IN SELECT unnest(ARRAY[
+    'fristen','forderungen','verwaltungsvertraege'
+  ]) LOOP
+    EXECUTE format(
+      'DROP TRIGGER IF EXISTS trg_%s_updated_at ON wimus.%I;
+       CREATE TRIGGER trg_%s_updated_at
+       BEFORE UPDATE ON wimus.%I
+       FOR EACH ROW EXECUTE FUNCTION wimus.set_updated_at()',
+      t, t, t, t);
+  END LOOP;
+END $$;
+
+-- ============================================================
+-- BK-ARTEN SEED (§2 BetrKV)
+-- ============================================================
+
+DO $$
+DECLARE v_mandant_id UUID;
+BEGIN
+  SELECT id INTO v_mandant_id FROM wimus.mandanten LIMIT 1;
+  IF v_mandant_id IS NOT NULL THEN
+    INSERT INTO wimus.bk_arten
+      (mandant_id, bezeichnung, code, kategorie, betrkv_nr,
+       standard_schluessel, umlagefaehig, hkvo_pflichtig,
+       verbrauchsabhaengig, zaehlerpflicht)
+    VALUES
+      (v_mandant_id,'Heizkosten Gas','heizkosten_gas','gas','§2 Nr.4a','flaeche',TRUE,TRUE,TRUE,TRUE),
+      (v_mandant_id,'Heizkosten Öl','heizkosten_oel','heizung','§2 Nr.4a','flaeche',TRUE,TRUE,TRUE,FALSE),
+      (v_mandant_id,'Heizkosten Fernwärme','heizkosten_fernwaerme','fernwaerme','§2 Nr.4a','flaeche',TRUE,TRUE,TRUE,TRUE),
+      (v_mandant_id,'Warmwasser zentral','warmwasser','warmwasser','§2 Nr.4b','flaeche',TRUE,TRUE,TRUE,TRUE),
+      (v_mandant_id,'Kaltwasser','kaltwasser','wasser','§2 Nr.2','flaeche',TRUE,FALSE,TRUE,TRUE),
+      (v_mandant_id,'Abwasser/Kanal','abwasser','wasser','§2 Nr.2','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Niederschlagswasser','niederschlagswasser','wasser','§2 Nr.2','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Allgemeinstrom','allgemeinstrom','strom','§2 Nr.11','flaeche',TRUE,FALSE,TRUE,TRUE),
+      (v_mandant_id,'Aufzug Wartung + Strom','aufzug','aufzug','§2 Nr.7','flaeche',TRUE,FALSE,FALSE,TRUE),
+      (v_mandant_id,'Müllabfuhr','muell','muell','§2 Nr.8','einheit',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Straßenreinigung','strassenreinigung','muell','§2 Nr.8','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Treppenhausreinigung','treppenhausreinigung','reinigung','§2 Nr.9','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Glasreinigung','glasreinigung','reinigung','§2 Nr.9','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Gartenpflege','gartenpflege','aussen','§2 Nr.10','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Winterdienst','winterdienst','aussen','§2 Nr.10','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Spielplatz Wartung','spielplatz','aussen','§2 Nr.10','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Gebäudeversicherung','gebaeude_versicherung','versicherung','§2 Nr.13','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Haftpflichtversicherung','haftpflicht_versicherung','versicherung','§2 Nr.13','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Hausmeister','hausmeister','hausmeister','§2 Nr.14','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Schornsteinfeger','schornsteinfeger','sonstige','§2 Nr.15','einheit',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Legionellenprüfung','legionellen','sonstige','§2 Nr.15','einheit',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Rauchmelder Wartung','rauchmelder','sonstige','§2 Nr.15','einheit',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Grundsteuer','grundsteuer','sonstige','§2 Nr.1','flaeche',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Kabelanschluss/Antenne','kabel','sonstige','§2 Nr.15','einheit',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Kontoführung','kontofuehrung','sonstige','§2 Nr.17','einheit',TRUE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Instandhaltungsrücklage WEG','ihr_weg','sonstige',NULL,'einheit',FALSE,FALSE,FALSE,FALSE),
+      (v_mandant_id,'Verwaltungshonorar HV','verwaltungshonorar','sonstige',NULL,'einheit',FALSE,FALSE,FALSE,FALSE)
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
+
+-- ============================================================
+-- ENDE MIGRATION 005
+-- ============================================================

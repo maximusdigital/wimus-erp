@@ -9,11 +9,11 @@ quelle: 20260624_WIMUS_IT_ERP_21_Datenmodell_Docs_V502.docx
 
 > Version & Status des Moduls stehen in `001_erp_000_konzept.md`.
 > Schema: `wimus` · ~130 Tabellen (nach V501+V502) · idempotente Migrationen 001–016
-> (002 Vollschema, 003 KZV, 006–009 Grants/RLS/Cutover, 010/011 FiBu, 012 organisationen,
-> 013 CRM, 014 ocr_verarbeitungen, 015 FiBu-Reporting, 016 Mietanpassung-Dublette).
-> Die „005"-Kern-DDL (BK/Fristen/Forderungen/Mietrecht) ist live angewandt, aber noch
-> nicht als getrackte `004*.sql` im Repo — Source-of-Truth ist bis dahin die Live-DB
-> (Nachziehung via `pg_dump`, OP-3 im Konzept). Das Archiv `ALT/` ist NICHT maßgeblich.
+> (002 Vollschema, 003 KZV, **005 BK/Fristen/Forderungen/Mietrecht**, 006–009 Grants/RLS/
+> Cutover, 010/011 FiBu, 012 organisationen, 013 CRM, 014 ocr_verarbeitungen, 015 FiBu-
+> Reporting, 016 Mietanpassung-Dublette). Migration 005 wurde am 2026-06-27 aus dem Archiv
+> 1:1 als getrackte `005_kern_bk_fristen_forderungen.sql` ins Repo übernommen (war zuvor nur
+> live angewandt). Das Archiv `ALT/` ist NICHT maßgeblich.
 > Konvention: PK = `UUID PRIMARY KEY DEFAULT gen_random_uuid()`, FK = Fremdschlüssel.
 
 ## Kern 1: Kostenverteilung

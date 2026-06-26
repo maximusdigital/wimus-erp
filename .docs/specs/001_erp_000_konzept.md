@@ -93,12 +93,11 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
   `001_erp_000_konzept.md` jetzt abgedeckt.
 - OP-2: CLAUDE.md wird in Spec referenziert, liegt aber nicht als migrierte Datei vor —
   gehört ins Repo, nicht in die Specs.
-- OP-3: Die „005"-Kern-DDL (BK/Fristen/Forderungen/Mietrecht) ist in der Live-DB angewandt,
-  aber **nicht als getrackte `supabase/migrations/004*.sql`** im Repo (Repo-Hygiene). Die
-  einzige Vollquelle liegt im Archiv `ALT/` — das ist NICHT maßgeblich und wird nicht als
-  Migrationsquelle genutzt. **Saubere Nachziehung:** `pg_dump --schema-only` der betroffenen
-  `wimus.*`-Tabellen, sobald DB-Zugriff besteht → als `004_kern_bestand.sql` (idempotent)
-  einchecken. Bis dahin gilt die Live-DB als Source-of-Truth dieser Tabellen.
+- ~~OP-3: „005"-Kern-DDL nicht als getrackte Migration~~ → **erledigt 2026-06-27**: Das
+  vollständige, idempotente DDL (BK/Fristen/Forderungen/Mietrecht inkl. Views/Funktionen/
+  Seeds) lag als lauffähiges `.txt` im Archiv und ist jetzt 1:1 als
+  `supabase/migrations/005_kern_bk_fristen_forderungen.sql` im Repo (No-Op bei erneutem
+  Anwenden). Damit ist die Migrationskette wieder lückenlos getrackt (005 vor RLS-009).
 - ~~OP-4: `organisationen` + `kontakte.organisation_id`~~ → **erledigt 2026-06-27**: als
   Migration `012_organisationen.sql` gebaut + eingespielt (RLS, Trigger). Genutzt von CRM 0003.
 
@@ -122,6 +121,7 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 01:30 | OP-3 erledigt: 005-Kern-DDL 1:1 aus Archiv als getrackte Migration 005 ins Repo | 000_konzept, 200, Migration 005 |
 | 2026-06-27 01:10 | v5.1.0: ocr_verarbeitungen (014) + Mietanpassung-Dublette (016) gebaut; Test-Ordnerstruktur an Ist | 000_konzept, 200, 600 |
 | 2026-06-27 00:45 | Spec-Sync: RowActions/Test-Setup/organisationen(012) als umgesetzt, Migrations-Range 001–013 | 000_konzept, 200, 400, 600 |
 | 2026-06-26 14:30 | organisationen + kontakte.organisation_id (externe Firmen, für CRM 0003) | 001_erp_200_datenmodell, 001_erp_000_konzept |
