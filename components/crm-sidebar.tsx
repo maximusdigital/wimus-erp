@@ -10,11 +10,13 @@ import {
   ClipboardList,
   DoorOpen,
   FileText,
+  BookOpen,
   FolderArchive,
   LayoutDashboard,
   LogOut,
   Mail,
   Package,
+  PieChart,
   Receipt,
   Landmark,
   Settings,
@@ -73,8 +75,10 @@ const mainNav: NavItem[] = [
 // FiBu (Spec 0002) – Stammdaten/Kontierung.
 const fibuNav: NavItem[] = [
   { title: "Gesellschafter", href: "/fibu/gesellschafter", icon: Landmark },
+  { title: "Kontenrahmen", href: "/fibu/konten", icon: BookOpen },
   { title: "Kontierungsregeln", href: "/fibu/kontierungsregeln", icon: Receipt },
   { title: "Lieferanten", href: "/fibu/lieferanten", icon: Truck },
+  { title: "Feststellung", href: "/fibu/feststellung", icon: PieChart },
 ];
 
 // Ab Phase 2: noch nicht gebaut – sichtbar als Roadmap, aber deaktiviert.

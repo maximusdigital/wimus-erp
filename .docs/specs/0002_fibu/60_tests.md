@@ -93,5 +93,16 @@ Embeds live gegen wimus verifiziert; `next build` grün.
   confidence 1.0; unstrukturiert → null → OCR-Pfad (`lib/utils/erechnung.ts`).
   Dependency-frei (Local-Name-Extraktion, kein XML-Parser-Dep).
 
-**Offen (nach Fixierung der OPs):** EXTF-Buchungsstapel-Export (OP-1: Feldlayout),
-Belege-/Buchungs-DDL (Schritt 3, OCR-abhängig), Belege-/Buchungs-UI + pgTAP-RLS.
+**EXTF-Export (Vitest, `tests/unit/lib/extf.test.ts`, 8 Tests):**
+- ✅ `extfBuchungsstapel`: DATEV-EXTF (Header 700/21 "Buchungsstapel" + Spaltenzeile
+  + Buchungen), Betrag deutsch, S/H, Konto/Gegenkonto, Belegdatum TTMM, KOST1=K1/
+  KOST2=K2, stabile BuchungsID, CSV-Escape, CRLF (`lib/utils/extf.ts`). OP-1 offen:
+  volles 116-Spalten-Layout – hier konsistenter, per Spaltennamen importierbarer Kern.
+
+**Weitere FiBu-UI (`/fibu/*`, e2e-geprüft):** Kontenrahmen (`fibu_konten`) CRUD;
+Feststellungs-Vorschau (firma + Periode + Ergebnis → `ergebnisverteilung`, zeitanteilig,
+Summenkontrolle). 22/22 eingeloggte Playwright-Grobtests grün.
+
+**Offen (echte Anbindung/Entscheidung nötig):** Belege-/Buchungs-DDL (Schritt 3,
+OCR-abhängig, 0001) + Belege-/Buchungs-UI; Export-Anbindung an echte Buchungen;
+pgTAP-RLS. Volles EXTF-Spaltenlayout (OP-1).

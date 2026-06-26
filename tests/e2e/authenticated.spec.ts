@@ -26,8 +26,10 @@ const HAUPTSEITEN: string[] = [
   "/fristen",
   "/dokumente",
   "/fibu/gesellschafter",
+  "/fibu/konten",
   "/fibu/kontierungsregeln",
   "/fibu/lieferanten",
+  "/fibu/feststellung",
 ]
 
 /** Prüft: kein 5xx, nicht auf /login geworfen, kein Error-Overlay, eine Überschrift. */
