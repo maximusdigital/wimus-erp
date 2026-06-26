@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0001
 dokument: Datenmodell
-geaendert: 2026-06-25
+geaendert: 2026-06-26
 quelle: 20260624_WIMUS_IT_ERP_21_Datenmodell_Docs_V502.docx
 ---
 
@@ -132,6 +132,22 @@ mandant_id FK, mietvertrag_id FK, kontakt_id FK, richtung ENUM (eingehend/ausgeh
 typ ENUM (abrechnung/mieterhoehung/…), betreff VARCHAR(255), inhalt TEXT, dokument_ids
 VARCHAR[], gelesen_am TIMESTAMPTZ, vorgang_id FK, zammad_ticket_id VARCHAR(100).
 
+## Externe Geschäftspartner (Organisationen)
+
+> Voraussetzung für CRM-Pipelines (0003). Externe Firmen relational, mit mehreren
+> Ansprechpartnern. **Wichtige Abgrenzung:** `organisationen` = AUSSEN (externe
+> Geschäftspartner: Eigentümer-Firma, Makler, Bauträger, Lieferant). `firmen`/Mandanten =
+> INNEN (eigene Buchungskreise). Bewusst getrennt — amoCRM vermischt beides in „Companies".
+
+### organisationen
+mandant_id FK, name VARCHAR(255), rechtsform VARCHAR(50), adresse (adresse-block-Felder:
+strasse, hausnummer, plz, stadt, land), ustid VARCHAR(30) NULL, website VARCHAR(255) NULL,
+typ ENUM (eigentuemer/makler/bautraeger/lieferant/interessent/sonstige), telefon VARCHAR(50)
+NULL, email VARCHAR(255) NULL, notiz TEXT, aktiv BOOL.
+
+> Eine Organisation kann n Ansprechpartner (Kontakte) haben (1:n über
+> `kontakte.organisation_id`). Verknüpfung zu Deals/Leads erfolgt im CRM-Modul (0003).
+
 ## ALTER TABLE — Erweiterungen bestehender Tabellen (Migration 005)
 
 - mietvertraege: bk_modell, bk_auto_check, bk_check_schwelle_pct, index_config JSONB,
@@ -139,7 +155,8 @@ VARCHAR[], gelesen_am TIMESTAMPTZ, vorgang_id FK, zammad_ticket_id VARCHAR(100).
 - buchungen: mietvertrag_id FK, rechnung_id (Invoice Ninja)
 - vorgaenge: massnahme_typ (instandhaltung/modernisierung/instandsetzung)
 - zaehler: fernauslesbar BOOL, abrechnungseinheit_id FK
-- kontakte: portal_aktiv BOOL, portal_aktiviert_am TIMESTAMPTZ
+- kontakte: portal_aktiv BOOL, portal_aktiviert_am TIMESTAMPTZ, organisation_id FK NULL
+  (→ organisationen; Person gehört zu externer Firma, für CRM-Pipelines 0003)
 - projekte: citytax_satz deprecaten → citytax_saetze Tabelle verwenden
 
 ## Views & Funktionen (Migration 005)
