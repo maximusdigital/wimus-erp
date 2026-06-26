@@ -32,7 +32,8 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // 1 Retry lokal fängt Dev-Cold-Compile-Timeouts im parallelen Lauf ab.
+  retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: "http://localhost:3000",

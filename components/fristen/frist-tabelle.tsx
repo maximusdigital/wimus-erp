@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -60,11 +61,12 @@ export function FristTabelle({
             <TableHead>Bezeichnung</TableHead>
             <TableHead>Fällig</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {fristen.map((f) => (
-            <TableRow key={f.id} className="hover:bg-muted/50">
+            <TableRow key={f.id} className="group hover:bg-muted/50">
               <TableCell>
                 <AmpelDot
                   faellig_am={f.faellig_am}
@@ -83,6 +85,17 @@ export function FristTabelle({
                 <StatusBadge status={f.status}>
                   {FRIST_STATUS_LABELS[f.status] ?? f.status}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/fristen/${f.id}/bearbeiten`}
+                  destructive={{
+                    kind: "soft",
+                    label: "Löschen",
+                    deleteUrl: `/api/fristen/${f.id}`,
+                    description: "Frist wird gelöscht.",
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import {
   Table,
   TableBody,
@@ -24,11 +25,12 @@ export function EinheitTabelle({ einheiten }: { einheiten: EinheitMitObjekt[] })
             <TableHead>Lage</TableHead>
             <TableHead className="text-right">Fläche</TableHead>
             <TableHead>Aktiv</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {einheiten.map((e) => (
-            <TableRow key={e.id} className="hover:bg-muted/50">
+            <TableRow key={e.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link href={`/einheiten/${e.id}`} className="hover:underline">
                   {e.verwendungszweck_code ?? "–"}
@@ -55,6 +57,17 @@ export function EinheitTabelle({ einheiten }: { einheiten: EinheitMitObjekt[] })
                 <StatusBadge status={e.aktiv ? "aktiv" : "inaktiv"}>
                   {e.aktiv ? "Aktiv" : "Inaktiv"}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/einheiten/${e.id}/bearbeiten`}
+                  destructive={{
+                    kind: "soft",
+                    label: "Löschen",
+                    deleteUrl: `/api/einheiten/${e.id}`,
+                    description: "Einheit wird gelöscht.",
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

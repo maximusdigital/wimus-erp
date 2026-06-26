@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -35,11 +36,12 @@ export function VertragTabelle({
             <TableHead className="text-right">Grundmiete</TableHead>
             <TableHead className="text-right">Warm</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {vertraege.map((v) => (
-            <TableRow key={v.id} className="hover:bg-muted/50">
+            <TableRow key={v.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link href={`/vertraege/${v.id}`} className="hover:underline">
                   {v.vertragstyp
@@ -69,6 +71,17 @@ export function VertragTabelle({
                 <StatusBadge status={v.status}>
                   {VERTRAG_STATUS_LABELS[v.status] ?? v.status}
                 </StatusBadge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/vertraege/${v.id}/bearbeiten`}
+                  destructive={{
+                    kind: "soft",
+                    label: "Löschen",
+                    deleteUrl: `/api/vertraege/${v.id}`,
+                    description: "Vertrag wird gelöscht.",
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

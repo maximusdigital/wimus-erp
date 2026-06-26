@@ -1,5 +1,7 @@
 import Link from "next/link"
+import { Plus } from "lucide-react"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -29,11 +31,12 @@ export function ObjektTabelle({ objekte }: { objekte: ObjektMitEinheiten[] }) {
             <TableHead className="text-right">Einheiten</TableHead>
             <TableHead className="text-right">Marktwert</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {objekte.map((o) => (
-            <TableRow key={o.id} className="hover:bg-muted/50">
+            <TableRow key={o.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link
                   href={`/objekte/${o.id}`}
@@ -58,6 +61,22 @@ export function ObjektTabelle({ objekte }: { objekte: ObjektMitEinheiten[] }) {
                 <Badge variant={OBJEKT_STATUS_VARIANT[o.status] ?? "secondary"}>
                   {OBJEKT_STATUS_LABELS[o.status] ?? o.status}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/objekte/${o.id}/bearbeiten`}
+                  primary={{
+                    label: "Einheit anlegen",
+                    href: `/einheiten/neu?objekt=${o.id}`,
+                    icon: Plus,
+                  }}
+                  destructive={{
+                    kind: "soft",
+                    label: "Löschen",
+                    deleteUrl: `/api/objekte/${o.id}`,
+                    description: `Objekt ${o.kuerzel} wird gelöscht.`,
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

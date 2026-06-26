@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -22,13 +23,14 @@ export function KontaktTabelle({ kontakte }: { kontakte: Kontakt[] }) {
             <TableHead>E-Mail</TableHead>
             <TableHead>Telefon</TableHead>
             <TableHead>Stadt</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {kontakte.map((k) => {
             const rollen = kontaktRollen(k)
             return (
-              <TableRow key={k.id} className="hover:bg-muted/50">
+              <TableRow key={k.id} className="group hover:bg-muted/50">
                 <TableCell className="font-medium">
                   <Link href={`/kontakte/${k.id}`} className="hover:underline">
                     {kontaktName(k)}
@@ -55,6 +57,17 @@ export function KontaktTabelle({ kontakte }: { kontakte: Kontakt[] }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {k.stadt ?? "–"}
+                </TableCell>
+                <TableCell>
+                  <RowActions
+                    editHref={`/kontakte/${k.id}/bearbeiten`}
+                    destructive={{
+                      kind: "soft",
+                      label: "Löschen",
+                      deleteUrl: `/api/kontakte/${k.id}`,
+                      description: `Kontakt "${kontaktName(k)}" wird gelöscht.`,
+                    }}
+                  />
                 </TableCell>
               </TableRow>
             )

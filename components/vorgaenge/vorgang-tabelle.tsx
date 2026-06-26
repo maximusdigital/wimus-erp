@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { Badge } from "@/components/ui/badge"
 import { PriorityBadge } from "@/components/ui/priority-badge"
 import {
@@ -37,11 +38,12 @@ export function VorgangTabelle({
             <TableHead>Priorität</TableHead>
             <TableHead>Leistung</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {vorgaenge.map((v) => (
-            <TableRow key={v.id} className="hover:bg-muted/50">
+            <TableRow key={v.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link href={`/vorgaenge/${v.id}`} className="hover:underline">
                   {vorgangTitel(v)}
@@ -66,6 +68,17 @@ export function VorgangTabelle({
                 <Badge variant={VORGANG_STATUS_VARIANT[v.status] ?? "secondary"}>
                   {VORGANG_STATUS_LABELS[v.status] ?? v.status}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/vorgaenge/${v.id}/bearbeiten`}
+                  destructive={{
+                    kind: "soft",
+                    label: "Löschen",
+                    deleteUrl: `/api/vorgaenge/${v.id}`,
+                    description: "Vorgang wird gelöscht.",
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}

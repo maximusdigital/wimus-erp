@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { RowActions } from "@/components/shared/row-actions"
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -32,11 +33,12 @@ export function AssetTabelle({ assets }: { assets: AssetMitRelationen[] }) {
             <TableHead>Standort</TableHead>
             <TableHead>Objekt / Einheit</TableHead>
             <TableHead className="text-right">Wert</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {assets.map((a) => (
-            <TableRow key={a.id} className="hover:bg-muted/50">
+            <TableRow key={a.id} className="group hover:bg-muted/50">
               <TableCell className="font-medium">
                 <Link href={`/inventar/${a.id}`} className="hover:underline">
                   {a.bezeichnung}
@@ -68,6 +70,17 @@ export function AssetTabelle({ assets }: { assets: AssetMitRelationen[] }) {
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatEUR(a.anschaffung_wert)}
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  editHref={`/inventar/${a.id}/bearbeiten`}
+                  destructive={{
+                    kind: "soft",
+                    label: "Löschen",
+                    deleteUrl: `/api/assets/${a.id}`,
+                    description: `"${a.bezeichnung}" wird gelöscht.`,
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}
