@@ -12,6 +12,8 @@ import {
   VorgangZuweisungen,
   type ZuweisungRow,
 } from "@/components/vorgaenge/vorgang-zuweisungen"
+import { VorgangTypPanel } from "@/components/vorgaenge/vorgang-typ-panel"
+import { TYP_TABELLE } from "@/lib/validations/vorgang-typ"
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import {
   einheitLabel,
@@ -88,6 +90,19 @@ export default async function VorgangDetailPage({
   const zuweisungen = (zuwRaw ?? []) as unknown as ZuweisungRow[]
   const akteure = (akteureRaw ?? []) as { id: string; name: string }[]
   const organisationen = (orgsRaw ?? []) as { id: string; name: string }[]
+
+  // Typ-Zusatzdaten (1:1), falls der Vorgangstyp eine Erweiterung hat.
+  const typTabelle = vorgang.typ ? TYP_TABELLE[vorgang.typ] : undefined
+  let typDaten: Record<string, unknown> | null = null
+  if (typTabelle) {
+    const { data: td } = await supabase
+      .schema("wimus")
+      .from(typTabelle)
+      .select("*")
+      .eq("vorgang_id", id)
+      .maybeSingle()
+    typDaten = (td as Record<string, unknown> | null) ?? null
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -281,6 +296,19 @@ export default async function VorgangDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {typTabelle && vorgang.typ ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {VORGANG_TYP_LABELS[vorgang.typ] ?? vorgang.typ} — Zusatzdaten
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <VorgangTypPanel vorgangId={vorgang.id} typ={vorgang.typ} initial={typDaten} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
