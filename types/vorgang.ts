@@ -72,18 +72,21 @@ export const VORGANG_TYP_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 // Priorität
 // ---------------------------------------------------------------------------
+// Werte müssen mit dem DB-CHECK (Migration 002) übereinstimmen:
+// prioritaet IN ('notfall','hoch','normal','niedrig'). Früher fälschlich
+// "kritisch" → verletzte die Constraint beim Insert (2026-06-27 korrigiert).
 export const VORGANG_PRIORITAET = [
   "niedrig",
   "normal",
   "hoch",
-  "kritisch",
+  "notfall",
 ] as const
 
 export const VORGANG_PRIORITAET_LABELS: Record<string, string> = {
   niedrig: "Niedrig",
   normal: "Normal",
   hoch: "Hoch",
-  kritisch: "Kritisch",
+  notfall: "Notfall",
 }
 
 export const VORGANG_PRIORITAET_VARIANT: Record<
@@ -93,12 +96,12 @@ export const VORGANG_PRIORITAET_VARIANT: Record<
   niedrig: "outline",
   normal: "secondary",
   hoch: "default",
-  kritisch: "destructive",
+  notfall: "destructive",
 }
 
-/** Sortier-Rang der Priorität: kritisch zuerst. */
+/** Sortier-Rang der Priorität: notfall zuerst. */
 export const VORGANG_PRIORITAET_RANG: Record<string, number> = {
-  kritisch: 0,
+  notfall: 0,
   hoch: 1,
   normal: 2,
   niedrig: 3,

@@ -13,7 +13,7 @@ describe("PriorityBadge", () => {
     expect(el.className).toContain("animate-pulse")
   })
 
-  it("Alias: DB-Wert 'kritisch' wird wie Notfall behandelt", () => {
+  it("Legacy-Alias: alter Wert 'kritisch' wird wie Notfall behandelt", () => {
     render(<PriorityBadge prioritaet="kritisch" />)
     const el = screen.getByText("Notfall")
     expect(el.className).toContain("animate-pulse")

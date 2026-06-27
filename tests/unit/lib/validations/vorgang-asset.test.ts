@@ -10,9 +10,13 @@ describe("vorgangInsertSchema", () => {
   const valid = { prioritaet: "hoch" as const, status: "offen" as const }
 
   it("Priorität als Enum (gültig/ungültig)", () => {
-    expect(vorgangInsertSchema.parse({ ...valid, prioritaet: "kritisch" }).prioritaet).toBe(
-      "kritisch"
+    // notfall = kanonisch (DB-CHECK); "kritisch" ist KEIN gültiger Wert mehr.
+    expect(vorgangInsertSchema.parse({ ...valid, prioritaet: "notfall" }).prioritaet).toBe(
+      "notfall"
     )
+    expect(
+      vorgangInsertSchema.safeParse({ ...valid, prioritaet: "kritisch" }).success
+    ).toBe(false)
     expect(
       vorgangInsertSchema.safeParse({ ...valid, prioritaet: "egal" }).success
     ).toBe(false)
