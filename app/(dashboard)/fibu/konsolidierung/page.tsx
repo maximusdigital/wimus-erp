@@ -14,8 +14,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { KonsoScopeLeiste } from "@/components/fibu/konso-scope"
-import { konsolidiereGuV, type FirmaBuchungen, type KonsoZeile } from "@/lib/fibu/konsolidierung"
+import {
+  konsolidiereGuV,
+  konsolidiereNachPosition,
+  type FirmaBuchungen,
+  type KonsoSpalte,
+} from "@/lib/fibu/konsolidierung"
 import type { GuvBuchung } from "@/lib/fibu/guv"
+import type { TaxonomiePosition } from "@/lib/fibu/taxonomie"
+import { cn } from "@/lib/utils"
 import { formatEUR } from "@/lib/utils/format"
 
 export const metadata = { title: "Konsolidierte GuV" }
@@ -25,7 +32,8 @@ const inputCls =
 
 type FirmaRow = { id: string; name: string; kuerzel: string | null }
 type Scope = { id: string; name: string; einheiten_set: string[] }
-type Sp = { f?: string | string[]; von?: string; bis?: string }
+type Sp = { f?: string | string[]; von?: string; bis?: string; modus?: string }
+type MatrixZeile = { id: string; label: string; werte: Record<string, number>; summe: number }
 
 export default async function KonsolidierungPage({
   searchParams,
@@ -39,12 +47,15 @@ export default async function KonsolidierungPage({
   const bis = (typeof sp.bis === "string" && sp.bis) || `${jahr}-12-31`
   const sel = Array.isArray(sp.f) ? sp.f : sp.f ? [sp.f] : []
 
-  const [{ data: firmenRaw }, { data: scopesRaw }] = await Promise.all([
+  const [{ data: firmenRaw }, { data: scopesRaw }, { data: taxRaw }] = await Promise.all([
     supabase.from("firmen").select("id, name, kuerzel").order("name"),
     supabase.from("auswertungs_scopes").select("id, name, einheiten_set").order("name"),
+    supabase.from("reporting_taxonomie").select("position_code, bezeichnung, mapping"),
   ])
   const firmen = (firmenRaw ?? []) as FirmaRow[]
   const scopes = (scopesRaw ?? []) as Scope[]
+  const positionen = (taxRaw ?? []) as TaxonomiePosition[]
+  const modus = sp.modus === "positionen" && positionen.length > 0 ? "positionen" : "konten"
 
   const firmenBuchungen: FirmaBuchungen[] = []
   if (sel.length > 0) {
@@ -68,8 +79,41 @@ export default async function KonsolidierungPage({
     }
   }
 
-  const konso = konsolidiereGuV(firmenBuchungen)
-  const druckHref = `/fibu/konsolidierung/druck?${sel.map((id) => `f=${id}`).join("&")}&von=${von}&bis=${bis}`
+  // Konten- ODER Positions-Modus.
+  let spalten: KonsoSpalte[]
+  let ertragZeilen: MatrixZeile[]
+  let aufwandZeilen: MatrixZeile[]
+  let ergebnis: number
+  let nichtZugeordnet: { firmaName: string; betrag: number }[] = []
+
+  if (modus === "positionen") {
+    const kp = konsolidiereNachPosition(firmenBuchungen, positionen)
+    spalten = kp.spalten
+    ergebnis = kp.ergebnis
+    nichtZugeordnet = kp.nichtZugeordnet
+    ertragZeilen = kp.ertraege.map((z) => ({
+      id: z.position_code,
+      label: `${z.bezeichnung} (${z.position_code})`,
+      werte: z.werte,
+      summe: z.summe,
+    }))
+    aufwandZeilen = kp.aufwendungen.map((z) => ({
+      id: z.position_code,
+      label: `${z.bezeichnung} (${z.position_code})`,
+      werte: z.werte,
+      summe: z.summe,
+    }))
+  } else {
+    const konso = konsolidiereGuV(firmenBuchungen)
+    spalten = konso.spalten
+    ergebnis = konso.ergebnis
+    ertragZeilen = konso.ertraege.map((z) => ({ id: z.konto, label: z.konto, werte: z.werte, summe: z.summe }))
+    aufwandZeilen = konso.aufwendungen.map((z) => ({ id: z.konto, label: z.konto, werte: z.werte, summe: z.summe }))
+  }
+
+  const erste = modus === "positionen" ? "Position" : "Konto"
+  const qs = (m: string) => `${sel.map((id) => `f=${id}`).join("&")}&von=${von}&bis=${bis}&modus=${m}`
+  const druckHref = `/fibu/konsolidierung/druck?${qs(modus)}`
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -80,12 +124,30 @@ export default async function KonsolidierungPage({
             Mehrere Einheiten zusammenfassen · {von} bis {bis} · Controlling-Sicht
           </p>
         </div>
-        {sel.length > 0 ? (
-          <Button variant="outline" render={<Link href={druckHref} />}>
-            <Printer />
-            <span>A4-Druck / PDF</span>
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2 print:hidden">
+          {positionen.length > 0 ? (
+            <div className="flex overflow-hidden rounded-md border text-sm">
+              <Link
+                href={`/fibu/konsolidierung?${qs("konten")}`}
+                className={cn("px-2.5 py-1.5", modus === "konten" ? "bg-secondary/10 text-secondary" : "text-muted-foreground")}
+              >
+                Konten
+              </Link>
+              <Link
+                href={`/fibu/konsolidierung?${qs("positionen")}`}
+                className={cn("border-l px-2.5 py-1.5", modus === "positionen" ? "bg-secondary/10 text-secondary" : "text-muted-foreground")}
+              >
+                Positionen
+              </Link>
+            </div>
+          ) : null}
+          {sel.length > 0 ? (
+            <Button variant="outline" render={<Link href={druckHref} />}>
+              <Printer />
+              <span>A4-Druck / PDF</span>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {/* Scope-Selektor */}
@@ -95,6 +157,7 @@ export default async function KonsolidierungPage({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <form method="get" className="flex flex-col gap-4">
+            <input type="hidden" name="modus" value={modus} />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {firmen.map((f) => (
                 <label key={f.id} className="flex items-center gap-2 rounded-md border p-2 text-sm">
@@ -128,25 +191,26 @@ export default async function KonsolidierungPage({
         </p>
       ) : (
         <>
-          <MatrixCard
-            titel="Erträge"
-            zeilen={konso.ertraege}
-            spalten={konso.spalten}
-            summeKey="summe_ertrag"
-          />
-          <MatrixCard
-            titel="Aufwendungen"
-            zeilen={konso.aufwendungen}
-            spalten={konso.spalten}
-            summeKey="summe_aufwand"
-          />
+          <MatrixCard titel="Erträge" erste={erste} zeilen={ertragZeilen} spalten={spalten} summeKey="summe_ertrag" />
+          <MatrixCard titel="Aufwendungen" erste={erste} zeilen={aufwandZeilen} spalten={spalten} summeKey="summe_aufwand" />
+
+          {nichtZugeordnet.length > 0 ? (
+            <Card>
+              <CardContent className="p-4 text-sm">
+                <span className="font-medium text-warning">Nicht zugeordnet:</span>{" "}
+                <span className="text-muted-foreground">
+                  {nichtZugeordnet.map((n) => `${n.firmaName}: ${formatEUR(n.betrag)}`).join(" · ")} — Konten ohne
+                  Berichtsposition (in der Taxonomie ergänzen).
+                </span>
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardContent className="flex items-center justify-between p-4">
               <span className="font-medium">Konsolidiertes Ergebnis</span>
-              <span
-                className={`text-lg font-semibold tabular-nums ${konso.ergebnis < 0 ? "text-danger" : "text-success"}`}
-              >
-                {formatEUR(konso.ergebnis)}
+              <span className={`text-lg font-semibold tabular-nums ${ergebnis < 0 ? "text-danger" : "text-success"}`}>
+                {formatEUR(ergebnis)}
               </span>
             </CardContent>
           </Card>
@@ -158,13 +222,15 @@ export default async function KonsolidierungPage({
 
 function MatrixCard({
   titel,
+  erste,
   zeilen,
   spalten,
   summeKey,
 }: {
   titel: string
-  zeilen: KonsoZeile[]
-  spalten: { firmaId: string; firmaName: string; summe_ertrag: number; summe_aufwand: number }[]
+  erste: string
+  zeilen: MatrixZeile[]
+  spalten: KonsoSpalte[]
   summeKey: "summe_ertrag" | "summe_aufwand"
 }) {
   return (
@@ -177,7 +243,7 @@ function MatrixCard({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Konto</TableHead>
+                <TableHead>{erste}</TableHead>
                 {spalten.map((s) => (
                   <TableHead key={s.firmaId} className="text-right">{s.firmaName}</TableHead>
                 ))}
@@ -193,8 +259,8 @@ function MatrixCard({
                 </TableRow>
               ) : (
                 zeilen.map((z) => (
-                  <TableRow key={z.konto}>
-                    <TableCell className="tabular-nums">{z.konto}</TableCell>
+                  <TableRow key={z.id}>
+                    <TableCell className={erste === "Konto" ? "tabular-nums" : ""}>{z.label}</TableCell>
                     {spalten.map((s) => (
                       <TableCell key={s.firmaId} className="text-right tabular-nums">
                         {z.werte[s.firmaId] ? formatEUR(z.werte[s.firmaId]) : "–"}

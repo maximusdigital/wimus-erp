@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.7.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.8.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-27
@@ -61,7 +61,8 @@ nur über definierte Confidence- und Betragsschwellen.
   Einheiten + Zeitraum), Matrix Konto × Einheit + Summe je Konto/Einheit + konsolidiertes
   Ergebnis, gebrandeter A4-Druck. Speicherbare Scope-Presets (`auswertungs_scopes`,
   `/api/fibu/auswertungs-scopes`). Logik `lib/fibu/konsolidierung.ts` (`konsolidiereGuV`) +
-  Tests. Innenumsatz-Eliminierung noch offen.
+  Tests. **Umschaltbar Konten ↔ Berichtspositionen** (`konsolidiereNachPosition`, nutzt die
+  Taxonomie) — Matrix Position × Einheit, A4-Druck. Innenumsatz-Eliminierung noch offen.
 - **Objekt-Tags (2026-06-27):** `/fibu/objekt-tags` — Objekte nach Nutzungsart/Marke/Region
   taggen (Chips anlegen/löschen) + Gruppierungs-Vorschau je Dimension. API
   `/api/fibu/objekt-tags`, Logik `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests.
@@ -157,6 +158,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.8.0 | 2026-06-27 | in_arbeit | Konsolidierung umschaltbar Konten↔Berichtspositionen (`konsolidiereNachPosition`, Matrix Position×Einheit, A4-Druck) + Tests. |
 | 0.7.0 | 2026-06-27 | in_arbeit | Reporting-Taxonomie: `/fibu/reporting-taxonomie` (Berichtspositionen, Konto-Präfix-Mapping), GuV-Umschalter Konten↔Positionen, `lib/fibu/taxonomie.ts` + Tests. |
 | 0.6.0 | 2026-06-27 | in_arbeit | Objekt-Tags: `/fibu/objekt-tags` (Nutzungsart/Marke/Region taggen + Gruppierungs-Vorschau), `/api/fibu/objekt-tags`, `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests. |
 | 0.5.0 | 2026-06-27 | in_arbeit | Konsolidierte GuV: `/fibu/konsolidierung` (Scope-Selektor, Matrix Konto×Einheit, A4-Druck), speicherbare Scope-Presets (`/api/fibu/auswertungs-scopes`), `lib/fibu/konsolidierung.ts` + Tests. |
@@ -172,6 +174,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 11:35 | v0.8.0: Konsolidierung umschaltbar Konten↔Positionen (konsolidiereNachPosition) + Tests | 000,400 + Code |
 | 2026-06-27 11:00 | v0.7.0: Reporting-Taxonomie (/fibu/reporting-taxonomie) + GuV-Umschalter Konten↔Positionen + Tests | 000,200,400 + Code |
 | 2026-06-27 10:35 | v0.6.0: Objekt-Tags-Verwaltung (/fibu/objekt-tags) + gruppiereNachTag + Tests | 000,200,400 + Code |
 | 2026-06-27 01:50 | v0.5.0: Konsolidierte GuV (/fibu/konsolidierung) + Scope-Presets + A4-Druck + Tests | 000,200,400 + Code |
