@@ -1,15 +1,18 @@
-# Uni-Prompt: Spec ↔ Code abgleichen (WIMUS ERP)
+# Uni-Prompt: Vollständiger Abgleich Spec ↔ Code ↔ Word-Bestand (WIMUS ERP)
 
-> Wiederverwendbarer Auftrag für Claude Code. Gleicht die Markdown-Specs unter
-> `.docs/specs/` mit dem tatsächlichen Stand von Code, Migrationen und Tests ab.
+> Wiederverwendbarer Auftrag für Claude Code. Drei-Wege-Abgleich:
+> 1) Markdown-Specs unter `.docs/specs/` (flaches Schema),
+> 2) tatsächlicher Stand von Code/Migrationen/Tests/Live-Schema,
+> 3) Word-/Txt-Bestandsdokumente unter `.docs/specs/ALT/word/` (Quelle, aus der migriert wird;
+>    Pfad ggf. an die reale Ablage anpassen).
+> Ziel: ALLE Diskrepanzen zwischen den drei Quellen finden.
 > WICHTIG: erst melden, dann auf Freigabe ändern — nichts blind überschreiben.
 
 ## Aufgabe
 
 Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen flach in
 `.docs/specs/` als `MMM_kuerzel_DDD_name.md` (z.B. `001_erp_200_datenmodell.md`); ein Modul
-= alle Dateien mit gleichem `MMM_kuerzel`-Präfix. Arbeite Modul für Modul (aktuell: `001_erp`,
-`002_fibu`, `003_crm`).
+= alle Dateien mit gleichem `MMM_kuerzel`-Präfix. Arbeite Modul für Modul (aktuell: `001_erp`, `002_fibu`, `003_crm`, `004_ops`).
 
 ## Vorgehen je Modul
 
@@ -31,6 +34,13 @@ Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen fl
    - `*_400_design` ↔ tatsächliche UI/Komponenten (RowActions, Inline-Edit, Cockpits).
    - `*_500_migration` ↔ vorhandene Migrationsdateien + Reihenfolge (falls vorhanden).
    - `*_600_tests` ↔ vorhandene Tests + letzter grüner Lauf (`npm run test:run`).
+2b. **Gleiche zusätzlich gegen den Word-Bestand ab** (`.docs/specs/ALT/word/`):
+   - Prüfe je Modul, ob es im Word-Bestand Inhalte gibt (Tabellen, Felder, Prozesse, Regeln,
+     Phasen), die WEDER in der Spec NOCH im Code angekommen sind. Das deckt nicht-migrierte
+     Bestandsanforderungen auf.
+   - Besonders bei Migrationen: vergleiche `supabase/migrations/*.sql` mit den
+     SQL-Bestandsdateien (`*_Migration_*_sql.txt`) — welche Tabellen/Views/Funktionen aus dem
+     Bestand sind gebaut, welche fehlen, welche weichen ab.
 3. **Erstelle einen Abgleich-Bericht** (NICHT sofort ändern) mit drei Kategorien je Fund:
    - **A) Code ist weiter als Spec** → Spec nachziehen (Code = Wahrheit). Beispiel: neue
      Tabelle/Funktion gebaut, steht nicht in der Spec.
@@ -38,6 +48,9 @@ Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen fl
      Konvention/Anforderung in der Spec, im Code nicht umgesetzt.
    - **C) Widerspruch** → Spec und Code sagen Unterschiedliches, keine Richtung offensichtlich.
      Hier KEINE Änderung, sondern mir die Entscheidung vorlegen.
+   - **D) Nur im Word-Bestand** → Inhalt existiert im Word-Bestand, aber weder in Spec noch
+     Code. Nicht-migrierte Anforderung. NICHT automatisch übernehmen — als Liste vorlegen
+     („gehört das ins ERP? in welches Modul?"), ich entscheide pro Punkt.
 
 ## Regeln (verbindlich)
 
@@ -74,7 +87,8 @@ Prüfe für jedes Modul, ob Spec und Repository übereinstimmen. Specs liegen fl
 
 1. Pro Modul: Tabelle mit Funden (Datei | Kategorie A/B/C | kurze Beschreibung).
 2. Konkreter Änderungsvorschlag je A-Fund (welche Spec-Datei, was wird ergänzt).
-3. Liste der B- und C-Funde als Entscheidungsfragen an mich.
+3. Liste der B-, C- und D-Funde als Entscheidungsfragen an mich (D = nicht-migrierte
+   Word-Bestandsinhalte, pro Punkt: ins ERP übernehmen? welches Modul?).
 4. Erst nach meiner Freigabe: Spec-Dateien editieren → **`npm run test:run` + `npm run build`
    ausführen → nur bei GRÜN committen** (`git add .docs/specs`, sprechende Message) — als
    EIGENER Commit, getrennt vom Sicherungspunkt aus Schritt 0. Bei rotem Lauf: nicht
