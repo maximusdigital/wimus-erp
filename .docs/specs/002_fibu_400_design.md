@@ -14,9 +14,11 @@ geaendert: 2026-06-27
 > **Umsetzungsstand (2026-06-26):** Gebaut: `/fibu/belege`-Cockpit (Upload PDF/Bild/XML →
 > Pipeline; Tabelle mit Ampel 🟢/🔴; Buchen/Ablehnen; Mobile-Karten) + Feldkorrektur-API;
 > Stammdaten-UI (Gesellschafter/Beteiligungen, Kontierungsregeln, Lieferanten, Kontenrahmen);
-> DATEV-Export-Seite; Feststellungs-Vorschau. **Noch offen (Backlog):** Inline-Korrektur in
-> der Cockpit-Tabelle, PDF-Split-Preview, Batch-/Mehrfachfreigabe, ProgressBar auto/review,
-> Einheiten-Filter-Tree, Audit-Timeline, Bank-/Finanz-Cockpit (Abschnitt 5) und
+> DATEV-Export-Seite; Feststellungs-Vorschau (+ Persistenz); **Batch-/Mehrfachfreigabe**
+> (`components/fibu/beleg-batch.tsx`); Auswertung GuV/konsolidiert (Konten↔Positionen) +
+> A4-Druck; Objekt-Tags; Berichtspositionen. **Noch offen (Backlog):** Inline-Korrektur in
+> der Cockpit-Tabelle, PDF-Split-Preview, ProgressBar auto/review, Einheiten-Filter-Tree,
+> Audit-Timeline, Bank-/Finanz-Cockpit (DSCR/Bankenmappe, Abschnitt 5) und
 > KI-Controlling-Sichten (Abschnitt 6).
 
 ## 1. Buchungsfreigabe-Cockpit

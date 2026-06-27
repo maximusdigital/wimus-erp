@@ -65,9 +65,9 @@ mandant_id FK, **firma_id FK (Pflicht — INNEN, welche Einheit/Mandant)**, pipe
 stage_id FK, titel, kontakt_id FK NULL (AUSSEN-Person), organisation_id FK NULL
 (AUSSEN-Firma), objekt_id FK NULL, einheit_immobilie_id FK NULL (Bezug zu Wohneinheit, nicht
 Mandant!), wert DECIMAL(14,2), waehrung default EUR, erwartetes_abschluss_datum DATE,
-status ENUM (offen/gewonnen/verloren), verloren_grund_id FK NULL, owner_akteur_id FK,
+status ENUM (offen/gewonnen/verloren), verloren_grund_id FK NULL, owner_akteur_id (bare UUID),
 custom_values JSONB (Werte zu Custom-Field-Definitionen), in_stage_seit TIMESTAMPTZ,
-erstellt_am, geaendert_am.
+abgeschlossen_am TIMESTAMPTZ NULL (gesetzt bei gewonnen/verloren), created_at, updated_at.
 
 > Namensklärung (3 verschiedene Dinge, bewusst getrennt): `firma_id` = Mandant/Buchungskreis
 > (innen); `organisation_id` = externe Geschäftsfirma (außen); `einheit_immobilie_id` =
@@ -87,7 +87,11 @@ falls Aktivität aus eingehender Nachricht), erstellt_am.
 > werden über `nachricht_id` aus der Kern-Inbox referenziert, NICHT im CRM dupliziert.
 
 ### verloren_gruende
-mandant_id FK, bezeichnung, aktiv BOOL.
+mandant_id FK, bezeichnung, sortierung INT, aktiv BOOL.
+
+> Umsetzungshinweis (Migration 013): Alle `crm_`-Tabellen tragen `mandant_id` (RLS
+> `mandant_isolation`) — auch `crm_pipeline_stages` und `crm_deal_stage_historie`, deren
+> Feldlisten oben den Pipeline-/Deal-Bezug betonen.
 
 ## Custom Fields (UI-konfigurierbar, Vorbild Pipedrive Bild 8–10)
 

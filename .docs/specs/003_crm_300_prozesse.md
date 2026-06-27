@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0003
 dokument: Prozesse
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0003 — Prozesse
@@ -38,7 +38,7 @@ geaendert: 2026-06-26
 
 ## 4. Aktivitäten am Deal
 
-- Typen: anruf/email/termin/aufgabe/notiz, mit `faellig_am`.
+- Typen: anruf/email/meeting/aufgabe/frist/notiz, mit `faellig_am`.
 - „Nächste Aktion" = nächste offene Aktivität → prominent auf Deal-Karte & in Detailansicht.
 - Anruf-Aktivität: SIP-Hook (`sip_referenz`) für späteren click-to-call (sipgate). Im MVP
   nur Hook/Feld, keine echte Telefonie.

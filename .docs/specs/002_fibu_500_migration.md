@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0002
 dokument: Migration
-geaendert: 2026-06-25
+geaendert: 2026-06-27
 ---
 
 # 0002 — Migration
@@ -12,13 +12,13 @@ geaendert: 2026-06-25
 
 ## Migrationsreihenfolge (Grobplan)
 
-1. **Stammdaten Steuerstruktur:** `gesellschafter`, Erweiterung `einheiten`
-   (rechtsform_typ, besteuerungsart, steuernummer, kontenrahmen_ref, datev_*),
-   `beteiligungen`. — Fundament, hängt nichts dran.
-2. **Kontenrahmen & Regeln:** `kontenrahmen`/`konten`, `kontierungsregeln`,
-   `lieferanten`/`kreditoren`. — Hängt an einheiten.
-3. **Belege & Buchungen:** `belege` (FK → 0001.ocr_verarbeitungen, einheiten, lieferanten),
-   `buchungen`, `korrekturen`. — Hängt an 1+2.
+1. **Stammdaten Steuerstruktur:** `gesellschafter`, Erweiterung `firmen`
+   (rechtsform_typ, besteuerungsart, kontenrahmen_ref; steuernummer/datev_* bereits da),
+   `beteiligungen`. — Fundament, hängt nichts dran. (real: Migration 010)
+2. **Kontenrahmen & Regeln:** `fibu_konten`, `kontierungsregeln`,
+   `lieferanten`. — Hängt an firmen. (real: Migration 010)
+3. **Belege & Buchungen:** `belege` (FK → firmen/lieferanten; `ocr_verarbeitung_id`
+   referenzlos), `fibu_buchungen`, `fibu_korrekturen`. — Hängt an 1+2. (real: Migration 011)
 4. **Auswertung/Konsolidierung:** `auswertungs_scopes`, `objekt_tags`,
    `reporting_taxonomie`, `feststellungen`. — Hängt an Buchungen/Stammdaten.
 
@@ -33,8 +33,14 @@ geaendert: 2026-06-25
 
 ## RLS
 
-Policies pro Tabelle nach `einheit_id`. Akteur-Einheiten-Berechtigung über Mapping-Tabelle
-(aus 0001 Akteure-Modell). Default-deny, explizite SELECT/INSERT/UPDATE je Rolle.
+**Umgesetzt (Migration 010/011/014/015):** Policy `mandant_isolation` je Tabelle über
+`mandant_id IN (SELECT mandant_id FROM public.user_mandanten WHERE user_id = auth.uid())`.
+Buchungskreis ist `firmen` (FK `firma_id`), NICHT `einheiten` — die ursprünglich erwogene
+`einheit_id`-Policy + „einheiten erweitern" wurde verworfen (firmen tragen bereits
+rechtsform/steuernummer/datev_*). Akteur-Feinberechtigung (Akteure-Modell 0001) noch offen.
+**Hinweis Seeds:** Die oben angedachten FiBu-Seeds (Standard-Kontierungsregeln,
+Reporting-Taxonomie) sind NICHT gebaut — Kontierungsregeln/Taxonomie werden über die UI
+gepflegt (`/fibu/kontierungsregeln`, `/fibu/reporting-taxonomie`).
 
 ## Offen (vor Umsetzung klären)
 

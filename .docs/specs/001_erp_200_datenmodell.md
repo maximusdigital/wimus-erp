@@ -157,6 +157,17 @@ NULL, email VARCHAR(255) NULL, notiz TEXT, aktiv BOOL.
 > Eine Organisation kann n Ansprechpartner (Kontakte) haben (1:n über
 > `kontakte.organisation_id`). Verknüpfung zu Deals/Leads erfolgt im CRM-Modul (0003).
 
+## Weitere in Migration 005 gebaute Tabellen (Nachtrag 2026-06-27)
+
+> Diese Tabellen sind in `005_kern_bk_fristen_forderungen.sql` real angelegt, waren oben
+> aber nicht einzeln enumeriert (nur z.T. in `300_prozesse` erwähnt) — Spec zieht Code nach:
+
+- `bk_abrechnungs_positionen` (Positionszeilen je BK-Abrechnung)
+- `weg_wirtschaftsplaene`, `weg_hausgeld_sollstellungen` (WEG-Verwaltung)
+- `vpi_daten` (Verbraucherpreisindex für Index-/Staffelmieten)
+- `vertrags_parameter_werte` (Werte zu `vertrags_parameter_definitionen`)
+- `verwaltungsvertraege`, `verwaltungsverguetungen` (WEG-/Miet-Verwaltungsverträge + Honorare)
+
 ## ALTER TABLE — Erweiterungen bestehender Tabellen (Migration 005)
 
 - mietvertraege: bk_modell, bk_auto_check, bk_check_schwelle_pct, index_config JSONB,

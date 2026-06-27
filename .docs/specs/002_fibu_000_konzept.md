@@ -178,6 +178,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 500_migration auf Realität (mandant_isolation/firmen), Batch-Freigabe aus Backlog | 400,500 |
 | 2026-06-27 11:50 | v0.9.0: Feststellungen-Persistenz (speichern + Historie, /api/fibu/feststellungen) | 000,200 + Code |
 | 2026-06-27 11:35 | v0.8.0: Konsolidierung umschaltbar Konten↔Positionen (konsolidiereNachPosition) + Tests | 000,400 + Code |
 | 2026-06-27 11:00 | v0.7.0: Reporting-Taxonomie (/fibu/reporting-taxonomie) + GuV-Umschalter Konten↔Positionen + Tests | 000,200,400 + Code |

@@ -140,6 +140,7 @@ Mieter-Gewinnung (ALFA CAMPUS/LZV), KZV-Anfragen (ALFA APARTMENTS).
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: deals.abgeschlossen_am + verloren_gruende.sortierung + mandant_id-Hinweis; termin→meeting | 200,300 |
 | 2026-06-27 01:35 | Board: Mandanten-/Einheit-Filter + Ansicht-Umschalter Kanban/Liste ergänzt | 000_konzept, Code |
 | 2026-06-27 00:30 | MVP implementiert (Mig. 012/013, API, UI, lib+Tests); Spec nachgezogen | alle + Code |
 | 2026-06-26 15:30 | Kanban-Tech-Basis ergänzt (dnd-kit, Shadcn-Vorlage, memo-Pattern) | 003_crm_400_design |

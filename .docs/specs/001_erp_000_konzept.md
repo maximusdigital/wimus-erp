@@ -35,7 +35,10 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
   (5-stufig), Betriebskosten-Abrechnung (Kostenverteilung/Umlageschlüssel, A4-Druck)
 - Eingeloggte Playwright-Grobtests über alle Hauptseiten (Pflicht nach jedem Umbau)
 - Stack produktiv: Next.js 16 / Supabase self-hosted / n8n / Coolify / amoCRM / Beds24+Pricelabs
-- ~130 Tabellen im Schema `wimus`, idempotente Migrationen (aktuell bis 011)
+- Schema `wimus`, idempotente Migrationen **001–016** (Stand 2026-06-27). Getrackt als
+  `.sql` ist aktuell ~110 Tabellen (002 Vollschema + 005 BK/Fristen + 010–016 FiBu/CRM/
+  Reporting); das V501-Fundament (Org-Hierarchie/Akteure/Channels/KPI, ~50 Tab.) ist
+  großteils live, aber noch nicht als Migration getrackt (siehe OP fehlende Migration 004).
 
 ## In Arbeit
 
@@ -121,6 +124,7 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 005-Zusatztabellen enumeriert, Migrations-/Tabellenzahl korrigiert; Bugfix vorgaenge.prioritaet kritisch→notfall (DB-CHECK) | 000_konzept, 200, types/vorgang |
 | 2026-06-27 01:30 | OP-3 erledigt: 005-Kern-DDL 1:1 aus Archiv als getrackte Migration 005 ins Repo | 000_konzept, 200, Migration 005 |
 | 2026-06-27 01:10 | v5.1.0: ocr_verarbeitungen (014) + Mietanpassung-Dublette (016) gebaut; Test-Ordnerstruktur an Ist | 000_konzept, 200, 600 |
 | 2026-06-27 00:45 | Spec-Sync: RowActions/Test-Setup/organisationen(012) als umgesetzt, Migrations-Range 001–013 | 000_konzept, 200, 400, 600 |
