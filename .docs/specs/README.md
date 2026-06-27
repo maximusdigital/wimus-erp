@@ -83,7 +83,7 @@ zulässig. Version springt nur am Meilenstein; im Cycle wachsen nur Historie + `
 | 0001 | erp | in_arbeit | 5.0.0 | ERP-Fundament: Hierarchie, Akteure, BK-Kerne, OCR, Dashboards, Organisationen (migriert aus Bestand V502/V501/V104/V101) |
 | 0002 | fibu | in_arbeit | 0.2.0 | Belegerkennung, Kontierung, Mehrmandanten/Gesellschafter, TaxPool-Export, Bank-Cockpit, KI-Controlling |
 | 0003 | crm | in_arbeit | 0.2.0 | CRM-Pipelines: Lead-Inbox + Deal-Kanban (implementiert), Verknüpfungsmodell, Custom Fields, Pipedrive-UI, amoCRM-Ablösung |
-| 0004 | ops | in_arbeit | 0.2.0 | Betrieb: EINE Vorgangs-Engine + 5 Typ-Erweiterungen (Schaden/Reparatur/Reinigung/Übergabe/Wartung), Träger akteure (Mensch+KI); Vorgänge aus Kern ausgelagert |
+| 0004 | ops | in_arbeit | 0.3.0 | Betrieb: EINE Vorgangs-Engine (implementiert: Status-Flow/Plantafel-DnD/Verlauf/Zuweisung) + 5 Typ-Erweiterungen, Träger akteure (Mensch+KI); Vorgänge aus Kern ausgelagert |
 | 0004 | ops | in_arbeit | 0.1.0 | Betrieb: Vorgänge/Schäden, Übergaben (LZV formell + KZV reinigungsbasiert, Foto-Abgleich), Reinigung, Wartung, Einsatzplanung |
 
 ## Konventionen

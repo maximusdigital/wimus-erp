@@ -2,7 +2,7 @@
 id: 0004
 titel: Betrieb (Vorgangs-Engine — Schaden/Reparatur/Reinigung/Übergabe/Wartung)
 status: in_arbeit
-version: 0.2.0
+version: 0.3.0
 modul: ops
 erstellt: 2026-06-26
 geaendert: 2026-06-27
@@ -56,14 +56,26 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 - **Kern-Anbindung vorhanden:** `forderungen.vorgang_id` (Schaden→Forderung), `fristen.frist_typ`
   Wartungstypen, OCR-Routing → vorgaenge, Channel-/Akteur-Bezug konzeptionell.
 
+## Steht zusätzlich (implementiert 2026-06-27, Migrationen 017/018)
+
+- **Datenmodell**: `akteure` (Mensch+KI) + Verfügbarkeit/Fähigkeiten (017); `vorgaenge`
+  geschärft (Status-/Typ-CHECK, owner_akteur_id, eskaliert, benachrichtigung_kanal),
+  `vorgang_verlauf`/`_zuweisung`/`_foto` + 5 Typ-Tabellen (018).
+- **Engine-Logik** `lib/ops/` (`statusUebergang`/`uebergangErlaubt`/`istAbgeschlossen`,
+  Schadens-Staffel `schadenEinstufung`) + 9 Unit-Tests.
+- **Status-Flow**: `/api/vorgaenge/[id]/status` (validierter Übergang + Verlauf-Eintrag);
+  **Plantafel** mit native Drag&Drop (Spalte ziehen = Statuswechsel).
+- **Akteure-CRUD** `/akteure` (+ API). **Vorgang-Detail**: Zuweisungen (intern Akteur /
+  extern Organisation, Status-Kette), **Verlauf-Timeline**, **Typ-Panel** je Erweiterungstyp
+  (Schaden mit Auto-Staffel Schwere/Abwicklungsstufe).
+
 ## In Arbeit (dieser Cycle)
 
-- Engine-Datenmodell schärfen (Status-CHECK, Typ-Liste reinigung/uebergabe/wartung ergänzen).
-- `akteure` (Träger) + Verlauf/Zuweisung/Foto + 5 Typ-Zusatztabellen (Migrationen 017/018).
-- UI: Engine-CRUD-Ausbau, Verlauf-Timeline, Zuweisung intern/extern, Checklisten-Ausführung,
-  Plantafel auf Drag&Drop, je Typ eine Sicht.
-- Externe Fähigkeiten (Benachrichtigung, Auftrag-Versand, Foto-Capture/KI-Prüfung) als
-  **Hook/Stub** (Felder + Status + Webhook/Log), echte Lieferung via n8n/Channel/Storage später.
+- Foto Vorher/Nachher-UI (Felder/Tabelle da; Upload/Capture als Hook).
+- Eskalations-UI (Feld da; Auslösung/Anzeige), Typ-Sichten/Filter („Reinigung heute",
+  „meine Aufträge"), Checklisten-Ausführung-UI.
+- Externe Fähigkeiten (Benachrichtigung, Auftrag-Versand, KI-Prüfung) bleiben **Hook/Stub** —
+  echte Lieferung via n8n/Channel/Storage/Claude-Vision später.
 
 ## Ideen / als Nächstes
 
@@ -114,6 +126,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.3.0 | 2026-06-27 | in_arbeit | Engine implementiert: Migrationen 017 (akteure) + 018 (vorgaenge geschärft + verlauf/zuweisung/foto + 5 Typ-Tabellen); lib/ops + Tests; Status-Flow-API + Plantafel-DnD; Akteure-CRUD; Vorgang-Detail mit Zuweisungen/Verlauf/Typ-Panels. |
 | 0.2.0 | 2026-06-27 | in_arbeit | Feinspec aus echten Quellen: Engine-Architektur (eine Engine + 5 Typ-Erweiterungen), Träger `akteure`, externe Hooks, Umzug Vorgänge 0001→004. Ersetzt den aus dem Chat rekonstruierten Grobentwurf. |
 | 0.1.0 | 2026-06-26 | abgelöst | Grobentwurf (chat-rekonstruiert, unzuverlässig) — durch 0.2.0 ersetzt. |
 
@@ -123,5 +136,6 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 19:00 | v0.3.0: Engine implementiert (Mig. 017/018, lib/ops+Tests, Status-API+Plantafel-DnD, Akteure, Detail: Zuweisung/Verlauf/Typ-Panels) | 000_konzept + Code |
 | 2026-06-27 15:00 | Neuaufbau aus echten Quellen: Engine-Architektur + akteure + 5 Typen; Umzug aus Kern | alle |
 | 2026-06-26 16:00 | Grobspec 004 (chat-rekonstruiert) — als unzuverlässig verworfen | alle |
