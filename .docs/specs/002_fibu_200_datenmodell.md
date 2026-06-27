@@ -103,9 +103,9 @@ akteur_id, am TIMESTAMPTZ. Häufung → Kontierungsregel-Vorschlag.
 
 ## Auswertungs-Scopes (Konsolidierung)
 
-> Status: **gebaut (Migration 015)** — Tabellen + RLS stehen. `auswertungs_scopes` wird
-> bereits genutzt (Preset-Speichern/-Laden in `/fibu/konsolidierung`, `/api/fibu/
-> auswertungs-scopes`). `objekt_tags`/`reporting_taxonomie` noch ohne UI.
+> Status: **gebaut (Migration 015)** — Tabellen + RLS stehen. `auswertungs_scopes` genutzt
+> (Presets in `/fibu/konsolidierung`). `objekt_tags` genutzt (Verwaltung + Gruppierung in
+> `/fibu/objekt-tags`, `/api/fibu/objekt-tags`). `reporting_taxonomie` noch ohne UI.
 
 ### auswertungs_scopes
 name, einheiten_set UUID[], k1_set TEXT[] (oder Tag-Filter), zeitraum_typ, optionen JSONB

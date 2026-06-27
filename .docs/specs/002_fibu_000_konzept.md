@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.5.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.6.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-27
@@ -62,6 +62,10 @@ nur über definierte Confidence- und Betragsschwellen.
   Ergebnis, gebrandeter A4-Druck. Speicherbare Scope-Presets (`auswertungs_scopes`,
   `/api/fibu/auswertungs-scopes`). Logik `lib/fibu/konsolidierung.ts` (`konsolidiereGuV`) +
   Tests. Innenumsatz-Eliminierung noch offen.
+- **Objekt-Tags (2026-06-27):** `/fibu/objekt-tags` — Objekte nach Nutzungsart/Marke/Region
+  taggen (Chips anlegen/löschen) + Gruppierungs-Vorschau je Dimension. API
+  `/api/fibu/objekt-tags`, Logik `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests.
+  Basis für die horizontale Achse konsolidierter Auswertungen.
 - **Lieferant-Fuzzy-Match:** `lib/fibu/lieferant-match.ts` (`matchLieferant`, Alias/
   Normalisierung) leitet `firma_id` aus dem erkannten Lieferanten ab (in `/api/fibu/belege`).
 - **RowActions/Kebab** in allen FiBu-Stammdaten-Listen ausgerollt (Kern-Komponente).
@@ -148,6 +152,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.6.0 | 2026-06-27 | in_arbeit | Objekt-Tags: `/fibu/objekt-tags` (Nutzungsart/Marke/Region taggen + Gruppierungs-Vorschau), `/api/fibu/objekt-tags`, `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests. |
 | 0.5.0 | 2026-06-27 | in_arbeit | Konsolidierte GuV: `/fibu/konsolidierung` (Scope-Selektor, Matrix Konto×Einheit, A4-Druck), speicherbare Scope-Presets (`/api/fibu/auswertungs-scopes`), `lib/fibu/konsolidierung.ts` + Tests. |
 | 0.4.0 | 2026-06-27 | in_arbeit | Reporting-Tabellen gebaut (Migration 015: feststellungen/auswertungs_scopes/objekt_tags/reporting_taxonomie + RLS), ocr_verarbeitungen (014); gebrandeter A4-GuV-Druck (`/fibu/auswertung/druck`). |
 | 0.3.0 | 2026-06-27 | in_arbeit | Reporting-Ergänzung: GuV-Auswertung (`lib/fibu/guv.ts` + `/fibu/auswertung`, Recharts), Lieferant-Fuzzy-Match → firma_id, RowActions/Kebab in FiBu-Listen. Tremor projektweit durch Recharts abgelöst. |
@@ -161,6 +166,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 10:35 | v0.6.0: Objekt-Tags-Verwaltung (/fibu/objekt-tags) + gruppiereNachTag + Tests | 000,200,400 + Code |
 | 2026-06-27 01:50 | v0.5.0: Konsolidierte GuV (/fibu/konsolidierung) + Scope-Presets + A4-Druck + Tests | 000,200,400 + Code |
 | 2026-06-27 01:10 | v0.4.0: Reporting-Tabellen (015) + ocr_verarbeitungen (014) gebaut, gebrandeter A4-GuV-Druck | 000,200,400 |
 | 2026-06-27 00:50 | Spec-Sync 0.3.0: GuV/Recharts/Lieferant-Match/RowActions als Steht, OP-6 teilw. gelöst, Tremor→Recharts | 000,200,400 |

@@ -26,6 +26,7 @@ import {
   Landmark,
   Settings,
   SlidersHorizontal,
+  Tags,
   Target,
   TrendingUp,
   Truck,
@@ -88,6 +89,7 @@ const fibuNav: NavItem[] = [
   { title: "Lieferanten", href: "/fibu/lieferanten", icon: Truck },
   { title: "Auswertung", href: "/fibu/auswertung", icon: PieChart },
   { title: "Konsolidierung", href: "/fibu/konsolidierung", icon: Layers },
+  { title: "Objekt-Tags", href: "/fibu/objekt-tags", icon: Tags },
   { title: "Feststellung", href: "/fibu/feststellung", icon: PieChart },
   { title: "DATEV-Export", href: "/fibu/export", icon: Download },
 ];
