@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PriorityBadge } from "@/components/ui/priority-badge"
 import { DeleteVorgangButton } from "@/components/vorgaenge/delete-vorgang-button"
+import {
+  VorgangZuweisungen,
+  type ZuweisungRow,
+} from "@/components/vorgaenge/vorgang-zuweisungen"
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import {
   einheitLabel,
@@ -53,6 +57,37 @@ export default async function VorgangDetailPage({
   if (!vorgang) {
     notFound()
   }
+
+  // Engine-Begleiter: Verlauf, Zuweisungen + Auswahllisten.
+  const [{ data: verlaufRaw }, { data: zuwRaw }, { data: akteureRaw }, { data: orgsRaw }] =
+    await Promise.all([
+      supabase
+        .schema("wimus")
+        .from("vorgang_verlauf")
+        .select("id, art, von_status, nach_status, notiz, am")
+        .eq("vorgang_id", id)
+        .order("am", { ascending: false }),
+      supabase
+        .schema("wimus")
+        .from("vorgang_zuweisung")
+        .select("id, rolle, status, akteur_id, organisation_id, kontakt_id, akteur:akteure(name), organisation:organisationen(name)")
+        .eq("vorgang_id", id)
+        .order("created_at", { ascending: true }),
+      supabase.schema("wimus").from("akteure").select("id, name").eq("aktiv", true).order("name"),
+      supabase.schema("wimus").from("organisationen").select("id, name").order("name").limit(500),
+    ])
+
+  const verlauf = (verlaufRaw ?? []) as {
+    id: string
+    art: string
+    von_status: string | null
+    nach_status: string | null
+    notiz: string | null
+    am: string
+  }[]
+  const zuweisungen = (zuwRaw ?? []) as unknown as ZuweisungRow[]
+  const akteure = (akteureRaw ?? []) as { id: string; name: string }[]
+  const organisationen = (orgsRaw ?? []) as { id: string; name: string }[]
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -243,6 +278,59 @@ export default async function VorgangDetailPage({
                 }
               />
             </dl>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Zuweisungen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <VorgangZuweisungen
+              vorgangId={vorgang.id}
+              zuweisungen={zuweisungen}
+              akteure={akteure}
+              organisationen={organisationen}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Verlauf</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {verlauf.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Noch keine Einträge.</p>
+            ) : (
+              <ul className="flex flex-col gap-2 text-sm">
+                {verlauf.map((v) => (
+                  <li key={v.id} className="flex items-start gap-2">
+                    <span className="w-24 shrink-0 text-xs text-muted-foreground">
+                      {formatDate(v.am)}
+                    </span>
+                    <span>
+                      {v.art === "status" ? (
+                        <>
+                          Status:{" "}
+                          {v.von_status
+                            ? (VORGANG_STATUS_LABELS[v.von_status] ?? v.von_status)
+                            : "–"}{" "}
+                          →{" "}
+                          {v.nach_status
+                            ? (VORGANG_STATUS_LABELS[v.nach_status] ?? v.nach_status)
+                            : "–"}
+                        </>
+                      ) : (
+                        (v.notiz ?? v.art)
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
