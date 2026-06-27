@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.4.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.5.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-27
@@ -55,8 +55,13 @@ nur über definierte Confidence- und Betragsschwellen.
 - **Gebrandeter A4-Druck (2026-06-27):** `/fibu/auswertung/druck` (PrintLayout + WIMUS-
   Briefkopf `components/fibu/report-kopf.tsx`) — GuV als druck-/PDF-fertige A4-Seite.
 - **Reporting-/Konsolidierungs-Tabellen (Migration 015):** `feststellungen`,
-  `auswertungs_scopes`, `objekt_tags`, `reporting_taxonomie` mit RLS angelegt
-  (Auswertungs-UI folgt). `ocr_verarbeitungen` als Kern-Tabelle gebaut (Migration 014).
+  `auswertungs_scopes`, `objekt_tags`, `reporting_taxonomie` mit RLS angelegt.
+  `ocr_verarbeitungen` als Kern-Tabelle gebaut (Migration 014).
+- **Konsolidierte GuV (2026-06-27):** `/fibu/konsolidierung` — Scope-Selektor (mehrere
+  Einheiten + Zeitraum), Matrix Konto × Einheit + Summe je Konto/Einheit + konsolidiertes
+  Ergebnis, gebrandeter A4-Druck. Speicherbare Scope-Presets (`auswertungs_scopes`,
+  `/api/fibu/auswertungs-scopes`). Logik `lib/fibu/konsolidierung.ts` (`konsolidiereGuV`) +
+  Tests. Innenumsatz-Eliminierung noch offen.
 - **Lieferant-Fuzzy-Match:** `lib/fibu/lieferant-match.ts` (`matchLieferant`, Alias/
   Normalisierung) leitet `firma_id` aus dem erkannten Lieferanten ab (in `/api/fibu/belege`).
 - **RowActions/Kebab** in allen FiBu-Stammdaten-Listen ausgerollt (Kern-Komponente).
@@ -72,7 +77,8 @@ nur über definierte Confidence- und Betragsschwellen.
 ## Ideen / als Nächstes
 
 - Bank-Cockpit (DSCR, Bankenmappe) — erst nach stabiler Beleg-Pipeline (Datenqualität)
-- Konsolidierte Auswertungen (Scope-Selektor, zwei Achsen, Reporting-Taxonomie)
+- Konsolidierte Auswertungen: Basis steht (`/fibu/konsolidierung`); offen bleiben
+  zweite Achse (objekt_tags-Gruppierung), Reporting-Taxonomie-Mapping, Innenumsatz-Eliminierung
 - KI-Controlling-Agents (Analyse → Alerting → autonome Aktion mit Leitplanken)
 - Phasen-Einordnung: überlappt ERP-Kern Phase 5 (DMS/OCR), Phase 7 (Reporting/Bank/DATEV),
   Agenten 4/8/11
@@ -142,6 +148,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.5.0 | 2026-06-27 | in_arbeit | Konsolidierte GuV: `/fibu/konsolidierung` (Scope-Selektor, Matrix Konto×Einheit, A4-Druck), speicherbare Scope-Presets (`/api/fibu/auswertungs-scopes`), `lib/fibu/konsolidierung.ts` + Tests. |
 | 0.4.0 | 2026-06-27 | in_arbeit | Reporting-Tabellen gebaut (Migration 015: feststellungen/auswertungs_scopes/objekt_tags/reporting_taxonomie + RLS), ocr_verarbeitungen (014); gebrandeter A4-GuV-Druck (`/fibu/auswertung/druck`). |
 | 0.3.0 | 2026-06-27 | in_arbeit | Reporting-Ergänzung: GuV-Auswertung (`lib/fibu/guv.ts` + `/fibu/auswertung`, Recharts), Lieferant-Fuzzy-Match → firma_id, RowActions/Kebab in FiBu-Listen. Tremor projektweit durch Recharts abgelöst. |
 | 0.2.0 | 2026-06-26 | in_arbeit | Stammdaten-Layer + Kernlogik gebaut & getestet: Migration 010/011, Kontierung, Ergebnisverteilung, Belegprüfung, E-Rechnungs-Weiche, EXTF-Kern, Beleg-Pipeline, Freigabe-Cockpit, Feststellungs-Vorschau |
@@ -154,6 +161,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 01:50 | v0.5.0: Konsolidierte GuV (/fibu/konsolidierung) + Scope-Presets + A4-Druck + Tests | 000,200,400 + Code |
 | 2026-06-27 01:10 | v0.4.0: Reporting-Tabellen (015) + ocr_verarbeitungen (014) gebaut, gebrandeter A4-GuV-Druck | 000,200,400 |
 | 2026-06-27 00:50 | Spec-Sync 0.3.0: GuV/Recharts/Lieferant-Match/RowActions als Steht, OP-6 teilw. gelöst, Tremor→Recharts | 000,200,400 |
 | 2026-06-26 | Build-Stand 0.2.0: firmen-Buchungskreis, Gating, EXTF-Kern, fibu_buchungen | 000,200,400,600 |

@@ -54,8 +54,10 @@ Gesellschafter, Einheiten (rechtsform_typ), Beteiligungen mit Gültigkeitszeitr�
 > `app/(dashboard)/fibu/auswertung/` (Firma-/Zeitraum-Filter, Ertrag/Aufwand, Ergebnis,
 > Balkenchart via Recharts). **Gebrandetes A4-PDF gebaut:** Druckseite
 > `/fibu/auswertung/druck` auf `components/layouts/print-layout.tsx` + WIMUS-Briefkopf
-> (`components/fibu/report-kopf.tsx`). Offen: BWA/Bilanz-Kurzform, KPIs, Scope-Selektor und
-> Bankenmappe (Ein-Klick-Voll-PDF — hängt an der noch ungebauten KPI-/DSCR-Ebene).
+> (`components/fibu/report-kopf.tsx`). **Konsolidierung gebaut:** `/fibu/konsolidierung` —
+> Scope-Selektor (mehrere Einheiten + Zeitraum), Matrix Konto × Einheit + Summen,
+> speicherbare Presets (`auswertungs_scopes`), eigener A4-Druck. Offen: BWA/Bilanz-Kurzform,
+> KPIs/DSCR, zweite Achse (objekt_tags), Innenumsatz-Eliminierung, Bankenmappe.
 
 Recharts-Dashboards (Anschluss an 0001 Finanzen-/OCR-Dashboards):
 

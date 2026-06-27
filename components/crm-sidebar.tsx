@@ -15,6 +15,7 @@ import {
   FolderArchive,
   GitBranch,
   Inbox,
+  Layers,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -86,6 +87,7 @@ const fibuNav: NavItem[] = [
   { title: "Kontierungsregeln", href: "/fibu/kontierungsregeln", icon: Receipt },
   { title: "Lieferanten", href: "/fibu/lieferanten", icon: Truck },
   { title: "Auswertung", href: "/fibu/auswertung", icon: PieChart },
+  { title: "Konsolidierung", href: "/fibu/konsolidierung", icon: Layers },
   { title: "Feststellung", href: "/fibu/feststellung", icon: PieChart },
   { title: "DATEV-Export", href: "/fibu/export", icon: Download },
 ];
