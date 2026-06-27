@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Camera, GaugeCircle, Loader2, ScanSearch, Trash2, X } from "lucide-react"
+import { Camera, Check, GaugeCircle, Loader2, Plus, ScanSearch, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -60,9 +61,15 @@ function downscale(file: File, max = 1600, quality = 0.8): Promise<string> {
 type ZaehlerErgebnis = {
   zaehler: { art: string; zaehlernummer: string | null; stand: number | null; einheit: string | null }[]
 }
-type AbgleichErgebnis = {
-  schaeden: { ort: string; beschreibung: string; schaden_typ: string | null; schwere: string | null; neu: boolean }[]
+type SchadenVorschlag = {
+  ort: string
+  beschreibung: string
+  schaden_typ: string | null
+  schwere: string | null
+  neu: boolean
 }
+type AbgleichErgebnis = { schaeden: SchadenVorschlag[] }
+type SchadenStatus = { state: "busy" | "done" | "error"; href?: string; az?: string; msg?: string }
 
 export function VorgangFotos({ vorgangId, fotos }: { vorgangId: string; fotos: FotoRow[] }) {
   const router = useRouter()
@@ -72,6 +79,8 @@ export function VorgangFotos({ vorgangId, fotos }: { vorgangId: string; fotos: F
   const [error, setError] = React.useState<string | null>(null)
   const [gross, setGross] = React.useState<string | null>(null)
   const [analyse, setAnalyse] = React.useState<string | null>(null) // fotoId | "abgleich" | null
+  // Status je Schadensvorschlag (Index → busy/done/error), session-lokal.
+  const [schadenStatus, setSchadenStatus] = React.useState<Record<number, SchadenStatus>>({})
 
   const hatVorher = fotos.some((f) => f.phase === "vorher" && f.url)
   const hatNachher = fotos.some((f) => f.phase === "nachher" && f.url)
@@ -134,6 +143,33 @@ export function VorgangFotos({ vorgangId, fotos }: { vorgangId: string; fotos: F
       setError("KI-Analyse fehlgeschlagen.")
     } finally {
       setAnalyse(null)
+    }
+  }
+
+  async function uebernehmeSchaden(index: number, s: SchadenVorschlag) {
+    setSchadenStatus((m) => ({ ...m, [index]: { state: "busy" } }))
+    try {
+      const res = await fetch(`/api/vorgaenge/${vorgangId}/schaden-uebernehmen`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ort: s.ort,
+          beschreibung: s.beschreibung,
+          schaden_typ: s.schaden_typ,
+          schwere: s.schwere,
+        }),
+      })
+      const j = await res.json().catch(() => null)
+      if (!res.ok) {
+        setSchadenStatus((m) => ({ ...m, [index]: { state: "error", msg: j?.error ?? "Fehlgeschlagen." } }))
+        return
+      }
+      setSchadenStatus((m) => ({
+        ...m,
+        [index]: { state: "done", href: `/vorgaenge/${j.id}`, az: j.aktenzeichen ?? undefined },
+      }))
+    } catch {
+      setSchadenStatus((m) => ({ ...m, [index]: { state: "error", msg: "Fehlgeschlagen." } }))
     }
   }
 
@@ -210,9 +246,13 @@ export function VorgangFotos({ vorgangId, fotos }: { vorgangId: string; fotos: F
               </Badge>
             ) : null}
           </div>
-          <SchaedenListe analyse={abgleichTraeger.ki_analyse as AbgleichErgebnis} />
+          <SchaedenListe
+            analyse={abgleichTraeger.ki_analyse as AbgleichErgebnis}
+            status={schadenStatus}
+            onUebernehmen={uebernehmeSchaden}
+          />
           <p className="mt-2 text-xs text-muted-foreground">
-            Vorschläge – vor Übernahme in Schaden/Kaution prüfen.
+            Vorschläge – „Als Schaden anlegen" erzeugt je einen Folge-Vorgang (Typ Schaden).
           </p>
         </div>
       ) : null}
@@ -309,22 +349,63 @@ function ZaehlerListe({ analyse }: { analyse: ZaehlerErgebnis }) {
   )
 }
 
-function SchaedenListe({ analyse }: { analyse: AbgleichErgebnis }) {
+function SchaedenListe({
+  analyse,
+  status,
+  onUebernehmen,
+}: {
+  analyse: AbgleichErgebnis
+  status: Record<number, SchadenStatus>
+  onUebernehmen: (index: number, s: SchadenVorschlag) => void
+}) {
   if (analyse.schaeden.length === 0) {
     return <p className="text-sm text-muted-foreground">Keine neuen Schäden erkannt.</p>
   }
   return (
-    <ul className="flex flex-col gap-1.5 text-sm">
-      {analyse.schaeden.map((s, i) => (
-        <li key={i} className="flex items-start gap-2">
-          <span className="text-danger">•</span>
-          <span>
-            <span className="font-medium">{s.ort || "?"}</span>
-            {s.schwere ? <Badge variant="secondary" className="ml-2 text-[10px]">{s.schwere}</Badge> : null}
-            <span className="block text-xs text-muted-foreground">{s.beschreibung}</span>
-          </span>
-        </li>
-      ))}
+    <ul className="flex flex-col gap-2 text-sm">
+      {analyse.schaeden.map((s, i) => {
+        const st = status[i]
+        return (
+          <li key={i} className="flex items-start justify-between gap-2">
+            <span className="flex items-start gap-2">
+              <span className="text-danger">•</span>
+              <span>
+                <span className="font-medium">{s.ort || "?"}</span>
+                {s.schwere ? (
+                  <Badge variant="secondary" className="ml-2 text-[10px]">{s.schwere}</Badge>
+                ) : null}
+                <span className="block text-xs text-muted-foreground">{s.beschreibung}</span>
+                {st?.state === "error" ? (
+                  <span className="block text-xs text-danger">{st.msg}</span>
+                ) : null}
+              </span>
+            </span>
+            {st?.state === "done" ? (
+              <Link
+                href={st.href ?? "#"}
+                className="inline-flex shrink-0 items-center gap-1 text-xs text-success hover:underline"
+              >
+                <Check className="size-3.5" />
+                <span>{st.az ?? "angelegt"}</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled={st?.state === "busy"}
+                onClick={() => onUebernehmen(i, s)}
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                {st?.state === "busy" ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Plus className="size-3.5" />
+                )}
+                <span>Als Schaden anlegen</span>
+              </button>
+            )}
+          </li>
+        )
+      })}
     </ul>
   )
 }

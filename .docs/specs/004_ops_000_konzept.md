@@ -2,7 +2,7 @@
 id: 0004
 titel: Betrieb (Vorgangs-Engine — Schaden/Reparatur/Reinigung/Übergabe/Wartung)
 status: in_arbeit
-version: 0.4.0
+version: 0.4.1
 modul: ops
 erstellt: 2026-06-26
 geaendert: 2026-06-28
@@ -76,7 +76,9 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 - ~~Bild-Abgleich Einzug↔Auszug~~ → **erledigt 2026-06-28** (Claude Vision, NICHT Mistral):
   Zählerstand-Foto + Vorher/Nachher-Abgleich → JSON-Schema-Output + Confidence-Routing,
   Ergebnis an `vorgang_foto.ki_*` (`lib/integrations/claude.ts`, `/foto-analyse`, Mig. 019).
-  Offen: Übernahme der Vorschläge in `vorgang_schaden`/Kaution per Klick.
+- ~~Schaden-Übernahme aus Abgleich~~ → **erledigt 2026-06-28**: „Als Schaden anlegen" je
+  Vorschlag erzeugt einen Folge-Vorgang `typ=schaden` (+ `vorgang_schaden`, Beschreibung im
+  Verlauf, Kostenträger Mieter→Kaution) via `/api/vorgaenge/[id]/schaden-uebernehmen`.
 - Typ-Sichten/Filter („Reinigung heute", „meine Aufträge"), Checklisten-Ausführung-UI.
 - ~~Eskalations-UI~~ → **erledigt 2026-06-27** (`lib/ops/eskalation.ts` + Anzeige Detail/Plantafel,
   manuell + rechnerisch).
@@ -142,6 +144,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.4.1 | 2026-06-28 | in_arbeit | Schaden-Übernahme aus KI-Abgleich: „Als Schaden anlegen" je Vorschlag → Folge-Vorgang `typ=schaden` + `vorgang_schaden` + Verlauf (`/api/vorgaenge/[id]/schaden-uebernehmen`). |
 | 0.4.0 | 2026-06-28 | in_arbeit | KI-Bildverarbeitung Übergabe (Claude Vision): Zählerstand + Vorher/Nachher-Abgleich, JSON-Schema-Output + Confidence-Routing, `vorgang_foto.ki_*` (Mig. 019), `lib/integrations/claude.ts` + `lib/ops/confidence.ts` (+Tests) + `/foto-analyse` + Foto-UI-Erweiterung. Mistral bleibt FiBu-only. |
 | 0.3.0 | 2026-06-27 | in_arbeit | Engine implementiert: Migrationen 017 (akteure) + 018 (vorgaenge geschärft + verlauf/zuweisung/foto + 5 Typ-Tabellen); lib/ops + Tests; Status-Flow-API + Plantafel-DnD; Akteure-CRUD; Vorgang-Detail mit Zuweisungen/Verlauf/Typ-Panels. |
 | 0.2.0 | 2026-06-27 | in_arbeit | Feinspec aus echten Quellen: Engine-Architektur (eine Engine + 5 Typ-Erweiterungen), Träger `akteure`, externe Hooks, Umzug Vorgänge 0001→004. Ersetzt den aus dem Chat rekonstruierten Grobentwurf. |
@@ -153,6 +156,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 01:20 | v0.4.1: Schaden-Übernahme aus KI-Abgleich (Vorschlag → Folge-Vorgang typ=schaden + vorgang_schaden + Verlauf) | 000_konzept + 300_prozesse + Code |
 | 2026-06-28 01:05 | v0.4.0: KI-Bildverarbeitung Übergabe (Claude Vision, Zähler+Abgleich, JSON+Confidence, Mig.019) | alle + Code |
 | 2026-06-28 00:40 | Foto-UI Vorher/Nachher (mobile Kamera + Supabase Storage + Galerie) | 000_konzept + Code |
 | 2026-06-27 19:15 | Eskalation gebaut (lib/ops/eskalation + Detail/Plantafel-Anzeige, manuell+rechnerisch) | 000_konzept + Code |
