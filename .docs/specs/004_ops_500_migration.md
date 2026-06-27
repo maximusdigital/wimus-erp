@@ -1,39 +1,38 @@
 ---
 gehoert_zu: 0004
 dokument: Migration
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0004 — Migration
 
-> Version & Status des Moduls stehen in `004_ops_000_konzept.md`.
-> SQL als Download/`.txt`, idempotent. Setzt Kern (0001) voraus, inkl. `organisationen`.
+> Version & Status stehen in `004_ops_000_konzept.md`. Schema `wimus`. Idempotent
+> (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `ON CONFLICT DO NOTHING`). Anwenden: SQL-Editor.
 
-## Reihenfolge (Grobplan)
+## Reihenfolge
 
-1. **Vorgang-Erweiterung:** `vorgaenge` um Betriebsfelder erweitern (typ/unter_typ/prioritaet/
-   status/kostentraeger/aktenzeichen/zuweisungen); `vorgang_verlauf`, `vorgang_anhaenge`.
-2. **Reinigung:** `reinigungsauftraege`, `reinigungsplaene`, `inventar_positionen`.
-3. **Übergaben:** `uebergabeprotokolle`, `uebergabe_zaehler`, `uebergabe_schluessel`,
-   `uebergabe_positionen`.
-4. **Wartung/Facility:** `wartungsobjekte` (FK Kern-Fristen), `muellabfuhr_termine`.
-5. **Einsatzplanung:** `einsaetze`.
-6. **Dienstleister-Zusatz:** `dienstleister_bewertungen`, `dienstleister_preislisten`
-   (FK `organisationen` typ=dienstleister).
-7. **Seed:** Vorgangstypen/Status, Wartungsintervalle (Heizung 1J … Gas 12J),
-   Standard-Reinigungstypen.
+1. **017_akteure.sql** (Kern-Erweiterung 0001): `akteure`, `akteur_verfuegbarkeit`,
+   `akteur_faehigkeiten` + RLS/Trigger. Träger-Modell (Mensch+KI), ersetzt `ma_profile`.
+2. **018_ops_vorgaenge.sql** (Modul 004):
+   - `vorgaenge` schärfen: CHECK auf `typ`/`status`/`kostentraeger` ergänzen (idempotent via
+     `ADD CONSTRAINT … IF NOT EXISTS`-Muster bzw. DROP+ADD), neue Spalten `owner_akteur_id`,
+     `faellig_am`, `eskaliert`/`eskaliert_am`, `benachrichtigung_kanal` (ADD COLUMN IF NOT EXISTS).
+   - `vorgang_verlauf`, `vorgang_zuweisung`, `vorgang_foto` (Engine-Begleiter).
+   - `vorgang_reinigung`, `vorgang_uebergabe`, `vorgang_wartung`, `vorgang_reparatur`,
+     `vorgang_schaden` (Typ-Erweiterungen, `vorgang_id` PK/FK).
+   - `checklisten_ausfuehrungen` um `akteur_id` ergänzen (ADD COLUMN IF NOT EXISTS).
+   - RLS `mandant_isolation` + Touch-Trigger + GRANTs für alle neuen Tabellen.
 
-## Idempotenz
+## Idempotenz-Notizen
 
-CREATE IF NOT EXISTS; ENUMs via DO-Block. UNIQUE: ein offener Reinigungsauftrag je
-Buchung+Einheit. Seeds ON CONFLICT DO NOTHING.
+- Bestehende `vorgaenge` (Migration 002) nur additiv ändern; vorhandene `prioritaet`-CHECK
+  bleibt. `status`/`typ` waren bisher CHECK-frei → CHECK additiv ergänzen (Bestandswerte prüfen,
+  ggf. erst Daten normalisieren).
+- `vorgang_<typ>.vorgang_id` als PK = automatisch UNIQUE (genau ein Zusatz je Vorgang).
 
-## Abhängigkeiten
+## Abgelöste Tabellen (OP-6, späterer Cleanup)
 
-- Kern `organisationen` (typ=dienstleister) muss vorhanden sein.
-- Kern `vorgaenge`, `fristen`, `forderungen`, `kautionen`, Akteure vorausgesetzt.
-
-## Offen
-
-- OP-4 Foto-Ablage (Paperless vs. Nextcloud) vor Anhang-Migration klären.
-- OP-5 Müllabfuhr-Kalenderquelle je Standort.
+`ma_profile`, `ma_verfuegbarkeit`, `einsaetze`, `objekt_zuweisungen`, `auftrag_zuweisungen`,
+`geraete`, `wartungsintervalle`, `prozess_bibliothek`, `prozess_ausfuehrungen` (alle Migration
+002, schema-only, ungenutzt) werden durch `akteure` + `vorgang_*` ersetzt. Drop erst nach
+verifiziertem 004-Stand in eigener Migration.

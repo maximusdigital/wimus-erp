@@ -1,127 +1,114 @@
 ---
 gehoert_zu: 0004
 dokument: Datenmodell
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0004 — Datenmodell
 
-> Version & Status des Moduls stehen in `004_ops_000_konzept.md`.
-> Schema `wimus`. Erweitert Kern `vorgaenge`; verweist auf `forderungen`, `kautionen`,
-> Akteure, `organisationen`, `objekte`/`einheiten`, `mietvertraege`, Beds24-Buchung.
-> Konvention: PK UUID, FK. Grobentwurf.
+> Version & Status stehen in `004_ops_000_konzept.md`. Schema `wimus`, PK UUID, FK.
+> `created_at`/`updated_at` auf allen Tabellen (Touch-Trigger), `mandant_id` + RLS
+> `mandant_isolation` (über `public.user_mandanten`) auf allen Tabellen.
+> Verweist auf Kern (0001): `objekte`, `einheiten`, `kontakte`, `organisationen`, `fristen`,
+> `forderungen`, `versicherungen`, `buchungen` (KZV), `mietvertraege`. Erfindet nichts neu.
 
-## Vorgänge (Erweiterung Kern `vorgaenge`)
+## Träger: akteure (Kern-Erweiterung 0001, Migration 017)
 
-Kern hat `vorgaenge` mit `massnahme_typ`. Erweiterung für Betrieb:
+> Gehört konzeptionell in den Kern (0001) — hier referenziert, da 004 der erste Nutzer ist.
 
-### vorgaenge (ALTER / Felder)
-typ ENUM (housekeeping/facility/dritt_kommunikation/mieter_anliegen/uebergabe), unter_typ
-VARCHAR(50) (reinigung_standard/reinigung_end/reparatur/wartung/muellabfuhr/winterdienst/
-schadensmeldung/beschwerde/…), prioritaet ENUM (notfall/hoch/normal/niedrig), status ENUM
-(offen/beauftragt/in_arbeit/erledigt/abgeschlossen), objekt_id FK, einheit_id FK NULL,
-mietvertrag_id FK NULL, beds24_buchung_id VARCHAR NULL (KZV-Bezug), erstellt_von_akteur_id FK,
-zugewiesen_akteur_id FK NULL (intern), zugewiesen_organisation_id FK NULL (extern/Handwerker),
-faellig_am DATE, erledigt_am DATE, kosten_angebot DECIMAL(10,2), kosten_rechnung DECIMAL(10,2),
-kostentraeger ENUM (mieter/eigentuemer/versicherung), aktenzeichen VARCHAR(50),
-forderung_id FK NULL (bei Mieterverschulden → Kern), rechnung_beleg_id FK NULL (→ FiBu).
+### akteure
+mandant_id FK, typ ENUM (mensch/ki/extern), name, kontakt_id FK NULL (→ kontakte, bei Mensch),
+benutzer_id UUID NULL (Auth-User), organisation_id FK NULL (→ organisationen, bei extern),
+ki_modell TEXT NULL, ki_konfidenz_schwelle NUMERIC(3,2) NULL, bereich TEXT[] (reinigung/
+hausmeister/handwerk/verwaltung/…), aktiv BOOL, created_at, updated_at.
 
-### vorgang_verlauf
-vorgang_id FK, akteur_id FK, am TIMESTAMPTZ, ereignis VARCHAR(100) (Status-Wechsel/Kommentar/
-Foto/Zuweisung), text TEXT, von_status/nach_status ENUM NULL. Audit-Timeline.
+### akteur_verfuegbarkeit
+akteur_id FK, wochentag INT (0–6), von_uhr TIME, bis_uhr TIME, max_stunden_woche INT.
 
-### vorgang_anhaenge
-vorgang_id FK, dms_id VARCHAR (Paperless/Nextcloud), typ ENUM (foto/video/pdf/rechnung),
-kategorie VARCHAR(50), aufgenommen_von_akteur_id FK, am TIMESTAMPTZ.
+### akteur_faehigkeiten
+akteur_id FK, faehigkeit TEXT, level INT NULL. (Skills für Auto-Zuweisung; einfach gehalten.)
 
-## Reinigung / Housekeeping
+## Engine: vorgaenge (vorhanden, geschärft)
 
-### reinigungsauftraege
-mandant_id FK, objekt_id FK, einheit_id FK, vorgang_id FK, beds24_buchung_id VARCHAR NULL,
-typ ENUM (standard/end/zwischen/wäsche), geplant_am TIMESTAMPTZ, reinigungskraft_akteur_id FK,
-status ENUM (offen/in_arbeit/erledigt/problem), checkout_am TIMESTAMPTZ NULL,
-naechster_checkin_am TIMESTAMPTZ NULL (Zeitdruck-Turnaround), inventar_ok BOOL,
-schaden_gemeldet BOOL, vorher_fotos_ok BOOL, nachher_fotos_ok BOOL.
+### vorgaenge
+> Bestehende Tabelle (Migration 002, `wimus`). Migration 018 ergänzt CHECKs + Engine-Felder.
 
-### reinigungsplaene
-mandant_id FK, objekt_id FK, einheit_id FK NULL, intervall ENUM (nach_checkout/woechentlich/
-14_taegig/monatlich), wochentag INT NULL, aufgabe TEXT, zustaendig_akteur_id FK, aktiv BOOL.
+mandant_id FK, objekt_id FK NULL, einheit_id FK NULL, gemeldet_von FK NULL (→ kontakte),
+**typ** ENUM (schaden/reparatur/reinigung/uebergabe/wartung/anfrage/kuendigung/sonstiges),
+**massnahme_typ** ENUM NULL (instandhaltung/modernisierung/instandsetzung/reparatur/wartung),
+**prioritaet** ENUM (notfall/hoch/normal/niedrig), **status** ENUM (offen/zugewiesen/in_arbeit/
+wartet_extern/erledigt/abgenommen/abgebrochen), **kostentraeger** ENUM (vermieter/mieter/
+versicherung/weg), kosten_geschaetzt/kosten_ist NUMERIC(12,2), leistungsdatum DATE,
+faellig_am TIMESTAMPTZ NULL, **owner_akteur_id** UUID NULL (→ akteure), handwerker_id FK NULL
+(→ kontakte, extern), aktenzeichen (Auto-Trigger), lfd_nr, paperless_id,
+**eskaliert** BOOL DEFAULT false, **eskaliert_am** TIMESTAMPTZ NULL,
+**benachrichtigung_kanal** TEXT NULL (Hook: email/whatsapp/telegram/zammad),
+created_at, updated_at.
 
-### inventar_positionen
-mandant_id FK, einheit_id FK, bezeichnung, soll_menge INT, kategorie VARCHAR(50), aktiv BOOL.
+> Status-Flow (kanonisch): `offen → zugewiesen → in_arbeit → (wartet_extern) → erledigt →
+> abgenommen`; `abgebrochen` aus jedem offenen Status. Abschluss = erledigt/abgenommen/abgebrochen.
 
-> Inventarcheck bei Reinigung vergleicht Ist gegen `inventar_positionen` (aus MP02 Bestand).
+## Engine-Begleittabellen (Migration 018)
 
-## Übergaben
+### vorgang_verlauf  (Audit-Timeline, gilt für jeden Typ)
+mandant_id FK, vorgang_id FK, akteur_id UUID NULL, art ENUM (status/zuweisung/feld/notiz/
+eskalation/benachrichtigung), von_status TEXT NULL, nach_status TEXT NULL, feld TEXT NULL,
+alt_wert TEXT NULL, neu_wert TEXT NULL, notiz TEXT NULL, am TIMESTAMPTZ DEFAULT now().
 
-### uebergabeprotokolle
-mandant_id FK, typ ENUM (einzug/auszug/wechsel), vertragsart ENUM (lzv/wg/kzv), objekt_id FK,
-einheit_id FK, mietvertrag_id FK NULL, datum TIMESTAMPTZ, durchfuehrer_akteur_id FK,
-anwesende JSONB, status ENUM (entwurf/abgeschlossen), vergleich_protokoll_id FK NULL
-(Einzugsprotokoll bei Auszug), kautionsabrechnung_id FK NULL (→ Kern), unterschrift_neu BOOL,
-unterschrift_alt BOOL, unterschrift_vermieter BOOL.
+### vorgang_zuweisung  (intern + extern)
+mandant_id FK, vorgang_id FK, akteur_id UUID NULL (intern → akteure), organisation_id FK NULL
+(extern), kontakt_id FK NULL (Handwerker), rolle ENUM (verantwortlich/ausfuehrend/extern),
+status ENUM (vorgeschlagen/beauftragt/angenommen/abgelehnt/erledigt), auftrag_versendet_am
+TIMESTAMPTZ NULL, auftrag_kanal TEXT NULL (Hook), grund ENUM NULL (primaer/vertretung/
+kapazitaet/manuell/ki), created_at, updated_at.
 
-### uebergabe_zaehler
-protokoll_id FK, zaehler_id FK (Kern), zaehlernummer VARCHAR, stand DECIMAL(12,3),
-foto_dms_id VARCHAR (OCR-Quelle).
+### vorgang_foto  (Vorher/Nachher + Pflichtfotos)
+mandant_id FK, vorgang_id FK, phase ENUM (vorher/nachher/befund/sonstig), paperless_id TEXT NULL,
+url TEXT NULL, beschreibung TEXT, akteur_id UUID NULL, aufgenommen_am TIMESTAMPTZ DEFAULT now().
 
-### uebergabe_schluessel
-protokoll_id FK, art ENUM (zentral/wohnung/zimmer/briefkasten/garage/keller), anzahl INT,
-id_kennung VARCHAR.
+> Capture/Upload via Paperless/Storage ist Hook — hier nur die Referenz-Felder.
 
-### uebergabe_positionen
-protokoll_id FK, raum VARCHAR(50), position VARCHAR(50) (boden/wand/decke/fenster/sanitaer/
-heizung/moeblierung/…), status ENUM (mangelfrei/optisch/technisch), beschreibung TEXT,
-pflicht_foto BOOL, foto_dms_id VARCHAR NULL. Basis für Einzug-Auszug-Abgleich.
+## Typ-Erweiterungen (1:1 zu vorgaenge, Migration 018)
 
-## Wartung / Facility (über Kern-Fristen)
+> Genau ein Zusatzdatensatz je Vorgang (`vorgang_id` PK/FK). Jede Tabelle trägt `mandant_id` (RLS).
 
-> Wiederkehrende Wartung läuft über Kern `fristen` (frist_typ=wartung_*), die Vorgänge
-> erzeugen. Hier nur Facility-Stammdaten, die Fristen nicht abdecken.
+### vorgang_reinigung
+vorgang_id PK/FK, buchung_id FK NULL (→ buchungen KZV), turnaround BOOL DEFAULT false,
+inventar_ok BOOL NULL, naechster_checkin TIMESTAMPTZ NULL, dauer_soll_min INT NULL.
 
-### wartungsobjekte
-mandant_id FK, objekt_id FK, art ENUM (heizung/aufzug/rauchmelder/feuerloescher/legionellen/
-tuev/e_check/gas/fahrzeug), intervall_jahre DECIMAL(4,2), letzte_pruefung DATE,
-naechste_pruefung DATE, zustaendig_organisation_id FK NULL, frist_id FK (→ Kern).
+### vorgang_uebergabe
+vorgang_id PK/FK, richtung ENUM (einzug/auszug), mietvertrag_id FK NULL, zaehlerstaende JSONB,
+schluessel JSONB, signatur_paperless_id TEXT NULL, abgleich_vorgang_id FK NULL
+(Einzug↔Auszug-Verknüpfung), kaution_relevant BOOL DEFAULT false.
 
-### muellabfuhr_termine
-mandant_id FK, objekt_id FK, tonne ENUM (rest/bio/papier/gelb), datum DATE,
-zustaendig_akteur_id FK NULL (rausstellen), quelle VARCHAR (Gemeinde-Kalender).
+### vorgang_wartung
+vorgang_id PK/FK, frist_id FK NULL (→ fristen), intervall_typ TEXT NULL (wartung_rauchmelder/
+_aufzug/_gas/_legionellen/…), pruefprotokoll_paperless_id TEXT NULL, naechste_faelligkeit DATE NULL.
 
-## Einsatzplanung (P15)
+### vorgang_reparatur
+vorgang_id PK/FK, angebot_betrag NUMERIC(12,2) NULL, angebot_paperless_id TEXT NULL,
+abgenommen BOOL DEFAULT false, abgenommen_am TIMESTAMPTZ NULL, gewaehrleistung_bis DATE NULL.
 
-### einsaetze
-mandant_id FK, akteur_id FK (Mitarbeiter/Reinigungskraft/Hausmeister), vorgang_id FK NULL,
-reinigungsauftrag_id FK NULL, datum DATE, von/bis TIME, ort_objekt_id FK, status ENUM
-(geplant/laeuft/erledigt/abgesagt), notiz TEXT.
+### vorgang_schaden
+vorgang_id PK/FK, schaden_typ ENUM (boden/wand/sanitaer/elektro/moebel/fenster/sonstiges),
+schwere ENUM (bagatell/mittel/gross/grossschaden), schaden_betrag NUMERIC(12,2) NULL,
+abwicklungsstufe ENUM (kaution/plattform/manuell/mahnbescheid/anwalt) NULL,
+versicherungsfall BOOL DEFAULT false, versicherung_id FK NULL (→ versicherungen),
+forderung_id FK NULL (→ forderungen), festgestellt_am DATE NULL.
 
-## Dienstleister-Zusatz (zu Kern `organisationen`)
+## Checklisten (Wiederverwendung Kern 002 + Akteur)
 
-### dienstleister_bewertungen
-organisation_id FK (Kern, typ=dienstleister), vorgang_id FK NULL, bewertung INT (1–5),
-kommentar TEXT, akteur_id FK, am TIMESTAMPTZ.
+`checklisten_vorlagen` (name, gilt_fuer_typ, sprache, aktiv) und `checklisten_positionen`
+(typ foto_ki/foto/checkbox/text/zahl/sprache, haeufigkeit, ki_kriterien, ki_schwellenwert 0.75,
+max_versuche 3) bleiben wie in Migration 002. **Ausführung** über `checklisten_ausfuehrungen`
+(+ `akteur_id` ergänzt) und `checklisten_ergebnisse` (je Position). KI-Prüf-Loop ist Hook.
 
-### dienstleister_preislisten
-organisation_id FK, leistung VARCHAR(100), einheit VARCHAR(20), preis DECIMAL(10,2),
-gueltig_ab DATE, rahmenvertrag BOOL.
+## RLS / Datenintegrität
 
-## Datenintegrität (betriebsspezifisch)
-
-> Basis: Kern `001_erp_200_datenmodell.md`.
-
-- **Block:** ein offener Reinigungsauftrag je Buchung+Einheit (DB-UNIQUE).
-- **Warnung:** Vorgang selber Schaden/Einheit/Zeitfenster über 2 Kanäle (Doppelmeldung).
-- **Status-Sperre:** abgeschlossener Vorgang/abgeschlossenes Protokoll → nicht editierbar
-  (nur reaktivieren mit Audit).
-- **Versionieren:** Preislisten (gueltig_ab), Wartungsintervalle.
-- **Abgleich-Pflicht:** Auszugsprotokoll referenziert Einzugsprotokoll (vergleich_protokoll_id).
-
-## RLS
-
-Alle Tabellen nach `mandant_id`. Akteur-Sichtbarkeit (Reinigungskraft sieht eigene Aufträge)
-über Akteure-Modell.
-
-## Migration
-
-Vorgangstypen/Status aus Bestand seeden. Wartungsobjekte aus vorhandenen Fristen ableiten.
-Inventarlisten aus MP02-Bestand. Dienstleister → `organisationen` (typ=dienstleister).
+- Alle 004-Tabellen: RLS `mandant_isolation` (mandant_id über `public.user_mandanten`);
+  `vorgang_*`-Erweiterungen tragen `mandant_id` redundant (konsistent mit fibu/crm, einfache RLS).
+- **Block (DB):** `vorgang_<typ>.vorgang_id` PK (genau ein Zusatz je Vorgang).
+- **Status-Sperre:** abgeschlossener Vorgang (erledigt/abgenommen/abgebrochen) → kein Drag im
+  Plantafel; Reaktivieren erzeugt Verlauf-Eintrag.
+- **Abgelöst (OP-6):** alte 002-Tabellen `ma_profile`/`einsaetze`/`auftrag_zuweisungen`/
+  `geraete`/`wartungsintervalle`/`prozess_*` werden vom neuen Modell ersetzt (Drop später).

@@ -1,90 +1,121 @@
 ---
 id: 0004
-titel: Betrieb (Vorgänge, Übergaben, Reinigung, Wartung)
+titel: Betrieb (Vorgangs-Engine — Schaden/Reparatur/Reinigung/Übergabe/Wartung)
 status: in_arbeit
-version: 0.1.0
+version: 0.2.0
 modul: ops
 erstellt: 2026-06-26
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 abhaengt_von: [0001]
 ---
 
-# 0004 — Betrieb (Vorgänge, Übergaben, Reinigung, Wartung)
+# 0004 — Betrieb (Vorgangs-Engine)
 
 ## Worum geht's
 
-Der operative Alltag der Immobilienverwaltung: alles, was im laufenden Verhältnis an
-Aufgaben, Schäden, Reinigung, Wartung und Koordination mit Dritten anfällt. Bündelt vier
-eng verzahnte Bereiche, die alle über das gemeinsame Vorgangs-Konzept laufen:
+Der operative Alltag der Immobilienverwaltung — alles, was im laufenden Verhältnis an
+Aufgaben, Schäden, Reinigung, Übergaben, Wartung und Koordination mit Dritten anfällt — läuft
+über **eine generische Vorgangs-Engine**. Ein Vorgang ist die zentrale Einheit; die fachlichen
+Ausprägungen (Reinigung, Übergabe, Wartung, Reparatur, Schaden) sind **dünne Typ-Erweiterungen**,
+die den vollen Engine-Funktionsumfang erben — kein Parallelsystem je Bereich.
 
-1. **Vorgangsmanagement** — Schäden, Reparaturen, Anfragen, Beschwerden; Priorität, Status-Flow,
-   Kostenträger, Aktenzeichen, Foto-/Dokumentanhang, Verlauf.
-2. **Übergaben** — formelle Protokolle (LZV/WG) mit Bildaufnahme + Einzug-Auszug-Abgleich;
-   reinigungsbasierte Zustandsprüfung (KZV) bei jedem Check-out.
-3. **Reinigung/Housekeeping** — KZV-Turnaround nach Check-out, Reinigungspläne, Wäscheservice,
-   Vorher/Nachher-Fotos, Inventarcheck.
-4. **Wartung/Facility** — wiederkehrende Prüfpflichten (Heizung, Rauchmelder, Legionellen, TÜV,
-   E-Check), Müllabfuhr-Termine, Winterdienst, Gartenpflege, Hausreinigung.
+Migriert aus den Bestands-Konzepten (Übergabe v5 §4.6/§4.8/§4.9/§5.5; P14 Vorgang, P15
+Einsatzplanung, P24 Dienstleister, P31 Wartung, P34 Notfall, P59 Checklisten, P61 Qualität).
 
-Migriert aus den Bestands-Konzepten (P14 Vorgangsmanagement, P15 Einsatzplanung, P24
-Dienstleister, P25 Compliance, P31 Wartung, P34 Notfall, Übergabeprozesse Kap. 6).
+## Architektur-Leitsatz: EINE Engine, Typen als Erweiterung
 
-Baut auf Kern (0001): Vorgänge, Fristen, Forderungen/Kaution, Akteure, Channel-System, DMS.
-Nutzt diese, erfindet sie nicht neu.
+```
+VORGANG (Engine — voller Funktionsumfang, gilt für JEDEN Typ)
+  ├─ Typ reinigung  → vorgang_reinigung   (Turnaround, Inventarcheck, KZV-Buchungsbezug)
+  ├─ Typ uebergabe  → vorgang_uebergabe   (Zähler, Schlüssel, Signatur, Einzug↔Auszug-Abgleich)
+  ├─ Typ wartung    → vorgang_wartung     (Intervall/Frist-Bezug, Prüfprotokoll)
+  ├─ Typ reparatur  → vorgang_reparatur   (massnahme_typ, Angebot/Preisspiegel, Gewährleistung)
+  └─ Typ schaden    → vorgang_schaden     (Kategorie/Schwere, gestaffelte Abwicklung, Versicherung)
+```
 
-## Steht (gebaut & läuft)
+**Engine-Funktionsumfang (gilt immer):** Auto-Aktenzeichen · Status-Flow · interne (Akteur) +
+externe (Organisation/Dienstleister) Zuweisung mit Auftrag-Versand · Eskalation · Verlauf/
+Audit-Timeline · Foto Vorher/Nachher (+ Pflichtfotos) · Checklisten/Pflichtfelder je Typ ·
+Benachrichtigung bei Statuswechsel · Kostenträger + Forderungs-/Beleg-Verknüpfung.
 
-- Kern-Fundament vorhanden: `vorgaenge` (mit `massnahme_typ`), Fristen (Wartungstypen),
-  Forderungen (Schadenstyp + Foto-Referenz), Akteure-Modell, Channel-Routing.
-- KZV-Buchungsfluss: Beds24-Webhook → n8n → NocoDB/amoCRM (liefert Check-out-Termine als
-  Reinigungs-Trigger).
+Typen sind **1:1-Zusatztabellen + eigene UI-Sicht**, keine Logik, die die Engine umgeht.
+„Reinigung heute" / „meine Aufträge" = **Sicht/Filter** auf die Engine, kein eigenes Modell.
 
-## In Arbeit
+## Träger: Akteure (Mensch + KI)
 
-- Grobspec (dieses Modul) — Migration aus Bestands-Konzept.
+Vorgänge werden von **Akteuren** getragen (Entscheidung 2026-06-27): eine Tabelle für Mensch
+UND KI-Agent, mit Verfügbarkeit/Fähigkeiten. Ersetzt das alte `ma_profile` (Ü5). Intern =
+Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontakte` (Handwerker).
+
+## Steht (gebaut & läuft — Stand 2026-06-27)
+
+- **Vorgänge-CRUD** (`/vorgaenge`, API, `wimus.vorgaenge`) + Plantafel (Kanban nach Status,
+  bislang read-only). Felder: typ, massnahme_typ, prioritaet (notfall/hoch/normal/niedrig),
+  status, kostentraeger, kosten_geschaetzt/_ist, leistungsdatum, Auto-Aktenzeichen, paperless_id.
+- **Inventar/Asset-Register** (`/inventar`, `public.asset_register`) — Cutover→wimus offen.
+- **Kern-Anbindung vorhanden:** `forderungen.vorgang_id` (Schaden→Forderung), `fristen.frist_typ`
+  Wartungstypen, OCR-Routing → vorgaenge, Channel-/Akteur-Bezug konzeptionell.
+
+## In Arbeit (dieser Cycle)
+
+- Engine-Datenmodell schärfen (Status-CHECK, Typ-Liste reinigung/uebergabe/wartung ergänzen).
+- `akteure` (Träger) + Verlauf/Zuweisung/Foto + 5 Typ-Zusatztabellen (Migrationen 017/018).
+- UI: Engine-CRUD-Ausbau, Verlauf-Timeline, Zuweisung intern/extern, Checklisten-Ausführung,
+  Plantafel auf Drag&Drop, je Typ eine Sicht.
+- Externe Fähigkeiten (Benachrichtigung, Auftrag-Versand, Foto-Capture/KI-Prüfung) als
+  **Hook/Stub** (Felder + Status + Webhook/Log), echte Lieferung via n8n/Channel/Storage später.
 
 ## Ideen / als Nächstes
 
-- Agent 5 (Vorgangs-Agent): Schadensmeldung → Priorität → Handwerker vorschlagen (P24) →
-  Auftrag vorbereiten → Preisspiegel → Rechnung prüfen.
-- Mobile PWA für Reinigungskräfte/Hausmeister (offline-fähig, Kamera, Tagesplan).
-- KI-Schadenskategorisierung + Kostenschätzung aus Foto (Claude Vision).
-- Einzug-Auszug-Foto-Abgleich automatisiert (Schadensermittlung).
-- Einsatzplanung als Plantafel (Drag&Drop), CalDAV-Sync.
+- Mobile-PWA (Reinigung/Hausmeister, offline, Kamera, Tagesplan).
+- KI-Schadenskategorisierung + Kostenschätzung aus Foto (Claude Vision); rekursiver
+  Checklisten-Prüf-Loop (ki_schwellenwert 0.75, max_versuche 3).
+- Einzug↔Auszug-Foto-Abgleich automatisiert → Kautionsabrechnung.
+- Dienstleister-Preisspiegel/Bewertungen (P24), Einsatz-Score/Auto-Zuweisung (P15).
+- Müllabfuhr-Kalenderimport je Standort; Winterdienst-Nachweispflicht.
 
 ## Entscheidungen (warum es so ist)
 
-- 2026-06-26: **Ein Betriebs-Modul statt Aufteilung.** Vorgänge, Übergaben, Reinigung,
-  Wartung laufen alle über dasselbe Vorgangs-Konzept und teilen Akteure/Fristen/DMS —
-  Zusammenfassung reduziert Doppelstruktur.
-- 2026-06-26: **Zwei getrennte Übergabe-Logiken** (aus Realbetrieb): LZV/WG = formelles
-  Protokoll mit Unterschrift + Einzug-Auszug-Abgleich (rechtsverbindlich, Basis Kaution);
-  KZV = reinigungsbasierte Zustandsprüfung ohne Gast-Unterschrift, Schaden→Vorgang→letzter
-  Buchung zugeordnet.
-- 2026-06-26: **Vorgang ist die zentrale Einheit.** Housekeeping/Facility/Dritt-Kommunikation/
-  Mieter-Anliegen sind alles Vorgangstypen, kein getrenntes System.
-- 2026-06-26: **Gestaffelte KZV-Schadensabwicklung** (aus Praxis): Bagatell <50€ aus
-  Kaution/Reinigungspauschale; mittel 50–300€ über Plattform-Resolution; groß >300€ manuell
-  + Versicherungsprüfung.
-- 2026-06-26: **Wiederkehrende Wartung über Kern-Fristen**, nicht eigene Mechanik — Fristen
-  erzeugen Vorgänge (Heizung 1J, Rauchmelder 1J, Feuerlöscher 2J, Legionellen 3J, TÜV 1J,
-  E-Check 4J, Gas 12J).
+- 2026-06-27: **EINE Vorgangs-Engine, Typen als dünne Erweiterung** (statt
+  gleichrangiger Parallelbereiche Reinigung/Übergabe/Wartung). Grund: voller Funktionsumfang
+  (Foto/Benachrichtigung/Zuweisung/Eskalation/Verlauf/Kostenträger) wird genau einmal gebaut
+  und von allen Typen geerbt; Typ = 1:1-Zusatztabelle + Sicht. Der frühere Parallel-Entwurf
+  (`reinigungsauftraege`/`uebergabeprotokolle`/`wartungsobjekte` als eigene Bereiche) ist verworfen.
+- 2026-06-27: **Vorgänge ziehen aus Kern 0001 in Modul 004.** Vom Umfang her eigenes Modul
+  (wie FiBu/CRM). Im Kern bleibt nur der Verweis „Vorgänge → 004" + die Verknüpfungspunkte
+  (`forderungen.vorgang_id`, `fristen`→Vorgang, Akteure als Träger). Nichts doppelt.
+- 2026-06-27: **Träger = `akteure` (Mensch + KI), neu gebaut** (Kern-Erweiterung 0001),
+  ersetzt `ma_profile`. Grund: vereinheitlicht menschliche und KI-Bearbeiter, trägt
+  Verfügbarkeit/Fähigkeiten für Zuweisung/Eskalation.
+- 2026-06-27: **Externe Fähigkeiten als Hook/Stub.** Benachrichtigung bei Statuswechsel,
+  externer Auftrag-Versand, Foto-Capture/Storage und KI-Prüfung werden mit Feldern + Status +
+  Webhook/Log angelegt; echte Anbindung (n8n/Channel/Paperless/Claude Vision) folgt separat.
+- 2026-06-27: **Zielschema `wimus`** für alle 004-Tabellen (App-Default). Asset-Register-Cutover
+  public→wimus ist separates Thema.
+- 2026-06-27: **Gestaffelte KZV-Schadensabwicklung** (aus Praxis, Spec502 §3.1): <50€ aus
+  Kaution/Pauschale · 50–500 · 500–5.000 (Kaution+Versicherung) · 5.000–10.000 (Mahnbescheid/AG)
+  · >10.000 (Anwalt). Steuert `vorgang_schaden` + Forderungs-/Versicherungsbezug.
+- 2026-06-27: **Wartung über Kern-Fristen** (nicht eigene Mechanik): Fristen (`frist_typ
+  wartung_*`) erzeugen Wartungs-Vorgänge; `vorgang_wartung` trägt nur Intervall-/Protokoll-Bezug.
 
 ## Offene Punkte
 
-- OP-1: Dienstleister-Stammdaten (P24) — eigene Tabelle in 004 oder als `organisationen`-Typ
-  (Kern 0001)? Tendenz: `organisationen` mit typ=dienstleister + Bewertungen/Preislisten in 004.
-- OP-2: Einsatzplanung (P15) — eigener Abschnitt in 004 oder später eigenes Modul? Erstmal hier.
-- OP-3: Mobile PWA — eigener UI-Stack (offline) vs. responsive Web; Tech-Entscheidung offen.
-- OP-4: Foto-Ablage — Paperless (Bilder/PDF) vs. Nextcloud (Videos); Übergabefotos wohin?
-- OP-5: Müllabfuhr-Termine — Quelle (Gemeinde-Kalender-Import) je Standort.
-- OP-6: Schaden→Forderung-Verknüpfung (Kern): Mieterverschulden → Forderung; Abgleich mit Kaution.
+- OP-1: Checklisten-Tabellen aus Migration 002 (`checklisten_*`) wiederverwenden vs. neu —
+  Tendenz wiederverwenden (Definition `vorlagen`/`positionen`), Ausführung an `vorgaenge` + Akteur.
+- OP-2: Dienstleister-Bewertungen/Preislisten — an `organisationen` (Kern) oder in 004? (Tendenz 004.)
+- OP-3: Foto-Ablage — Paperless (Bild/PDF) vs. Nextcloud (Video); Übergabefotos wohin.
+- OP-4: Mobile-PWA-Tech (offline) — eigener Stack vs. responsive Web.
+- OP-5: Müllabfuhr-Quelle (Gemeinde-Kalender) je Standort.
+- OP-6: Alte schema-only-Tabellen (`ma_profile`/`einsaetze`/`auftrag_zuweisungen`/`geraete`/
+  `wartungsintervalle`/`prozess_*`) aus 002 — die durch das neue Modell ersetzten als
+  „abgelöst" markieren bzw. droppen, sobald 004 steht.
 
 ## Meilensteine & Versionen
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
-| 0.1.0 | 2026-06-26 | in_arbeit | Grobspec migriert aus Bestand: Vorgänge, Übergaben (LZV/KZV), Reinigung, Wartung, Einsatzplanung |
+| 0.2.0 | 2026-06-27 | in_arbeit | Feinspec aus echten Quellen: Engine-Architektur (eine Engine + 5 Typ-Erweiterungen), Träger `akteure`, externe Hooks, Umzug Vorgänge 0001→004. Ersetzt den aus dem Chat rekonstruierten Grobentwurf. |
+| 0.1.0 | 2026-06-26 | abgelöst | Grobentwurf (chat-rekonstruiert, unzuverlässig) — durch 0.2.0 ersetzt. |
 
 ## Änderungshistorie
 
@@ -92,4 +123,5 @@ Nutzt diese, erfindet sie nicht neu.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
-| 2026-06-26 16:00 | Grobspec 004 migriert aus Bestand (Vorgänge/Übergaben/Reinigung/Wartung) | alle |
+| 2026-06-27 15:00 | Neuaufbau aus echten Quellen: Engine-Architektur + akteure + 5 Typen; Umzug aus Kern | alle |
+| 2026-06-26 16:00 | Grobspec 004 (chat-rekonstruiert) — als unzuverlässig verworfen | alle |

@@ -1,55 +1,58 @@
 ---
 gehoert_zu: 0004
 dokument: Design
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0004 — Design
 
-> Version & Status des Moduls stehen in `004_ops_000_konzept.md`.
-> Folgt Kern-Design-System (`001_erp_400_design.md`). Charts: shadcn-charts.
+> Version & Status stehen in `004_ops_000_konzept.md`. Folgt Kern-Design-System
+> (`001_erp_400_design.md`): Shadcn + Recharts, Token-Farben, 4px-Grid, deutsche Labels,
+> Mobile 390px. RowActions/StatusBadge/PriorityBadge aus dem Kern wiederverwenden.
 
-## 1. Vorgangs-Liste & Detail
+## 1. Plantafel (Vorgangs-Kanban)
 
-- **Liste:** Tabelle/Board nach Status (offen/beauftragt/in_arbeit/erledigt). Spalten:
-  Aktenzeichen, Titel, Typ, Priorität (Farbe: Notfall rot), Objekt/Einheit, Zugewiesen,
-  Fällig. Filter nach Typ/Priorität/Status/Objekt. RowActions (Kern).
-- **Detail:** Kopf mit Aktenzeichen + Status + Priorität + Gewonnen/Erledigt-Aktion.
-  Verlauf/Audit-Timeline (`vorgang_verlauf`). Anhänge (Fotos/Rechnungen, DMS). Zuweisung
-  (intern/Handwerker). Kosten (Angebot/Rechnung) + Kostenträger. Verknüpfung Forderung/Beleg.
+- Spalten = Status (offen/zugewiesen/in_arbeit/wartet_extern/erledigt/abgenommen), Karten =
+  Vorgänge, **Drag&Drop → Statuswechsel** (native HTML5-DnD wie CRM-Board, kein dnd-kit) +
+  Verlauf-Eintrag. Abgeschlossene Spalten sperren Drag (Reaktivieren explizit).
+- Karte: Aktenzeichen, Typ-Icon, Titel (aus Typ+Bezug), Objekt/Einheit, Priorität-Badge,
+  Owner-Akteur, nächste Fälligkeit, Eskalations-Warnsymbol.
+- Filter oben: Typ, Objekt/Einheit, Akteur („meine Aufträge"), Priorität.
 
-## 2. Mobile PWA (Reinigungskraft / Hausmeister)
+## 2. Vorgangs-Detail (Engine + Typ)
 
-> Offline-fähig, Kamera-Integration, großflächige Touch-Bedienung (Bestand-Anforderung).
+- Kopf: Aktenzeichen + PriorityBadge + StatusBadge, Gewonnen-/Abschluss-Aktionen
+  (Erledigt/Abnehmen/Abbrechen), Kebab.
+- **Verlauf-Timeline** (aus `vorgang_verlauf`): Statuswechsel + Feldänderungen + Zuweisung +
+  Benachrichtigung, je mit Akteur + Zeit.
+- **Zuweisungen**: intern (Akteur) + extern (Organisation/Handwerker) anlegen, Auftrag
+  versenden (Hook-Button), Status je Zuweisung.
+- **Fotos**: Vorher/Nachher-Galerie (Referenzen), Upload-Hook.
+- **Typ-Panel** (nur für den Typ sichtbar): Reinigung (Turnaround/Inventar/buchung) · Übergabe
+  (Zähler/Schlüssel/Signatur/Einzug↔Auszug) · Wartung (Frist/Protokoll) · Reparatur (Angebot/
+  Abnahme/Gewährleistung) · Schaden (Kategorie/Schwere/Abwicklungsstufe/Versicherung/Forderung).
+- **Checkliste** (falls Vorlage für Typ): Positionen abarbeiten (foto/checkbox/text/zahl),
+  KI-Prüfung als Hook.
+- Kosten + Kostenträger → Forderung verknüpfen.
 
-- **Heutige Einsätze** (Tagesplan, KpiCard minimal, Liste).
-- **Reinigungs-Flow:** Vorher-Fotos → Inventar-Checkliste → Schaden melden (Foto+Kategorie+
-  Schwere) → Reinigung → Nachher-Fotos → abschließen. Schritt-für-Schritt, offline puffern.
-- **Zählerstand-Foto** mit OCR-Vorschlag (Claude Vision), manuelle Korrektur.
+## 3. Typ-Sichten (Filter, kein eigenes Modell)
 
-## 3. Übergabe-UI (Tablet)
+- „Reinigung heute" (Typ=reinigung, leistungsdatum=heute), „Offene Schäden", „Wartung fällig",
+  „Meine Aufträge" (Owner/Zuweisung = aktiver Akteur). Alles als Listen-Filter auf die Engine.
 
-- Protokoll-Assistent (Einzug/Auszug/Wechsel): Zähler → Schlüssel → Rauchmelder → Checkliste
-  je Raum (Status + Pflichtfoto) → Unterschriften-Pad.
-- **Auszug-Abgleich:** Split-View Einzugsfoto ↔ Auszugsfoto je Position; Abweichung markieren
-  → Schadensvorschlag → Kautionsabrechnung anstoßen.
+## 4. Akteure-Verwaltung
 
-## 4. Einsatzplanung (Plantafel)
+- Stammdaten-Liste Akteure (Mensch/KI/extern), Bereich/Fähigkeiten/Verfügbarkeit; Zuordnung
+  in der Vorgangs-Zuweisung.
 
-- Drag&Drop-Plantafel (Ressourcen × Zeit), wie Kanban-Engine (dnd-kit). Akteure als Zeilen,
-  Tage/Stunden als Spalten, Vorgänge/Reinigungen als Karten.
-- Tagesplan-Mobilansicht je Akteur.
+## 5. Mobile (390px / PWA-Vorbereitung)
 
-## 5. Wartungs-/Facility-Übersicht
+- Tagesplan-Liste (heutige Vorgänge des Akteurs), Karten statt Tabelle, Foto-Button prominent.
+  Voll-PWA (offline) später.
 
-- Wartungsobjekte mit nächster Prüfung (Ampel: fällig/bald/ok). shadcn-charts: Timeline.
-- Müllabfuhr-Kalender je Objekt.
+## UI-Konventionen (004-spezifisch)
 
-## UI-Konventionen (betriebsspezifisch)
-
-> Basis: Kern „UI-Konventionen" in `001_erp_400_design.md`.
-
-- **Primäraktion Vorgang:** Status weiterschalten / zuweisen. Notfall optisch hervorgehoben.
-- **Mobile zuerst** für Reinigung/Hausmeister (Touch 390px, offline, Kamera).
-- **Pflichtfoto-Erzwingung** in Übergabe/Reinigung (Position ohne Foto = nicht abschließbar).
-- **Audit-Timeline** je Vorgang (Verlauf).
+- Primäraktion Vorgang: Status weiterschalten / Zuweisen. Kebab: Duplizieren, Drucken, DMS.
+  Destruktiv: Abbrechen (+ Grund), Löschen (soft).
+- Typ-Icon-Map: schaden ⚠ · reparatur 🔧 · reinigung 🧹 · uebergabe 🔑 · wartung 🛠 · anfrage ✉.
+- Charts (Workforce-/Auslastungssicht, später): Recharts.

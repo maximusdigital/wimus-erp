@@ -89,6 +89,12 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
   Datenmodell — Grund: CRM-Pipelines (0003) brauchen externe Firmen relational (mehrere
   Ansprechpartner je Firma). Bewusste Trennung INNEN (`firmen`/Mandant) vs. AUSSEN
   (`organisationen`); amoCRM vermischt beides in „Companies".
+- 2026-06-27: **Vorgänge ziehen nach Modul 004 (ops).** Vom Umfang her eigenes Modul; Kern
+  hält nur die Bezugspunkte (`forderungen.vorgang_id`, `fristen`→Vorgang, `akteure` als Träger,
+  `ocr_verarbeitungen`/`portal_nachrichten`→`vorgang_id`). Vorgangs-Datenmodell/Prozesse/UI
+  vollständig in `004_ops_*`. Nichts doppelt.
+- 2026-06-27: **`akteure` (Mensch + KI) als Kern-Erweiterung** (Migration 017), ersetzt das
+  ungenutzte `ma_profile`. Träger von Vorgängen/KI-Agenten; Detail-Workforce-Modell in 004.
 
 ## Offene Punkte
 
@@ -124,6 +130,7 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 15:00 | Vorgänge → Modul 004 ausgelagert (Kern auf Bezugspunkte reduziert); akteure (Mensch+KI) als Kern-Erweiterung 017 ergänzt | 000_konzept, 200 |
 | 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 005-Zusatztabellen enumeriert, Migrations-/Tabellenzahl korrigiert; Bugfix vorgaenge.prioritaet kritisch→notfall (DB-CHECK) | 000_konzept, 200, types/vorgang |
 | 2026-06-27 01:30 | OP-3 erledigt: 005-Kern-DDL 1:1 aus Archiv als getrackte Migration 005 ins Repo | 000_konzept, 200, Migration 005 |
 | 2026-06-27 01:10 | v5.1.0: ocr_verarbeitungen (014) + Mietanpassung-Dublette (016) gebaut; Test-Ordnerstruktur an Ist | 000_konzept, 200, 600 |

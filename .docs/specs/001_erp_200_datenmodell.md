@@ -157,6 +157,26 @@ NULL, email VARCHAR(255) NULL, notiz TEXT, aktiv BOOL.
 > Eine Organisation kann n Ansprechpartner (Kontakte) haben (1:n über
 > `kontakte.organisation_id`). Verknüpfung zu Deals/Leads erfolgt im CRM-Modul (0003).
 
+## akteure (Kern-Erweiterung, Migration 017)
+
+> Träger von Vorgängen/Aufgaben — **Mensch ODER KI-Agent** in einer Tabelle. Ersetzt das alte
+> `ma_profile` (Migration 002, schema-only). Erster Nutzer: Modul 004 (ops). Detailliertes
+> Workforce-Modell (Verfügbarkeit/Fähigkeiten/Score) lebt fachlich in 004.
+
+### akteure
+mandant_id FK, typ ENUM (mensch/ki/extern), name, kontakt_id FK NULL, benutzer_id UUID NULL,
+organisation_id FK NULL, ki_modell TEXT NULL, ki_konfidenz_schwelle NUMERIC(3,2) NULL,
+bereich TEXT[], aktiv BOOL. (+ `akteur_verfuegbarkeit`, `akteur_faehigkeiten`.)
+
+## Vorgänge → Modul 004 (ops)
+
+> **Ausgelagert (2026-06-27):** Das Vorgangs-Datenmodell (`vorgaenge` + `vorgang_verlauf`/
+> `_zuweisung`/`_foto` + Typ-Erweiterungen `vorgang_reinigung/_uebergabe/_wartung/_reparatur/
+> _schaden` + Checklisten-Ausführung) ist nach **`004_ops_200_datenmodell.md`** verschoben.
+> Der Kern hält nur die **Bezugspunkte**: `forderungen.vorgang_id` (Schaden→Forderung),
+> `fristen` erzeugen Wartungs-Vorgänge, `akteure` sind die Träger, `ocr_verarbeitungen`/
+> `portal_nachrichten` referenzieren `vorgang_id`. `vorgaenge.massnahme_typ` siehe ALTER unten.
+
 ## Weitere in Migration 005 gebaute Tabellen (Nachtrag 2026-06-27)
 
 > Diese Tabellen sind in `005_kern_bk_fristen_forderungen.sql` real angelegt, waren oben

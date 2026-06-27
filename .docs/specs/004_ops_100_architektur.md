@@ -1,70 +1,58 @@
 ---
 gehoert_zu: 0004
 dokument: Architektur
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0004 — Architektur
 
-> Version & Status des Moduls stehen in `004_ops_000_konzept.md`.
-> Baut auf Kern (0001): Vorgänge, Fristen, Forderungen/Kaution, Akteure, Channel-System, DMS.
+> Version & Status stehen in `004_ops_000_konzept.md`. Baut auf Kern 0001.
 
-## Systemgrenzen
+## Leitprinzip: eine Engine, Typen erben
 
-- **Eingang:** Schadensmeldung (Mieter/Gast via Channel), Reinigungs-Trigger (Beds24
-  Check-out), Frist-Fälligkeit (Wartung), manuelle Vorgangsanlage, Übergabetermin.
-- **Kern:** Vorgang als zentrale Einheit — Typ, Priorität, Status-Flow, Zuweisung, Kosten,
-  Kostenträger, Fotos, Verlauf.
-- **Ausgang:** Auftrag an Handwerker/Dienstleister (Channel), Forderung (bei
-  Mieterverschulden → Kern), Kautionsabrechnung (Kern), DMS-Ablage (Fotos/Rechnungen).
+Es gibt **keine** parallelen Subsysteme für Reinigung/Übergabe/Wartung. Es gibt die
+**Vorgangs-Engine** (`vorgaenge` + Begleittabellen `vorgang_verlauf`/`_zuweisung`/`_foto`) und
+fünf **Typ-Erweiterungen** (`vorgang_reinigung/_uebergabe/_wartung/_reparatur/_schaden`), die
+1:1 am Vorgang hängen. Jede Engine-Fähigkeit ist genau einmal implementiert und wird von jedem
+Typ genutzt. Sichten („Reinigung heute", „meine Aufträge", Plantafel) sind Filter/Views, kein
+eigenes Datenmodell.
 
-## Vier Bereiche, ein Vorgangs-Konzept
+## Schichten
 
-| Bereich | Inhalt | Trigger |
-|---------|--------|---------|
-| Vorgangsmanagement | Schäden, Reparaturen, Anfragen, Beschwerden | Meldung / manuell |
-| Übergaben | LZV formell (Protokoll+Unterschrift), KZV reinigungsbasiert | Ein-/Auszug / Check-out |
-| Reinigung/Housekeeping | KZV-Turnaround, Reinigungspläne, Wäsche | Check-out / Plan |
-| Wartung/Facility | Prüfpflichten, Müll, Winterdienst, Garten, Treppenhaus | Frist / Kalender |
+| Schicht | Inhalt | Quelle/Tabellen |
+|---------|--------|-----------------|
+| Engine-Kern | Vorgang anlegen/bearbeiten, Status-Flow, Aktenzeichen, Kostenträger | `vorgaenge` |
+| Verlauf | Audit-Timeline jeder Änderung/Statuswechsel | `vorgang_verlauf` |
+| Zuweisung | intern (Akteur) + extern (Organisation/Handwerker), Auftrag-Versand | `vorgang_zuweisung`, `akteure` |
+| Foto | Vorher/Nachher + Pflichtfotos (Referenzen) | `vorgang_foto` |
+| Checklisten | Vorlagen/Positionen + Ausführung je Vorgang | `checklisten_*` (Kern 002) |
+| Typ-Zusatz | je Typ ein 1:1-Datensatz + UI-Sicht | `vorgang_<typ>` |
 
-## Vorgangstypen (aus Bestand P14)
+## Systemgrenzen / externe Anbindung (Hook/Stub)
 
-- **Housekeeping:** Reinigung (Standard/End/Zwischen KZV), Wäscheservice, Aufbereitung
-  zwischen KZV-Belegungen, Reinigungsplan je Objekt/Einheit.
-- **Facility:** Reparaturen (klein/groß/Notfall), Wartungen, Müllabfuhr, Winterdienst,
-  Gartenpflege, Hausreinigung/Treppenhaus.
-- **Kommunikation Dritte:** Handwerker (Auftrag/Angebot/Abnahme/Rechnung), externe HV
-  (WEG-Verwalter), Behörden, Versorger, Dienstleister.
-- **Mieter-Vorgänge:** Schadensmeldung, Beschwerde, Anfrage, Kündigung.
+- **Benachrichtigung bei Statuswechsel** → Channel-System (E-Mail/WhatsApp/Telegram/Zammad):
+  Engine schreibt `vorgang_verlauf` (art=benachrichtigung) + Feld `benachrichtigung_kanal`;
+  echte Zustellung via n8n/Channel später.
+- **Externer Auftrag-Versand** → `vorgang_zuweisung.auftrag_versendet_am`/`auftrag_kanal`
+  (Stub); Versand via n8n später.
+- **Foto-Capture/Storage** → Paperless/Nextcloud: Felder `paperless_id`/`url`, Upload später.
+- **KI-Prüfung Checkliste** (`ki_schwellenwert`/`max_versuche`) + KI-Schadenskategorisierung
+  (Claude Vision) → Hook; KI-Call später.
+- **KZV-Turnaround** → Beds24-Webhook → n8n erzeugt Reinigungs-Vorgang (`vorgang_reinigung`
+  mit `buchung_id`); der Webhook-Skeleton existiert im Kern.
 
-## Datenfluss Handwerker (aus Bestand)
+## Träger-Modell (akteure)
 
-Schadensmeldung → Vorgang anlegen → Handwerker wählen (P24/`organisationen`) → Auftrag
-erteilen (E-Mail/WhatsApp via Channel) → Termin → Zutritt koordinieren (TTLock temporär) →
-Abnahme → Rechnung erfassen (→ FiBu 0002) → Zahlung → Vorgang schließen.
+Jeder Vorgang hat einen `owner_akteur_id` (verantwortlich) und 0..n `vorgang_zuweisung`
+(ausführend, intern Akteur / extern Organisation/Handwerker). Akteur = Mensch **oder** KI —
+KI-Agenten (z.B. Posteingang/Schaden) sind ebenfalls Akteure und können Vorgänge tragen.
 
-## Datenfluss KZV-Reinigung (aus Bestand)
+## Querbezug Kern (0001)
 
-Beds24 Check-out → Reinigungs-Vorgang → Mobile-App Reinigungskraft: Vorher-Fotos →
-Inventarcheck (gegen Inventarliste) → Schaden? (Foto+Kategorie+Schwere → Vorgang, letzter
-Buchung zugeordnet) → Reinigung → Nachher-Fotos → Schadensabwicklung gestaffelt.
-
-## Übergabe LZV/WG (aus Bestand Kap. 6.1)
-
-Protokoll (Typ Einzug/Auszug/Wechsel) → Zählerstände (OCR Claude Vision) → Schlüssel →
-Rauchmelder-Test → Checkliste je Raum (Status mangelfrei/optisch/technisch) → Pflichtfotos
-je Position → digitale Unterschrift → bei Auszug: Abgleich Einzug↔Auszug → Schadensermittlung
-→ Kautionsabrechnung (Kern).
-
-## Bezug zu Kern-Akteuren & Agenten
-
-- Reinigungskräfte/Hausmeister/Handwerker = Akteure (0001), Aufträge tragen Akteur+Zeit.
-- Agent 5 (Vorgangs-Agent): Priorität, Handwerker-Vorschlag, Auftrag, Rechnungsprüfung.
-- Channel-System: Auftrag/Benachrichtigung über WhatsApp/E-Mail.
-- Fristen (Kern): wiederkehrende Wartung erzeugt Vorgänge.
-
-## Andocken, nicht duplizieren
-
-- Vorgang-Basistabelle: Kern `vorgaenge` erweitern (Typen/Status), nicht neu bauen.
-- Schaden mit Mieterverschulden → Kern `forderungen` (Schadenstyp, Foto-Referenz vorhanden).
-- Dienstleister → Kern `organisationen` (typ=dienstleister) + 004-Zusatz (Bewertung/Preisliste).
+- **Fristen → Vorgang:** fällige Wartungsfrist (`fristen.frist_typ wartung_*`) erzeugt einen
+  Vorgang `typ=wartung` (+ `vorgang_wartung.frist_id`).
+- **Vorgang → Forderung:** Schaden mit Mieter-/Versicherungs-Kostenträger erzeugt/verknüpft
+  eine Forderung (`forderungen.vorgang_id`); Abgleich mit Kaution.
+- **Übergabe → Kaution:** Auszug-Vorgang vergleicht mit Einzug (`abgleich_vorgang_id`) →
+  Schäden → Kautionsabrechnung (Kern).
+- **Akteure/Organisationen/DMS/Channel** kommen aus dem Kern.

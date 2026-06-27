@@ -1,73 +1,57 @@
 ---
 gehoert_zu: 0004
 dokument: Prozesse
-geaendert: 2026-06-26
+geaendert: 2026-06-27
 ---
 
 # 0004 — Prozesse
 
-> Version & Status des Moduls stehen in `004_ops_000_konzept.md`.
+> Version & Status stehen in `004_ops_000_konzept.md`.
 
-## 1. Vorgang-Lebenszyklus (zentral)
+## 1. Vorgang-Lebenszyklus (Engine, jeder Typ)
 
-Anlage (Meldung/manuell/Frist/Check-out) → Typ + Priorität setzen → Status-Flow:
-**offen → beauftragt → in_arbeit → erledigt → abgeschlossen**. Jeder Schritt in
-`vorgang_verlauf` (Akteur+Zeit). Notfall (Priorität) → Eskalationskette (P34).
+1. **Anlegen** — manuell, aus Portal-Schadensmeldung (Foto→Vorgang), aus Frist (Wartung), aus
+   KZV-Check-out (Reinigung). Auto-Aktenzeichen via Trigger. Status `offen`.
+2. **Zuweisen** — intern (Akteur) oder extern (Organisation/Handwerker); Status `zugewiesen`;
+   bei extern: Auftrag-Versand (Hook). Verlauf-Eintrag.
+3. **Bearbeiten** — Status `in_arbeit`; ggf. `wartet_extern` (Angebot/Teil). Pflicht-/Checklisten
+   je Typ. Foto Vorher/Nachher.
+4. **Abschluss** — `erledigt`; bei abnahmepflichtigen Typen `abgenommen`. Kostenträger →
+   Forderung/Beleg. Oder `abgebrochen` (+ Grund im Verlauf).
+5. **Benachrichtigung** bei jedem Statuswechsel an Melder/Mieter/Dienstleister (Hook).
+6. **Eskalation** bei `prioritaet=notfall` oder Überfälligkeit → `eskaliert`, Verlauf, Hinweis
+   an Verantwortlichen (Hook).
 
-## 2. Handwerker-/Reparatur-Prozess
+## 2. Typ-Prozesse (dünne Erweiterung auf der Engine)
 
-1. Schadensmeldung → Vorgang (typ=facility/mieter_anliegen).
-2. Priorität einschätzen (Agent 5 / manuell). Notfall → sofort eskalieren.
-3. Handwerker/Dienstleister wählen (`organisationen` typ=dienstleister, Bewertung/Preisliste).
-4. Auftrag erteilen via Channel (E-Mail/WhatsApp). Status=beauftragt.
-5. Termin + Zutritt koordinieren (TTLock temporärer Code).
-6. Abnahme → Status=erledigt. Rechnung erfassen → FiBu (0002).
-7. Kostenträger klären (Mieter/Eigentümer/Versicherung). Mieterverschulden → Forderung (Kern).
-8. Zahlung → Vorgang abschließen.
+- **Reinigung (KZV-Turnaround):** Check-out (Beds24→n8n) → Reinigungs-Vorgang mit `buchung_id`;
+  Checkliste je Raum, Foto Vorher/Nachher, Inventarcheck; Schaden gefunden → Folge-Vorgang
+  `typ=schaden`. `naechster_checkin` steuert Dringlichkeit.
+- **Übergabe (LZV einzug/auszug):** Checkliste je Raum, Zählerstände (OCR-Hook), Schlüssel,
+  Signatur (Paperless-Hook). Auszug vergleicht mit Einzug (`abgleich_vorgang_id`) →
+  Schadensliste → Kautionsabrechnung (Kern).
+- **Wartung:** aus Frist erzeugt; Prüfprotokoll (Paperless); nach Abschluss neue Frist /
+  `naechste_faelligkeit`. Dienstleister-Beauftragung über Zuweisung.
+- **Reparatur:** Angebot/Preisspiegel (`angebot_betrag`), `wartet_extern`; Abnahme
+  (`abgenommen`); Gewährleistung (`gewaehrleistung_bis`, §634a).
+- **Schaden:** Kategorie/Schwere; **gestaffelte Abwicklung** (`abwicklungsstufe`): bagatell→
+  Kaution/Pauschale · mittel→Plattform · gross→manuell+Versicherung · grossschaden→Mahnbescheid/
+  Anwalt. Verknüpfung Forderung + ggf. Versicherung; Incident-PDF (Hook).
 
-## 3. KZV-Reinigungs-Turnaround
+## 3. Zuweisung & Eskalation
 
-1. Beds24 Check-out → Reinigungsauftrag (typ je nach Belegung), Zeitdruck aus
-   naechster_checkin.
-2. Reinigungskraft (Mobile): **Vorher-Fotos** → **Inventarcheck** (gegen `inventar_positionen`).
-3. Schaden entdeckt? → Foto + Kategorie + Schwere → **Vorgang**, der **letzten Buchung**
-   zugeordnet (beds24_buchung_id).
-4. Reinigung durchführen → **Nachher-Fotos**.
-5. **Schadensabwicklung gestaffelt:**
-   - Bagatell <50€ → aus Kaution/Reinigungspauschale.
-   - mittel 50–300€ → Plattform-Resolution-Center.
-   - groß >300€ → manuell + Versicherungsprüfung.
-6. KI: Schadenskategorisierung, Kostenschätzung, vorformulierte Gast-Nachricht.
+- Vorschlag (manuell/KI), Beauftragung, Annahme/Ablehnung, Erledigung — alles als
+  `vorgang_zuweisung`-Status + Verlauf. Auto-Zuweisung (Skill/Verfügbarkeit/Rolle) später.
+- Eskalation: Notfall sofort, Überfälligkeit nach Frist; an Verantwortlichen/Vertretung.
 
-## 4. Übergabe LZV/WG (formell)
+## 4. Sichten
 
-1. Protokoll anlegen (Einzug/Auszug/Wechsel), Vertragsart lzv/wg.
-2. Zählerstände (Foto → OCR Claude Vision), Schlüssel erfassen, Rauchmelder-Test.
-3. Checkliste je Raum: Position + Status (mangelfrei/optisch/technisch) + **Pflichtfotos**.
-4. Digitale Unterschrift (Neu-/Alt-Mieter/Vermieter) → Status=abgeschlossen, rechtsverbindlich.
-5. **Bei Auszug:** automatischer **Abgleich Einzug↔Auszug** → Schäden, die bei Einzug nicht
-   dokumentiert waren = potenziell Mieterverschulden → Schadensermittlung →
-   **Kautionsabrechnung** (Kern, §259 BGB).
+- **Plantafel** (Kanban nach Status, Drag&Drop → Statuswechsel + Verlauf).
+- **Liste/Filter** je Typ („Reinigung heute", „meine Aufträge" = Filter auf Akteur/Typ/Status).
+- **Detail** mit Verlauf-Timeline, Zuweisungen, Fotos, Typ-Zusatz, Checkliste.
 
-## 5. Übergabe KZV (reinigungsbasiert)
+## 5. Querbezug Kern
 
-Kein Gast-Unterschriftsprozess. Zustandsprüfung = Teil jeder Reinigung (siehe 3). Schaden →
-Vorgang → letzter Buchung. Keine formelle Übergabe.
-
-## 6. Wartung / wiederkehrende Vorgänge
-
-Kern-Fristen erzeugen Vorgänge nach Intervall: Heizung 1J, Rauchmelder 1J, Feuerlöscher 2J,
-Legionellen 3J, Aufzug-TÜV 1J, E-Check 4J, Gas 12J. Müllabfuhr aus Gemeinde-Kalender (Tonne
-rausstellen → Einsatz). Winterdienst (Streupflicht-Termine), Gartenpflege, Treppenhaus
-(Reinigungsplan rotierend WG).
-
-## 7. Einsatzplanung (P15)
-
-Aufträge/Vorgänge auf Akteure (Mitarbeiter/Reinigungskräfte/Hausmeister) planen — Plantafel
-Drag&Drop, Tagesplan mobil, Verfügbarkeit/Qualifikation (Schlüsselzugang/Fahrzeug). CalDAV-Sync.
-
-## 8. Querbezug
-
-- Vorgänge/Forderungen/Kaution/Akteure/Fristen/DMS: Kern (0001).
-- Handwerkerrechnung → FiBu (0002). Dienstleister → `organisationen` (Kern).
-- Schadensmeldung-Eingang → Posteingang-Agent (Agent 1) klassifiziert → Vorgang.
+- Fristen erzeugen Wartungsvorgänge; Forderungen/Kaution hängen an Schaden/Übergabe; Akteure
+  sind Träger; DMS/Channel liefern Anhänge/Benachrichtigung. Vorgänge-Verknüpfung in anderen
+  Modulen über `vorgang_id`.
