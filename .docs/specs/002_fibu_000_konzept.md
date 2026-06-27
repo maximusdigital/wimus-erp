@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.8.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.9.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-27
@@ -48,7 +48,10 @@ nur über definierte Confidence- und Betragsschwellen.
   `verarbeiteBeleg` (E-Rechnungs-Weiche | OCR+KI → Validierung → Kontierung → Gating);
   Migration `011_fibu_belege.sql` (belege/buchungen/korrekturen, GoBD-Versionierung, hash +
   buchungs_id_extern UNIQUE); UI `/fibu/belege` (Upload → Pipeline → Freigabe-Cockpit).
-- **Feststellungs-Vorschau:** firma + Periode → Ergebnisverteilung (zeitanteilig, Summenkontrolle).
+- **Feststellungs-Vorschau + Persistenz:** firma + Periode → Ergebnisverteilung (zeitanteilig,
+  Summenkontrolle). **Speicherbar (2026-06-27):** Feststellung in `feststellungen` ablegen
+  (Ergebnis + Verteilung JSONB), Historie je Firma mit Laden/Löschen
+  (`/api/fibu/feststellungen`).
 - **GuV-Auswertung (2026-06-27):** `lib/fibu/guv.ts` (`aggregateGuV`, SKR03-Heuristik
   4xxx Aufwand / 8xxx Ertrag) + Seite `/fibu/auswertung` (Firma-/Zeitraum-Filter, Ertrag/
   Aufwand je Konto, Ergebnis, Balkenchart via **Recharts**) + Tests.
@@ -158,6 +161,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.9.0 | 2026-06-27 | in_arbeit | Feststellungen-Persistenz: Vorschau speichern (`feststellungen` + Verteilung JSONB), Historie je Firma mit Laden/Löschen (`/api/fibu/feststellungen`). |
 | 0.8.0 | 2026-06-27 | in_arbeit | Konsolidierung umschaltbar Konten↔Berichtspositionen (`konsolidiereNachPosition`, Matrix Position×Einheit, A4-Druck) + Tests. |
 | 0.7.0 | 2026-06-27 | in_arbeit | Reporting-Taxonomie: `/fibu/reporting-taxonomie` (Berichtspositionen, Konto-Präfix-Mapping), GuV-Umschalter Konten↔Positionen, `lib/fibu/taxonomie.ts` + Tests. |
 | 0.6.0 | 2026-06-27 | in_arbeit | Objekt-Tags: `/fibu/objekt-tags` (Nutzungsart/Marke/Region taggen + Gruppierungs-Vorschau), `/api/fibu/objekt-tags`, `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests. |
@@ -174,6 +178,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 11:50 | v0.9.0: Feststellungen-Persistenz (speichern + Historie, /api/fibu/feststellungen) | 000,200 + Code |
 | 2026-06-27 11:35 | v0.8.0: Konsolidierung umschaltbar Konten↔Positionen (konsolidiereNachPosition) + Tests | 000,400 + Code |
 | 2026-06-27 11:00 | v0.7.0: Reporting-Taxonomie (/fibu/reporting-taxonomie) + GuV-Umschalter Konten↔Positionen + Tests | 000,200,400 + Code |
 | 2026-06-27 10:35 | v0.6.0: Objekt-Tags-Verwaltung (/fibu/objekt-tags) + gruppiereNachTag + Tests | 000,200,400 + Code |

@@ -80,9 +80,10 @@ zulässig. Version springt nur am Meilenstein; im Cycle wachsen nur Historie + `
 
 | ID | Kürzel | Status | Version | Kurzbeschreibung |
 |----|--------|--------|---------|------------------|
-| 0001 | erp | in_arbeit | 5.1.0 | ERP-Fundament: Hierarchie, Akteure, BK-Kerne, OCR (ocr_verarbeitungen), Dashboards, Organisationen (migriert aus Bestand V502/V501/V104/V101) |
-| 0002 | fibu | in_arbeit | 0.8.0 | Belegerkennung, Kontierung, Mehrmandanten/Gesellschafter, GuV + konsolidierte GuV (Konten/Positionen, Scope-Presets, A4-Druck), Objekt-Tags, Berichtspositionen, Lieferant-Match |
-| 0003 | crm | in_arbeit | 0.2.0 | CRM-Pipelines: Lead-Inbox + Deal-Kanban (implementiert, crm_-Tabellen), Verknüpfungsmodell, Custom Fields, Pipedrive-UI, amoCRM-Ablösung |
+| 0001 | erp | in_arbeit | 5.0.0 | ERP-Fundament: Hierarchie, Akteure, BK-Kerne, OCR, Dashboards, Organisationen (migriert aus Bestand V502/V501/V104/V101) |
+| 0002 | fibu | in_arbeit | 0.2.0 | Belegerkennung, Kontierung, Mehrmandanten/Gesellschafter, TaxPool-Export, Bank-Cockpit, KI-Controlling |
+| 0003 | crm | in_arbeit | 0.1.0 | CRM-Pipelines: Lead-Inbox + Deal-Kanban, Verknüpfungsmodell, Custom Fields, Pipedrive-UI, amoCRM-Ablösung |
+| 0004 | ops | in_arbeit | 0.1.0 | Betrieb: Vorgänge/Schäden, Übergaben (LZV formell + KZV reinigungsbasiert, Foto-Abgleich), Reinigung, Wartung, Einsatzplanung |
 
 ## Konventionen
 

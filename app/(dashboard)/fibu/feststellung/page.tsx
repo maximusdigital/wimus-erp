@@ -15,6 +15,11 @@ import {
 import { formatEUR } from "@/lib/utils/format"
 import { DonutChart } from "@/components/charts/wimus-charts"
 import { ergebnisverteilung, type Beteiligung } from "@/lib/utils/fibu"
+import {
+  FeststellungSpeichern,
+  FeststellungHistorie,
+  type FeststellungEintrag,
+} from "@/components/fibu/feststellung-aktionen"
 
 export const metadata = {
   title: "Feststellungs-Vorschau",
@@ -77,6 +82,24 @@ export default async function FeststellungPage({
       ? ergebnisverteilung(beteiligungen, ergebnis, von, bis)
       : []
   const summe = verteilung.reduce((s, v) => s + v.anteil_betrag, 0)
+
+  // Payload zum Persistieren + Historie der gespeicherten Feststellungen.
+  const verteilungMitName = verteilung.map((v) => ({
+    gesellschafter_id: v.gesellschafter_id,
+    name: namen.get(v.gesellschafter_id) ?? null,
+    effektiv_quote: v.effektiv_quote,
+    anteil_betrag: v.anteil_betrag,
+  }))
+
+  let historie: FeststellungEintrag[] = []
+  if (firmaId) {
+    const { data } = await supabase
+      .from("feststellungen")
+      .select("id, firma_id, periode_von, periode_bis, ermitteltes_ergebnis, created_at, firma:firmen(id, name, kuerzel)")
+      .eq("firma_id", firmaId)
+      .order("created_at", { ascending: false })
+    historie = (data ?? []) as unknown as FeststellungEintrag[]
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -162,8 +185,19 @@ export default async function FeststellungPage({
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base">Verteilung</CardTitle>
+          {verteilung.length > 0 ? (
+            <FeststellungSpeichern
+              payload={{
+                firma_id: firmaId,
+                periode_von: von,
+                periode_bis: bis,
+                ermitteltes_ergebnis: ergebnis,
+                verteilung: verteilungMitName,
+              }}
+            />
+          ) : null}
         </CardHeader>
         <CardContent>
           {beteiligungen.length === 0 ? (
@@ -229,6 +263,15 @@ export default async function FeststellungPage({
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Gespeicherte Feststellungen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FeststellungHistorie eintraege={historie} />
         </CardContent>
       </Card>
     </div>
