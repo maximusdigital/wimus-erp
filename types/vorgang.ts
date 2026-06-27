@@ -56,6 +56,9 @@ export type KontaktRef = {
 export const VORGANG_TYPEN = [
   "schaden",
   "reparatur",
+  "reinigung",
+  "uebergabe",
+  "wartung",
   "anfrage",
   "kuendigung",
   "sonstiges",
@@ -64,10 +67,22 @@ export const VORGANG_TYPEN = [
 export const VORGANG_TYP_LABELS: Record<string, string> = {
   schaden: "Schaden",
   reparatur: "Reparatur",
+  reinigung: "Reinigung",
+  uebergabe: "Übergabe",
+  wartung: "Wartung",
   anfrage: "Anfrage",
   kuendigung: "Kündigung",
   sonstiges: "Sonstiges",
 }
+
+/** Typen mit 1:1-Zusatztabelle (Engine-Erweiterung, Spec 0004). */
+export const VORGANG_TYP_ERWEITERUNG = [
+  "schaden",
+  "reparatur",
+  "reinigung",
+  "uebergabe",
+  "wartung",
+] as const
 
 // ---------------------------------------------------------------------------
 // Priorität
@@ -110,19 +125,26 @@ export const VORGANG_PRIORITAET_RANG: Record<string, number> = {
 // ---------------------------------------------------------------------------
 // Status
 // ---------------------------------------------------------------------------
+// Kanonischer Status-Flow (Spec 0004 / DB-CHECK Migration 018):
+// offen → zugewiesen → in_arbeit → (wartet_extern) → erledigt → abgenommen;
+// abgebrochen aus jedem offenen Status. "wartet" (alt) → "wartet_extern".
 export const VORGANG_STATUS = [
   "offen",
+  "zugewiesen",
   "in_arbeit",
-  "wartet",
+  "wartet_extern",
   "erledigt",
+  "abgenommen",
   "abgebrochen",
 ] as const
 
 export const VORGANG_STATUS_LABELS: Record<string, string> = {
   offen: "Offen",
+  zugewiesen: "Zugewiesen",
   in_arbeit: "In Arbeit",
-  wartet: "Wartet",
+  wartet_extern: "Wartet (extern)",
   erledigt: "Erledigt",
+  abgenommen: "Abgenommen",
   abgebrochen: "Abgebrochen",
 }
 
@@ -131,9 +153,11 @@ export const VORGANG_STATUS_VARIANT: Record<
   "default" | "secondary" | "destructive" | "outline"
 > = {
   offen: "default",
+  zugewiesen: "secondary",
   in_arbeit: "secondary",
-  wartet: "outline",
+  wartet_extern: "outline",
   erledigt: "outline",
+  abgenommen: "outline",
   abgebrochen: "destructive",
 }
 
