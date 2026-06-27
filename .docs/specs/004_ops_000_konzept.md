@@ -154,12 +154,22 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 > Laufendes Protokoll aller Änderungen am Modul (neueste oben). Vorgang ≤ 100 Zeichen.
 
+> Bau-Chronik aus der echten Git-Historie nachgetragen (Committer-Zeit, `git log`),
+> Commit-Kürzel in Klammern. Doku-Commits kursiv kenntlich.
+
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
-| 2026-06-28 01:20 | v0.4.1: Schaden-Übernahme aus KI-Abgleich (Vorschlag → Folge-Vorgang typ=schaden + vorgang_schaden + Verlauf) | 000_konzept + 300_prozesse + Code |
-| 2026-06-28 01:05 | v0.4.0: KI-Bildverarbeitung Übergabe (Claude Vision, Zähler+Abgleich, JSON+Confidence, Mig.019) | alle + Code |
-| 2026-06-28 00:40 | Foto-UI Vorher/Nachher (mobile Kamera + Supabase Storage + Galerie) | 000_konzept + Code |
-| 2026-06-27 19:15 | Eskalation gebaut (lib/ops/eskalation + Detail/Plantafel-Anzeige, manuell+rechnerisch) | 000_konzept + Code |
-| 2026-06-27 19:00 | v0.3.0: Engine implementiert (Mig. 017/018, lib/ops+Tests, Status-API+Plantafel-DnD, Akteure, Detail: Zuweisung/Verlauf/Typ-Panels) | 000_konzept + Code |
-| 2026-06-27 15:00 | Neuaufbau aus echten Quellen: Engine-Architektur + akteure + 5 Typen; Umzug aus Kern | alle |
-| 2026-06-26 16:00 | Grobspec 004 (chat-rekonstruiert) — als unzuverlässig verworfen | alle |
+| 2026-06-28 01:35 | Spec festgeschrieben auf realen Stand (400/500/600 + README-Index) + Bau-Chronik aus git | alle 004 + README |
+| 2026-06-28 01:25 | Schaden-Übernahme aus KI-Abgleich → Folge-Vorgang typ=schaden + vorgang_schaden + Verlauf (e0df43b) | schaden-uebernehmen, vorgang-fotos |
+| 2026-06-28 01:08 | KI-Bildverarbeitung Übergabe (Claude Vision: Zähler + Vorher/Nachher-Abgleich, JSON+Confidence) (13bdf66) | Mig.019, lib/claude, lib/ops/confidence, foto-analyse |
+| 2026-06-28 00:42 | *Doku: Foto-UI erledigt, Bild-Abgleich als nächster Schritt (83d887d)* | 000_konzept |
+| 2026-06-28 00:41 | Foto-UI Vorher/Nachher mobile-first (Kamera + Supabase Storage + Galerie) (057be5f) | vorgang-fotos, foto-route |
+| 2026-06-27 23:55 | *Doku: Eskalation erledigt, Bild-Abgleich-Hook präzisiert (ac2e03e)* | 000_konzept |
+| 2026-06-27 23:54 | Eskalation: Auslösung (computed + manuell) + Anzeige Detail/Plantafel (e39acda) | lib/ops/eskalation, vorgang-eskalation |
+| 2026-06-27 19:07 | *Doku: Konzept auf implementierten Stand v0.3.0 (d6be882)* | 000_konzept |
+| 2026-06-27 19:06 | Typ-Panels: 5 Vorgangstyp-Erweiterungen am Detail (f3ea090) | vorgang-typ-panel, typ-route |
+| 2026-06-27 18:38 | Akteure-CRUD + Vorgang-Detail (Zuweisungen + Verlauf-Timeline) (653e6ec) | akteure, vorgang_zuweisung, akteur-verwaltung |
+| 2026-06-27 18:27 | Engine-Kern: Status-Flow, Schadens-Staffel, Plantafel-DnD + Migrationen 017/018 (e1bd926) | Mig.017/018, lib/ops, vorgaenge |
+| 2026-06-27 14:50 | *Spec-Neuaufbau aus echten Quellen (Engine-Architektur) + Umzug Vorgänge aus Kern (82271a7)* | alle 004 |
+| 2026-06-23 11:51 | Asset-Register / Inventar – CRUD (Phase 4) (8a5ca21) | asset_register, /inventar |
+| 2026-06-23 11:41 | Vorgänge (P14) CRUD + Plantafel (P15, Kanban) (Phase 4) (e3e7b0c) | vorgaenge, /vorgaenge |

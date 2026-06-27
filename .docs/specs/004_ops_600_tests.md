@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0004
 dokument: Tests
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0004 — Tests
@@ -18,12 +18,18 @@ geaendert: 2026-06-27
   explizite Reaktivierung (Verlauf-Eintrag).
 - `statusUebergang(vorgang, neu)` liefert Verlauf-Eintrag {von, nach, am} + Patch.
 
-### Eskalation
-- `istEskaliert(prioritaet, faellig_am, jetzt)`: notfall sofort; sonst bei Überfälligkeit.
+### Eskalation (gebaut: `lib/ops/eskalation.ts`)
+- `eskalationFaellig`/`istUeberfaellig`/`eskalationsGrund`/`zeigtEskalation`: notfall sofort;
+  sonst bei Überfälligkeit; abgeschlossen nie.
 
 ### Typ-Zuordnung
 - Vorgang `typ` bestimmt genau eine Zusatztabelle; `vorgang_<typ>` 1:1.
-- Schaden-Schwere → `abwicklungsstufe` (Staffel <50/…/>10.000).
+- Schaden-Schwere → `abwicklungsstufe` (Staffel <50/…/>10.000), `schadenEinstufung` aus Betrag.
+
+### KI-Bildanalyse-Routing (gebaut: `lib/ops/confidence.ts`)
+- `kiStatusAusConfidence(confidence, kritisch)`: ≥0.90 auto · 0.75–0.89 pruefen · <0.75 manuell;
+  kritische Felder (Zähler→Abrechnung, Schaden→Kaution) nie auto → mindestens pruefen;
+  ungültige Confidence (NaN/∞) → manuell. (5 Unit-Tests.)
 
 ### Zuweisung
 - intern (Akteur) XOR extern (Organisation/Handwerker) je Zuweisung sinnvoll befüllt.
@@ -38,6 +44,13 @@ geaendert: 2026-06-27
 - Vorgang anlegen (Typ Schaden) → Akteur zuweisen → in_arbeit → Foto + Checkliste →
   erledigt → Forderung verknüpft. Plantafel: Karte zwei Spalten weiterziehen → Verlauf wächst.
 
+## KI-Bildverarbeitung (gebaut, Claude Vision)
+- `lib/integrations/claude.ts` (Vision-Call), `lib/validations/foto-analyse.ts` (zod), Endpoints
+  `/api/vorgaenge/[id]/foto-analyse` (zaehler/abgleich) + `/schaden-uebernehmen`. Schema im Prompt,
+  JSON serverseitig validiert; Confidence-Routing per `lib/ops/confidence.ts` (s.o., getestet).
+- Noch ohne automatisierten E2E (braucht echte Fotos + ANTHROPIC_TOKEN); Modellgüte an 20–30
+  echten Vorher/Nachher-Paaren verifizieren, bevor Auto-Schwellen scharf gestellt werden.
+
 ## Offen / später
-- KI-Prüf-Loop (Schwellen/Versuche), Foto-Capture, Benachrichtigungs-Zustellung — Hooks, daher
+- KI-Prüf-Loop Checkliste (Schwellen/Versuche), Benachrichtigungs-Zustellung — Hooks, daher
   jetzt nur Feld-/Status-Tests, keine End-to-End-Lieferung.

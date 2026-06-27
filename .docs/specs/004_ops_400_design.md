@@ -1,14 +1,14 @@
 ---
 gehoert_zu: 0004
 dokument: Design
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0004 — Design
 
 > Version & Status stehen in `004_ops_000_konzept.md`. Folgt Kern-Design-System
-> (`001_erp_400_design.md`): Shadcn + Recharts, Token-Farben, 4px-Grid, deutsche Labels,
-> Mobile 390px. RowActions/StatusBadge/PriorityBadge aus dem Kern wiederverwenden.
+> (`001_erp_400_design.md`): Shadcn + shadcn-charts (Recharts-basiert), Token-Farben, 4px-Grid,
+> deutsche Labels, Mobile 390px. RowActions/StatusBadge/PriorityBadge aus dem Kern wiederverwenden.
 
 ## 1. Plantafel (Vorgangs-Kanban)
 
@@ -27,7 +27,11 @@ geaendert: 2026-06-27
   Benachrichtigung, je mit Akteur + Zeit.
 - **Zuweisungen**: intern (Akteur) + extern (Organisation/Handwerker) anlegen, Auftrag
   versenden (Hook-Button), Status je Zuweisung.
-- **Fotos**: Vorher/Nachher-Galerie (Referenzen), Upload-Hook.
+- **Fotos** (gebaut): mobile Kamera-Capture (`capture=environment`) + client-seitiges Downscale
+  → Supabase Storage (`vorgang-fotos`), Galerie je Phase (Vorher/Nachher/Befund), Lightbox. **KI
+  (Claude Vision):** je Foto „Zähler lesen", vorgangweit „Vorher/Nachher abgleichen" → KI-Badge
+  (auto/prüfen/manuell + Confidence); Schadensvorschläge je Zeile „Als Schaden anlegen" (Folge-
+  Vorgang typ=schaden).
 - **Typ-Panel** (nur für den Typ sichtbar): Reinigung (Turnaround/Inventar/buchung) · Übergabe
   (Zähler/Schlüssel/Signatur/Einzug↔Auszug) · Wartung (Frist/Protokoll) · Reparatur (Angebot/
   Abnahme/Gewährleistung) · Schaden (Kategorie/Schwere/Abwicklungsstufe/Versicherung/Forderung).
@@ -55,4 +59,4 @@ geaendert: 2026-06-27
 - Primäraktion Vorgang: Status weiterschalten / Zuweisen. Kebab: Duplizieren, Drucken, DMS.
   Destruktiv: Abbrechen (+ Grund), Löschen (soft).
 - Typ-Icon-Map: schaden ⚠ · reparatur 🔧 · reinigung 🧹 · uebergabe 🔑 · wartung 🛠 · anfrage ✉.
-- Charts (Workforce-/Auslastungssicht, später): Recharts.
+- Charts (Workforce-/Auslastungssicht, später): shadcn-charts (Recharts-basiert), nie Tremor.

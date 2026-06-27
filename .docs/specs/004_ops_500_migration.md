@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0004
 dokument: Migration
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0004 — Migration
@@ -22,6 +22,10 @@ geaendert: 2026-06-27
      `vorgang_schaden` (Typ-Erweiterungen, `vorgang_id` PK/FK).
    - `checklisten_ausfuehrungen` um `akteur_id` ergänzen (ADD COLUMN IF NOT EXISTS).
    - RLS `mandant_isolation` + Touch-Trigger + GRANTs für alle neuen Tabellen.
+3. **019_vorgang_foto_ki.sql** (Modul 004): `vorgang_foto` additiv um die KI-Bildanalyse-Felder
+   ergänzen (ADD COLUMN IF NOT EXISTS): `ki_analyse` JSONB, `ki_confidence` NUMERIC(3,2),
+   `ki_status` TEXT CHECK(auto/pruefen/manuell), `ki_analysiert_am` TIMESTAMPTZ. Reiner ALTER,
+   keine neuen Tabellen/Policies. Anwenden nach 018.
 
 ## Idempotenz-Notizen
 
