@@ -13,6 +13,7 @@ import {
   type ZuweisungRow,
 } from "@/components/vorgaenge/vorgang-zuweisungen"
 import { VorgangTypPanel } from "@/components/vorgaenge/vorgang-typ-panel"
+import { VorgangFotos, type FotoRow } from "@/components/vorgaenge/vorgang-fotos"
 import { VorgangEskalation } from "@/components/vorgaenge/vorgang-eskalation"
 import { TYP_TABELLE } from "@/lib/validations/vorgang-typ"
 import { eskalationsGrund, eskalationFaellig } from "@/lib/ops/eskalation"
@@ -63,7 +64,7 @@ export default async function VorgangDetailPage({
   }
 
   // Engine-Begleiter: Verlauf, Zuweisungen + Auswahllisten.
-  const [{ data: verlaufRaw }, { data: zuwRaw }, { data: akteureRaw }, { data: orgsRaw }] =
+  const [{ data: verlaufRaw }, { data: zuwRaw }, { data: akteureRaw }, { data: orgsRaw }, { data: fotosRaw }] =
     await Promise.all([
       supabase
         .schema("wimus")
@@ -79,6 +80,12 @@ export default async function VorgangDetailPage({
         .order("created_at", { ascending: true }),
       supabase.schema("wimus").from("akteure").select("id, name").eq("aktiv", true).order("name"),
       supabase.schema("wimus").from("organisationen").select("id, name").order("name").limit(500),
+      supabase
+        .schema("wimus")
+        .from("vorgang_foto")
+        .select("id, phase, url, beschreibung, aufgenommen_am")
+        .eq("vorgang_id", id)
+        .order("aufgenommen_am", { ascending: true }),
     ])
 
   const verlauf = (verlaufRaw ?? []) as {
@@ -92,6 +99,7 @@ export default async function VorgangDetailPage({
   const zuweisungen = (zuwRaw ?? []) as unknown as ZuweisungRow[]
   const akteure = (akteureRaw ?? []) as { id: string; name: string }[]
   const organisationen = (orgsRaw ?? []) as { id: string; name: string }[]
+  const fotos = (fotosRaw ?? []) as FotoRow[]
 
   // Typ-Zusatzdaten (1:1), falls der Vorgangstyp eine Erweiterung hat.
   const typTabelle = vorgang.typ ? TYP_TABELLE[vorgang.typ] : undefined
@@ -317,6 +325,15 @@ export default async function VorgangDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Fotos (Vorher / Nachher)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <VorgangFotos vorgangId={vorgang.id} fotos={fotos} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
