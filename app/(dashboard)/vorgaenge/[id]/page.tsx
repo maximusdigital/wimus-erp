@@ -83,7 +83,7 @@ export default async function VorgangDetailPage({
       supabase
         .schema("wimus")
         .from("vorgang_foto")
-        .select("id, phase, url, beschreibung, aufgenommen_am")
+        .select("id, phase, url, beschreibung, aufgenommen_am, ki_status, ki_confidence, ki_analyse")
         .eq("vorgang_id", id)
         .order("aufgenommen_am", { ascending: true }),
     ])

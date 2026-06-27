@@ -2,10 +2,10 @@
 id: 0004
 titel: Betrieb (Vorgangs-Engine — Schaden/Reparatur/Reinigung/Übergabe/Wartung)
 status: in_arbeit
-version: 0.3.0
+version: 0.4.0
 modul: ops
 erstellt: 2026-06-26
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 abhaengt_von: [0001]
 ---
 
@@ -73,8 +73,10 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 - ~~Foto Vorher/Nachher-UI~~ → **erledigt 2026-06-28**: mobile Capture (Handy-Kamera) +
   Supabase Storage + Galerie je Phase (`components/vorgaenge/vorgang-fotos.tsx`).
-- **Bild-Abgleich Einzug↔Auszug** (Mistral Pixtral / Claude Vision) — Fotos liegen nun vor;
-  KI-Vergleich → Schadens-Vorschläge noch offen.
+- ~~Bild-Abgleich Einzug↔Auszug~~ → **erledigt 2026-06-28** (Claude Vision, NICHT Mistral):
+  Zählerstand-Foto + Vorher/Nachher-Abgleich → JSON-Schema-Output + Confidence-Routing,
+  Ergebnis an `vorgang_foto.ki_*` (`lib/integrations/claude.ts`, `/foto-analyse`, Mig. 019).
+  Offen: Übernahme der Vorschläge in `vorgang_schaden`/Kaution per Klick.
 - Typ-Sichten/Filter („Reinigung heute", „meine Aufträge"), Checklisten-Ausführung-UI.
 - ~~Eskalations-UI~~ → **erledigt 2026-06-27** (`lib/ops/eskalation.ts` + Anzeige Detail/Plantafel,
   manuell + rechnerisch).
@@ -113,6 +115,16 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
   · >10.000 (Anwalt). Steuert `vorgang_schaden` + Forderungs-/Versicherungsbezug.
 - 2026-06-27: **Wartung über Kern-Fristen** (nicht eigene Mechanik): Fristen (`frist_typ
   wartung_*`) erzeugen Wartungs-Vorgänge; `vorgang_wartung` trägt nur Intervall-/Protokoll-Bezug.
+- 2026-06-28: **KI-Bildverarbeitung — Modelltrennung Mistral≠Claude.** Mistral OCR bleibt
+  FiBu/Belege-only; **Claude Vision** (`claude-opus-4-8`) macht die zwei Übergabe-Bildaufgaben
+  (Zählerstand-Foto, Vorher/Nachher-Abgleich). Korrigiert die frühere Idee „Mistral Pixtral fürs
+  Bild". Grund: ein Belegmodell ≠ ein Foto-/Vergleichsmodell; Trennung hält die Pipelines sauber.
+- 2026-06-28: **Strukturierter Output + Confidence-Routing** statt Fließtext. Schema im Prompt,
+  nur JSON, serverseitig (zod) validiert → DB-Felder. Routing ≥0.90 auto · 0.75–0.89 pruefen ·
+  <0.75 manuell; kritische Felder (Zähler→Abrechnung, Schaden→Kaution) **nie auto**.
+- 2026-06-28: **Kein zusätzliches Vision-Modell.** Volumen ~500 Bilder/Monat (<1 €) → keine
+  Volumen-Optimierung/Fallback, Qualität vor Sparen. **Vorbehalt:** Modellgüte an 20–30 echten
+  Vorher/Nachher-Paaren verifizieren, BEVOR Auto-Confidence-Schwellen scharf gestellt werden.
 
 ## Offene Punkte
 
@@ -130,6 +142,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.4.0 | 2026-06-28 | in_arbeit | KI-Bildverarbeitung Übergabe (Claude Vision): Zählerstand + Vorher/Nachher-Abgleich, JSON-Schema-Output + Confidence-Routing, `vorgang_foto.ki_*` (Mig. 019), `lib/integrations/claude.ts` + `lib/ops/confidence.ts` (+Tests) + `/foto-analyse` + Foto-UI-Erweiterung. Mistral bleibt FiBu-only. |
 | 0.3.0 | 2026-06-27 | in_arbeit | Engine implementiert: Migrationen 017 (akteure) + 018 (vorgaenge geschärft + verlauf/zuweisung/foto + 5 Typ-Tabellen); lib/ops + Tests; Status-Flow-API + Plantafel-DnD; Akteure-CRUD; Vorgang-Detail mit Zuweisungen/Verlauf/Typ-Panels. |
 | 0.2.0 | 2026-06-27 | in_arbeit | Feinspec aus echten Quellen: Engine-Architektur (eine Engine + 5 Typ-Erweiterungen), Träger `akteure`, externe Hooks, Umzug Vorgänge 0001→004. Ersetzt den aus dem Chat rekonstruierten Grobentwurf. |
 | 0.1.0 | 2026-06-26 | abgelöst | Grobentwurf (chat-rekonstruiert, unzuverlässig) — durch 0.2.0 ersetzt. |
@@ -140,6 +153,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 01:05 | v0.4.0: KI-Bildverarbeitung Übergabe (Claude Vision, Zähler+Abgleich, JSON+Confidence, Mig.019) | alle + Code |
 | 2026-06-28 00:40 | Foto-UI Vorher/Nachher (mobile Kamera + Supabase Storage + Galerie) | 000_konzept + Code |
 | 2026-06-27 19:15 | Eskalation gebaut (lib/ops/eskalation + Detail/Plantafel-Anzeige, manuell+rechnerisch) | 000_konzept + Code |
 | 2026-06-27 19:00 | v0.3.0: Engine implementiert (Mig. 017/018, lib/ops+Tests, Status-API+Plantafel-DnD, Akteure, Detail: Zuweisung/Verlauf/Typ-Panels) | 000_konzept + Code |

@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0004
 dokument: Architektur
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0004 — Architektur
@@ -36,10 +36,30 @@ eigenes Datenmodell.
 - **Externer Auftrag-Versand** → `vorgang_zuweisung.auftrag_versendet_am`/`auftrag_kanal`
   (Stub); Versand via n8n später.
 - **Foto-Capture/Storage** → Paperless/Nextcloud: Felder `paperless_id`/`url`, Upload später.
-- **KI-Prüfung Checkliste** (`ki_schwellenwert`/`max_versuche`) + KI-Schadenskategorisierung
-  (Claude Vision) → Hook; KI-Call später.
+- **KI-Prüfung Checkliste** (`ki_schwellenwert`/`max_versuche`) → Hook; KI-Call später.
 - **KZV-Turnaround** → Beds24-Webhook → n8n erzeugt Reinigungs-Vorgang (`vorgang_reinigung`
   mit `buchung_id`); der Webhook-Skeleton existiert im Kern.
+
+## KI-Bildverarbeitung (gebaut 2026-06-28)
+
+Bewusste Modelltrennung — **keine Vermischung**:
+
+| Aufgabe | Modell | Anbindung | Output |
+|---------|--------|-----------|--------|
+| Belege/Rechnungen (FiBu 0002) | **Mistral OCR** | `lib/integrations/mistral.ts` | Markdown + JSON |
+| Zählerstand-Foto (Übergabe) | **Claude Vision** (`claude-opus-4-8`) | `lib/integrations/claude.ts` | JSON nach Schema |
+| Vorher/Nachher-Abgleich + Schadenskategorisierung | **Claude Vision** | `lib/integrations/claude.ts` | JSON nach Schema |
+
+- Mistral bleibt **FiBu/Belege-only**; Claude macht die zwei Übergabe-Bildaufgaben. Schema im
+  Prompt, **nur JSON** zurück, serverseitig gegen zod-Schema validiert (`lib/validations/foto-analyse.ts`).
+- **Ablauf:** Foto liegt in Supabase Storage (`vorgang-fotos`) → Endpoint
+  `/api/vorgaenge/[id]/foto-analyse` (`modus=zaehler|abgleich`) lädt Bytes per Public-URL, ruft
+  Claude, validiert, **routet per Confidence** (`lib/ops/confidence.ts`) und schreibt
+  `ki_analyse`/`ki_confidence`/`ki_status`/`ki_analysiert_am` an `vorgang_foto` (Migration 019).
+- **Confidence-Routing** (wie OCR-Pipeline): ≥0.90 auto · 0.75–0.89 pruefen · <0.75 manuell.
+  Kritische Felder (Zähler→Abrechnung, Schaden→Kaution) **nie auto** → mindestens pruefen.
+- **Serverseitig** (App-Route, liest `ANTHROPIC_TOKEN`); Service-Role nur für Storage. Kein
+  Vision-Modell im Client. Token (`ANTHROPIC_TOKEN`) noch zu setzen.
 
 ## Träger-Modell (akteure)
 

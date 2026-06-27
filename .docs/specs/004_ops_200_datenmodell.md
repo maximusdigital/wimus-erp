@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0004
 dokument: Datenmodell
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0004 — Datenmodell
@@ -62,11 +62,17 @@ status ENUM (vorgeschlagen/beauftragt/angenommen/abgelehnt/erledigt), auftrag_ve
 TIMESTAMPTZ NULL, auftrag_kanal TEXT NULL (Hook), grund ENUM NULL (primaer/vertretung/
 kapazitaet/manuell/ki), created_at, updated_at.
 
-### vorgang_foto  (Vorher/Nachher + Pflichtfotos)
+### vorgang_foto  (Vorher/Nachher + Pflichtfotos + KI-Analyse)
 mandant_id FK, vorgang_id FK, phase ENUM (vorher/nachher/befund/sonstig), paperless_id TEXT NULL,
-url TEXT NULL, beschreibung TEXT, akteur_id UUID NULL, aufgenommen_am TIMESTAMPTZ DEFAULT now().
+url TEXT NULL, beschreibung TEXT, akteur_id UUID NULL, aufgenommen_am TIMESTAMPTZ DEFAULT now(),
+**ki_analyse** JSONB NULL (strukturiertes Claude-Vision-Ergebnis: `{zaehler:[…]}` bzw.
+`{schaeden:[…]}`), **ki_confidence** NUMERIC(3,2) NULL (Modell-Sicherheit 0..1),
+**ki_status** ENUM NULL (auto/pruefen/manuell – Confidence-Routing),
+**ki_analysiert_am** TIMESTAMPTZ NULL. (Migration 019.)
 
-> Capture/Upload via Paperless/Storage ist Hook — hier nur die Referenz-Felder.
+> Capture/Upload via Supabase Storage (`vorgang-fotos`); Bytes per Public-URL. KI-Analyse via
+> Claude Vision (Endpoint `/api/vorgaenge/[id]/foto-analyse`) – Routing ≥0.90 auto · 0.75–0.89
+> pruefen · <0.75 manuell, kritische Felder (Zähler→Abrechnung, Schaden→Kaution) nie auto.
 
 ## Typ-Erweiterungen (1:1 zu vorgaenge, Migration 018)
 
