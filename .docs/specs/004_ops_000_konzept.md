@@ -71,9 +71,11 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 ## In Arbeit (dieser Cycle)
 
-- Foto Vorher/Nachher-UI (Felder/Tabelle da; Upload/Capture als Hook).
-- Eskalations-UI (Feld da; Auslösung/Anzeige), Typ-Sichten/Filter („Reinigung heute",
-  „meine Aufträge"), Checklisten-Ausführung-UI.
+- Foto Vorher/Nachher-UI + **Bild-Abgleich Einzug↔Auszug** (Mistral Pixtral / Claude Vision —
+  Felder/Tabelle da; Upload/Capture + KI-Call als Hook).
+- Typ-Sichten/Filter („Reinigung heute", „meine Aufträge"), Checklisten-Ausführung-UI.
+- ~~Eskalations-UI~~ → **erledigt 2026-06-27** (`lib/ops/eskalation.ts` + Anzeige Detail/Plantafel,
+  manuell + rechnerisch).
 - Externe Fähigkeiten (Benachrichtigung, Auftrag-Versand, KI-Prüfung) bleiben **Hook/Stub** —
   echte Lieferung via n8n/Channel/Storage/Claude-Vision später.
 
@@ -136,6 +138,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 19:15 | Eskalation gebaut (lib/ops/eskalation + Detail/Plantafel-Anzeige, manuell+rechnerisch) | 000_konzept + Code |
 | 2026-06-27 19:00 | v0.3.0: Engine implementiert (Mig. 017/018, lib/ops+Tests, Status-API+Plantafel-DnD, Akteure, Detail: Zuweisung/Verlauf/Typ-Panels) | 000_konzept + Code |
 | 2026-06-27 15:00 | Neuaufbau aus echten Quellen: Engine-Architektur + akteure + 5 Typen; Umzug aus Kern | alle |
 | 2026-06-26 16:00 | Grobspec 004 (chat-rekonstruiert) — als unzuverlässig verworfen | alle |
