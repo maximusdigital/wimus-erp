@@ -18,6 +18,7 @@ import {
   Layers,
   LayoutDashboard,
   ListChecks,
+  ListTree,
   LogOut,
   Mail,
   Package,
@@ -90,6 +91,7 @@ const fibuNav: NavItem[] = [
   { title: "Auswertung", href: "/fibu/auswertung", icon: PieChart },
   { title: "Konsolidierung", href: "/fibu/konsolidierung", icon: Layers },
   { title: "Objekt-Tags", href: "/fibu/objekt-tags", icon: Tags },
+  { title: "Berichtspositionen", href: "/fibu/reporting-taxonomie", icon: ListTree },
   { title: "Feststellung", href: "/fibu/feststellung", icon: PieChart },
   { title: "DATEV-Export", href: "/fibu/export", icon: Download },
 ];

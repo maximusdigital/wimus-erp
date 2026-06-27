@@ -105,7 +105,8 @@ akteur_id, am TIMESTAMPTZ. Häufung → Kontierungsregel-Vorschlag.
 
 > Status: **gebaut (Migration 015)** — Tabellen + RLS stehen. `auswertungs_scopes` genutzt
 > (Presets in `/fibu/konsolidierung`). `objekt_tags` genutzt (Verwaltung + Gruppierung in
-> `/fibu/objekt-tags`, `/api/fibu/objekt-tags`). `reporting_taxonomie` noch ohne UI.
+> `/fibu/objekt-tags`). `reporting_taxonomie` genutzt (`/fibu/reporting-taxonomie` +
+> GuV-Umschalter Konten↔Positionen; mapping JSONB = `{ art, konten[] }`, Konto-Präfix-Match).
 
 ### auswertungs_scopes
 name, einheiten_set UUID[], k1_set TEXT[] (oder Tag-Filter), zeitraum_typ, optionen JSONB

@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.6.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.7.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-27
@@ -66,6 +66,11 @@ nur über definierte Confidence- und Betragsschwellen.
   taggen (Chips anlegen/löschen) + Gruppierungs-Vorschau je Dimension. API
   `/api/fibu/objekt-tags`, Logik `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests.
   Basis für die horizontale Achse konsolidierter Auswertungen.
+- **Reporting-Taxonomie (2026-06-27):** `/fibu/reporting-taxonomie` — neutrale
+  Berichtspositionen (Code/Bezeichnung/Art + Konto-Präfixe), vereinheitlicht SKR03↔EÜR.
+  GuV-Auswertung umschaltbar **Konten ↔ Berichtspositionen** (Longest-Prefix-Mapping,
+  nicht-zugeordnete Konten ausgewiesen). API `/api/fibu/reporting-taxonomie`, Logik
+  `lib/fibu/taxonomie.ts` (`mapKonto`/`aggregateNachPosition`) + Tests.
 - **Lieferant-Fuzzy-Match:** `lib/fibu/lieferant-match.ts` (`matchLieferant`, Alias/
   Normalisierung) leitet `firma_id` aus dem erkannten Lieferanten ab (in `/api/fibu/belege`).
 - **RowActions/Kebab** in allen FiBu-Stammdaten-Listen ausgerollt (Kern-Komponente).
@@ -152,6 +157,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.7.0 | 2026-06-27 | in_arbeit | Reporting-Taxonomie: `/fibu/reporting-taxonomie` (Berichtspositionen, Konto-Präfix-Mapping), GuV-Umschalter Konten↔Positionen, `lib/fibu/taxonomie.ts` + Tests. |
 | 0.6.0 | 2026-06-27 | in_arbeit | Objekt-Tags: `/fibu/objekt-tags` (Nutzungsart/Marke/Region taggen + Gruppierungs-Vorschau), `/api/fibu/objekt-tags`, `lib/fibu/objekt-tags.ts` (`gruppiereNachTag`) + Tests. |
 | 0.5.0 | 2026-06-27 | in_arbeit | Konsolidierte GuV: `/fibu/konsolidierung` (Scope-Selektor, Matrix Konto×Einheit, A4-Druck), speicherbare Scope-Presets (`/api/fibu/auswertungs-scopes`), `lib/fibu/konsolidierung.ts` + Tests. |
 | 0.4.0 | 2026-06-27 | in_arbeit | Reporting-Tabellen gebaut (Migration 015: feststellungen/auswertungs_scopes/objekt_tags/reporting_taxonomie + RLS), ocr_verarbeitungen (014); gebrandeter A4-GuV-Druck (`/fibu/auswertung/druck`). |
@@ -166,6 +172,7 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-27 11:00 | v0.7.0: Reporting-Taxonomie (/fibu/reporting-taxonomie) + GuV-Umschalter Konten↔Positionen + Tests | 000,200,400 + Code |
 | 2026-06-27 10:35 | v0.6.0: Objekt-Tags-Verwaltung (/fibu/objekt-tags) + gruppiereNachTag + Tests | 000,200,400 + Code |
 | 2026-06-27 01:50 | v0.5.0: Konsolidierte GuV (/fibu/konsolidierung) + Scope-Presets + A4-Druck + Tests | 000,200,400 + Code |
 | 2026-06-27 01:10 | v0.4.0: Reporting-Tabellen (015) + ocr_verarbeitungen (014) gebaut, gebrandeter A4-GuV-Druck | 000,200,400 |

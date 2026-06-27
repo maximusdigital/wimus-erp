@@ -81,7 +81,7 @@ zulässig. Version springt nur am Meilenstein; im Cycle wachsen nur Historie + `
 | ID | Kürzel | Status | Version | Kurzbeschreibung |
 |----|--------|--------|---------|------------------|
 | 0001 | erp | in_arbeit | 5.1.0 | ERP-Fundament: Hierarchie, Akteure, BK-Kerne, OCR (ocr_verarbeitungen), Dashboards, Organisationen (migriert aus Bestand V502/V501/V104/V101) |
-| 0002 | fibu | in_arbeit | 0.6.0 | Belegerkennung, Kontierung, Mehrmandanten/Gesellschafter, GuV + konsolidierte GuV (Scope-Presets, A4-Druck), Objekt-Tags, Reporting-Tabellen, Lieferant-Match, TaxPool-Export |
+| 0002 | fibu | in_arbeit | 0.7.0 | Belegerkennung, Kontierung, Mehrmandanten/Gesellschafter, GuV + konsolidierte GuV (Scope-Presets, A4-Druck), Objekt-Tags, Berichtspositionen (Taxonomie), Lieferant-Match, TaxPool-Export |
 | 0003 | crm | in_arbeit | 0.2.0 | CRM-Pipelines: Lead-Inbox + Deal-Kanban (implementiert, crm_-Tabellen), Verknüpfungsmodell, Custom Fields, Pipedrive-UI, amoCRM-Ablösung |
 
 ## Konventionen
