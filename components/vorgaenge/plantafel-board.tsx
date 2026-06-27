@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { GripVertical } from "lucide-react"
+import { AlertTriangle, GripVertical } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/utils/format"
 import { istAbgeschlossen } from "@/lib/ops/status"
+import { zeigtEskalation } from "@/lib/ops/eskalation"
 import {
   einheitLabel,
   vorgangTitel,
@@ -54,7 +55,10 @@ function Karte({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <Link href={`/vorgaenge/${vorgang.id}`} className="text-sm font-medium leading-tight hover:underline">
+        <Link href={`/vorgaenge/${vorgang.id}`} className="flex items-start gap-1 text-sm font-medium leading-tight hover:underline">
+          {zeigtEskalation(vorgang) ? (
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-danger" aria-label="Eskaliert" />
+          ) : null}
           {vorgangTitel(vorgang)}
         </Link>
         <div className="flex shrink-0 items-center gap-1">

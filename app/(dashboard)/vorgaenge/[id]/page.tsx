@@ -13,7 +13,9 @@ import {
   type ZuweisungRow,
 } from "@/components/vorgaenge/vorgang-zuweisungen"
 import { VorgangTypPanel } from "@/components/vorgaenge/vorgang-typ-panel"
+import { VorgangEskalation } from "@/components/vorgaenge/vorgang-eskalation"
 import { TYP_TABELLE } from "@/lib/validations/vorgang-typ"
+import { eskalationsGrund, eskalationFaellig } from "@/lib/ops/eskalation"
 import { formatDate, formatEUR } from "@/lib/utils/format"
 import {
   einheitLabel,
@@ -138,7 +140,13 @@ export default async function VorgangDetailPage({
                 : "Vorgang"}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <VorgangEskalation
+              vorgangId={vorgang.id}
+              manuell={vorgang.eskaliert === true}
+              computed={eskalationFaellig(vorgang)}
+              grund={eskalationsGrund(vorgang)}
+            />
             <Button
               variant="outline"
               render={<Link href={`/vorgaenge/${vorgang.id}/bearbeiten`} />}

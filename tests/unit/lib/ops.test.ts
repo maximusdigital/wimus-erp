@@ -10,6 +10,12 @@ import {
   abwicklungsstufeAusBetrag,
   schadenEinstufung,
 } from "@/lib/ops/schaden"
+import {
+  eskalationsGrund,
+  eskalationFaellig,
+  istUeberfaellig,
+  zeigtEskalation,
+} from "@/lib/ops/eskalation"
 
 describe("Vorgang Status-Flow", () => {
   it("erlaubte Übergänge", () => {
@@ -74,5 +80,37 @@ describe("Schadens-Staffel", () => {
       abwicklungsstufe: "manuell",
       versicherung_pruefen: true,
     })
+  })
+})
+
+describe("Eskalation", () => {
+  const heute = "2026-06-27T12:00:00Z"
+
+  it("Notfall (offen) → eskalationsgrund notfall", () => {
+    expect(eskalationsGrund({ prioritaet: "notfall", status: "offen" }, heute)).toBe("notfall")
+  })
+
+  it("überfällig (faellig_am in Vergangenheit, offen) → ueberfaellig", () => {
+    expect(
+      eskalationsGrund({ prioritaet: "normal", status: "in_arbeit", faellig_am: "2026-06-20T00:00:00Z" }, heute)
+    ).toBe("ueberfaellig")
+    expect(istUeberfaellig("2026-06-20T00:00:00Z", "in_arbeit", heute)).toBe(true)
+  })
+
+  it("nicht fällig in der Zukunft / normal → null", () => {
+    expect(
+      eskalationFaellig({ prioritaet: "normal", status: "offen", faellig_am: "2026-07-01T00:00:00Z" }, heute)
+    ).toBe(false)
+  })
+
+  it("abgeschlossen eskaliert nie", () => {
+    expect(eskalationsGrund({ prioritaet: "notfall", status: "erledigt" }, heute)).toBeNull()
+    expect(istUeberfaellig("2020-01-01T00:00:00Z", "abgenommen", heute)).toBe(false)
+  })
+
+  it("zeigtEskalation: manuelles Flag ODER rechnerisch", () => {
+    expect(zeigtEskalation({ prioritaet: "normal", status: "offen", eskaliert: true }, heute)).toBe(true)
+    expect(zeigtEskalation({ prioritaet: "normal", status: "offen", eskaliert: false }, heute)).toBe(false)
+    expect(zeigtEskalation({ prioritaet: "notfall", status: "offen" }, heute)).toBe(true)
   })
 })

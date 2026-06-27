@@ -20,6 +20,12 @@ export type Vorgang = {
   aktenzeichen: string | null
   lfd_nr: number | null
   paperless_id: string | null
+  // Engine-Felder (Migration 018)
+  faellig_am: string | null
+  eskaliert: boolean
+  eskaliert_am: string | null
+  owner_akteur_id: string | null
+  benachrichtigung_kanal: string | null
 }
 
 /** Embed-Form eines verknüpften Kontakts (Handwerker / Melder). */
