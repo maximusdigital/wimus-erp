@@ -71,8 +71,10 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 ## In Arbeit (dieser Cycle)
 
-- Foto Vorher/Nachher-UI + **Bild-Abgleich Einzug↔Auszug** (Mistral Pixtral / Claude Vision —
-  Felder/Tabelle da; Upload/Capture + KI-Call als Hook).
+- ~~Foto Vorher/Nachher-UI~~ → **erledigt 2026-06-28**: mobile Capture (Handy-Kamera) +
+  Supabase Storage + Galerie je Phase (`components/vorgaenge/vorgang-fotos.tsx`).
+- **Bild-Abgleich Einzug↔Auszug** (Mistral Pixtral / Claude Vision) — Fotos liegen nun vor;
+  KI-Vergleich → Schadens-Vorschläge noch offen.
 - Typ-Sichten/Filter („Reinigung heute", „meine Aufträge"), Checklisten-Ausführung-UI.
 - ~~Eskalations-UI~~ → **erledigt 2026-06-27** (`lib/ops/eskalation.ts` + Anzeige Detail/Plantafel,
   manuell + rechnerisch).
@@ -138,6 +140,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 00:40 | Foto-UI Vorher/Nachher (mobile Kamera + Supabase Storage + Galerie) | 000_konzept + Code |
 | 2026-06-27 19:15 | Eskalation gebaut (lib/ops/eskalation + Detail/Plantafel-Anzeige, manuell+rechnerisch) | 000_konzept + Code |
 | 2026-06-27 19:00 | v0.3.0: Engine implementiert (Mig. 017/018, lib/ops+Tests, Status-API+Plantafel-DnD, Akteure, Detail: Zuweisung/Verlauf/Typ-Panels) | 000_konzept + Code |
 | 2026-06-27 15:00 | Neuaufbau aus echten Quellen: Engine-Architektur + akteure + 5 Typen; Umzug aus Kern | alle |
