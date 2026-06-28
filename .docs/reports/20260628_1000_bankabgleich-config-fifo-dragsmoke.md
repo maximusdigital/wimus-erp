@@ -2,7 +2,12 @@
 
 > Umsetzung der Antworten zum 0925-Report. **Keine Spec-Edits** (Spec-Nachzug macht
 > Konzept-Claude, s.u.). Build + **318 Unit-Tests grün**. Sicherung: Tag
-> `sicherung/vor-bankabgleich-20260628-0252`. **SQL offen: Migration 022.**
+> `sicherung/vor-bankabgleich-20260628-0252`.
+>
+> **Nachtrag 2026-06-28 ~10:15 — Migration 022 eingespielt + verifiziert:** Settings-Round-Trip
+> grün (Schwellen GET/PUT persistiert + zurückgesetzt, Ignorier-Muster POST/GET/DELETE), Render
+> `/finanzen/bank` sauber, Kanban-Drag-Reorder per Seed-Smoke bestätigt (board_sort 0/1). Der
+> Punkt „SQL offen: 022" unter §3 ist damit erledigt.
 
 ## 1. Gebaut (echte Dateien/Felder)
 
