@@ -70,3 +70,48 @@ export function abgleicheEinnahme(
     art,
   }
 }
+
+export type Allokation = {
+  forderung_id: string
+  neuer_bezahlt_betrag: number
+  neuer_status: "offen" | "teilbezahlt" | "bezahlt"
+  verbucht: number
+}
+
+export type VerteilErgebnis = {
+  allokationen: Allokation[]
+  /** Verbleibendes Mieter-Guthaben nach Verteilung. */
+  guthaben: number
+  verbucht_gesamt: number
+}
+
+/**
+ * Verteilt eine Einnahme über mehrere offene Forderungen (Kontokorrent/FIFO).
+ * `forderungen` muss bereits in der gewünschten Reihenfolge stehen (älteste zuerst).
+ * Überzahlung bedient die nächste offene Forderung; verbleibender Rest → Guthaben.
+ */
+export function verteileEinnahme(
+  betrag: number,
+  forderungen: ForderungOffen[]
+): VerteilErgebnis {
+  let rest = round2(Math.abs(betrag))
+  const allokationen: Allokation[] = []
+  for (const f of forderungen) {
+    if (rest <= 0) break
+    const r = abgleicheEinnahme(rest, f)
+    if (r.verbucht > 0) {
+      allokationen.push({
+        forderung_id: f.id,
+        neuer_bezahlt_betrag: r.neuer_bezahlt_betrag,
+        neuer_status: r.neuer_status,
+        verbucht: r.verbucht,
+      })
+      rest = round2(rest - r.verbucht)
+    }
+  }
+  return {
+    allokationen,
+    guthaben: round2(rest),
+    verbucht_gesamt: round2(Math.abs(betrag) - rest),
+  }
+}

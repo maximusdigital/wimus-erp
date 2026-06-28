@@ -63,7 +63,8 @@ export function matchUmsatz(z: BankZeile, ctx: MatchKontext): UmsatzMatch {
 
   // 0. Vorfilter (eigene Umbuchungen / Kontoinhaber)
   const hay = `${z.verwendungszweck} ${z.empfaenger}`.toLowerCase()
-  const ignore = (ctx.ignorierMuster ?? DEFAULT_IGNORE).map((s) => s.toLowerCase())
+  // Default-Muster greifen IMMER, Mandanten-Muster (ctx.ignorierMuster) ergänzen sie.
+  const ignore = [...DEFAULT_IGNORE, ...(ctx.ignorierMuster ?? [])].map((s) => s.toLowerCase())
   const inhaber = (ctx.kontoinhaber ?? []).map(normBase)
   if (ignore.some((p) => hay.includes(p)) || (z.empfaenger && inhaber.includes(normBase(z.empfaenger)))) {
     return { ...leer, ignoriert: true, routing: "ignoriert" }

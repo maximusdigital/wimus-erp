@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { createServerClient } from "@/lib/supabase/server"
-import { abgleicheEinnahme } from "@/lib/fibu/op-abgleich"
+import { verteileEinnahme, type ForderungOffen } from "@/lib/fibu/op-abgleich"
 
 type Context = { params: Promise<{ id: string }> }
 
@@ -46,41 +46,39 @@ export async function POST(request: NextRequest, { params }: Context) {
   let forderung_id: string | null = parsed.data.forderung_id ?? null
   let zugeordnet_am: string | null = null
 
-  // Ohne explizite Forderung: offene Miete-Forderung des gewählten Vertrags suchen.
-  if (!forderung_id && parsed.data.mietvertrag_id && umsatz.richtung === "einnahme") {
-    const { data: offene } = await supabase
-      .schema("wimus")
-      .from("forderungen")
-      .select("id")
-      .eq("mietvertrag_id", parsed.data.mietvertrag_id)
-      .eq("forderung_typ", "miete")
-      .in("status", ["offen", "teilbezahlt"])
-      .order("faellig_am", { ascending: true })
-      .limit(1)
-      .maybeSingle()
-    if (offene) forderung_id = offene.id
-  }
-
-  // OP-Abgleich bei Forderung + Einnahme.
-  if (forderung_id && umsatz.richtung === "einnahme") {
-    const { data: f } = await supabase
+  // OP-Abgleich (FIFO-Kaskade) bei Einnahme: alle offenen Forderungen des Vertrags
+  // (bzw. die explizit gewählte) verrechnen; Überzahlung bedient die nächste.
+  if (umsatz.richtung === "einnahme" && (parsed.data.mietvertrag_id || forderung_id)) {
+    let q = supabase
       .schema("wimus")
       .from("forderungen")
       .select("id, betrag, bezahlt_betrag")
-      .eq("id", forderung_id)
-      .maybeSingle()
-    if (f) {
-      const op = abgleicheEinnahme(umsatz.betrag, { id: f.id, betrag: f.betrag ?? 0, bezahlt_betrag: f.bezahlt_betrag })
-      await supabase
-        .schema("wimus")
-        .from("forderungen")
-        .update({
-          bezahlt_betrag: op.neuer_bezahlt_betrag,
-          status: op.neuer_status,
-          bezahlt_am: op.neuer_status === "bezahlt" ? umsatz.wertstellung : null,
-        })
-        .eq("id", f.id)
-      forderung_id = op.forderung_id
+      .eq("forderung_typ", "miete")
+      .in("status", ["offen", "teilbezahlt"])
+      .order("faellig_am", { ascending: true })
+    if (forderung_id) q = q.eq("id", forderung_id)
+    else q = q.eq("mietvertrag_id", parsed.data.mietvertrag_id as string)
+    const { data: offene } = await q
+
+    const liste: ForderungOffen[] = (offene ?? []).map((f) => ({
+      id: f.id,
+      betrag: f.betrag ?? 0,
+      bezahlt_betrag: f.bezahlt_betrag,
+    }))
+    if (liste.length > 0) {
+      const v = verteileEinnahme(umsatz.betrag, liste)
+      for (const a of v.allokationen) {
+        await supabase
+          .schema("wimus")
+          .from("forderungen")
+          .update({
+            bezahlt_betrag: a.neuer_bezahlt_betrag,
+            status: a.neuer_status,
+            bezahlt_am: a.neuer_status === "bezahlt" ? umsatz.wertstellung : null,
+          })
+          .eq("id", a.forderung_id)
+      }
+      forderung_id = v.allokationen[0]?.forderung_id ?? forderung_id
       zugeordnet_am = new Date().toISOString()
     }
   }

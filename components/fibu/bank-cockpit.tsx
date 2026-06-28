@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Upload, Check, Ban } from "lucide-react"
+import { Loader2, Upload, Check, Ban, Settings, Plus, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,8 +11,10 @@ import { formatDate, formatEUR } from "@/lib/utils/format"
 import {
   BANK_STATUS_CLASS,
   BANK_STATUS_LABELS,
+  type BankEinstellungen,
   type BankKonto,
   type BankUmsatzRow,
+  type IgnorierMuster,
   type VertragOption,
 } from "@/types/bank"
 
@@ -39,10 +41,14 @@ export function BankCockpit({
   umsaetze,
   konten,
   vertraege,
+  einstellungen,
+  ignorier,
 }: {
   umsaetze: BankUmsatzRow[]
   konten: BankKonto[]
   vertraege: VertragOption[]
+  einstellungen: BankEinstellungen
+  ignorier: IgnorierMuster[]
 }) {
   const router = useRouter()
   const fileRef = React.useRef<HTMLInputElement>(null)
@@ -53,6 +59,44 @@ export function BankCockpit({
   const [filter, setFilter] = React.useState<string>("offen")
   const [rowBusy, setRowBusy] = React.useState<string | null>(null)
   const [wahl, setWahl] = React.useState<Record<string, string>>({})
+  // Einstellungen-Panel
+  const [showSettings, setShowSettings] = React.useState(false)
+  const [schw, setSchw] = React.useState(einstellungen)
+  const [neuMuster, setNeuMuster] = React.useState("")
+  const [settingsBusy, setSettingsBusy] = React.useState(false)
+
+  async function saveSchwellen() {
+    setSettingsBusy(true)
+    try {
+      await fetch("/api/fibu/bank/einstellungen", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(schw),
+      })
+      router.refresh()
+    } finally {
+      setSettingsBusy(false)
+    }
+  }
+  async function addMuster() {
+    if (!neuMuster.trim()) return
+    setSettingsBusy(true)
+    try {
+      await fetch("/api/fibu/bank/ignorier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ muster: neuMuster.trim() }),
+      })
+      setNeuMuster("")
+      router.refresh()
+    } finally {
+      setSettingsBusy(false)
+    }
+  }
+  async function delMuster(id: string) {
+    await fetch(`/api/fibu/bank/ignorier/${id}`, { method: "DELETE" })
+    router.refresh()
+  }
 
   async function importieren(file: File) {
     setBusy(true)
@@ -145,6 +189,79 @@ export function BankCockpit({
             {summary.fehler.length > 0 ? (
               <span className="ml-1 text-danger">· {summary.fehler.length} Fehler</span>
             ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Einstellungen */}
+      <div className="rounded-lg border">
+        <button
+          onClick={() => setShowSettings((s) => !s)}
+          className="flex w-full items-center gap-2 p-3 text-sm font-medium"
+        >
+          <Settings className="size-4" />
+          <span>Einstellungen (Schwellen · Ignorier-Muster)</span>
+          <span className="ml-auto text-xs text-muted-foreground">{showSettings ? "▲" : "▼"}</span>
+        </button>
+        {showSettings ? (
+          <div className="flex flex-col gap-4 border-t p-3 sm:flex-row sm:gap-8">
+            {/* Schwellen */}
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-medium text-muted-foreground">Confidence-Schwellen</p>
+              {([
+                ["auto_schwelle", "Auto ≥"],
+                ["pruefen_schwelle", "Prüfen ≥"],
+                ["name_min", "Name-Min"],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
+                  <span className="w-20 text-muted-foreground">{label}</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={schw[key]}
+                    onChange={(ev) => setSchw((s) => ({ ...s, [key]: Number(ev.target.value) }))}
+                    className="h-8 w-24 rounded-md border bg-background px-2 text-sm tabular-nums"
+                  />
+                </label>
+              ))}
+              <Button size="sm" className="mt-1 w-fit" disabled={settingsBusy} onClick={saveSchwellen}>
+                {settingsBusy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                <span>Schwellen speichern</span>
+              </Button>
+            </div>
+            {/* Ignorier-Muster */}
+            <div className="flex flex-1 flex-col gap-2">
+              <p className="text-xs font-medium text-muted-foreground">
+                Ignorier-Muster (zusätzlich zu Geldtransit/GT KSK/KSKLB sowie eigenen Firmen-/Kontonamen)
+              </p>
+              <div className="flex gap-1">
+                <input
+                  value={neuMuster}
+                  onChange={(ev) => setNeuMuster(ev.target.value)}
+                  placeholder="Teilstring, z. B. Privatkonto Müller"
+                  className="h-8 flex-1 rounded-md border bg-background px-2 text-sm"
+                />
+                <Button size="icon" variant="ghost" className="size-8" disabled={settingsBusy} onClick={addMuster} aria-label="Muster hinzufügen">
+                  <Plus className="size-4" />
+                </Button>
+              </div>
+              <ul className="flex flex-col gap-1">
+                {ignorier.length === 0 ? (
+                  <li className="text-xs text-muted-foreground">Keine eigenen Muster.</li>
+                ) : (
+                  ignorier.map((m) => (
+                    <li key={m.id} className="flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-sm">
+                      <span className="truncate">{m.muster}</span>
+                      <button onClick={() => delMuster(m.id)} aria-label="Löschen" className="text-muted-foreground hover:text-danger">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
           </div>
         ) : null}
       </div>

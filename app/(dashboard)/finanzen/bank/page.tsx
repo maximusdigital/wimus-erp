@@ -1,6 +1,12 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { BankCockpit } from "@/components/fibu/bank-cockpit"
-import type { BankKonto, BankUmsatzRow, VertragOption } from "@/types/bank"
+import type {
+  BankEinstellungen,
+  BankKonto,
+  BankUmsatzRow,
+  IgnorierMuster,
+  VertragOption,
+} from "@/types/bank"
 
 export const metadata = { title: "Bank-Abgleich – FiBu" }
 
@@ -19,7 +25,7 @@ function kontaktName(k: KontaktRef | null): string {
 export default async function BankAbgleichPage() {
   const supabase = await createServerClient()
 
-  const [{ data: umsaetzeRaw }, { data: kontenRaw }, { data: vertraegeRaw }] = await Promise.all([
+  const [{ data: umsaetzeRaw }, { data: kontenRaw }, { data: vertraegeRaw }, { data: einstRaw }, { data: ignorierRaw }] = await Promise.all([
     supabase
       .schema("wimus")
       .from("bank_umsaetze")
@@ -35,6 +41,8 @@ export default async function BankAbgleichPage() {
       .select("id, einheit:einheiten!einheit_id(verwendungszweck_code), mieter:kontakte!mieter_id(vorname, nachname, firmenname)")
       .order("created_at", { ascending: false })
       .limit(500),
+    supabase.schema("wimus").from("bank_einstellungen").select("auto_schwelle, pruefen_schwelle, name_min").maybeSingle(),
+    supabase.schema("wimus").from("bank_ignorier_muster").select("id, muster, aktiv").order("created_at", { ascending: true }),
   ])
 
   const umsaetze = (umsaetzeRaw ?? []) as unknown as BankUmsatzRow[]
@@ -49,6 +57,15 @@ export default async function BankAbgleichPage() {
     return { id: v.id, label: code ? `${name} · ${code}` : name }
   })
 
+  const einstellungen: BankEinstellungen = einstRaw
+    ? {
+        auto_schwelle: Number(einstRaw.auto_schwelle),
+        pruefen_schwelle: Number(einstRaw.pruefen_schwelle),
+        name_min: Number(einstRaw.name_min),
+      }
+    : { auto_schwelle: 0.9, pruefen_schwelle: 0.75, name_min: 0.82 }
+  const ignorier = (ignorierRaw ?? []) as IgnorierMuster[]
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <div>
@@ -57,7 +74,13 @@ export default async function BankAbgleichPage() {
           KSK/WISO-CSV importieren · automatischer Match (K1/Name/Betrag) · OP-Abgleich gegen offene Mietforderungen
         </p>
       </div>
-      <BankCockpit umsaetze={umsaetze} konten={konten} vertraege={vertraege} />
+      <BankCockpit
+        umsaetze={umsaetze}
+        konten={konten}
+        vertraege={vertraege}
+        einstellungen={einstellungen}
+        ignorier={ignorier}
+      />
     </div>
   )
 }

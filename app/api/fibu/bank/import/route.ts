@@ -5,7 +5,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { parseKskCsv } from "@/lib/fibu/bank-csv"
 import { matchUmsatz, type MatchKontext } from "@/lib/fibu/bank-match"
-import { abgleicheEinnahme } from "@/lib/fibu/op-abgleich"
+import { verteileEinnahme, type ForderungOffen } from "@/lib/fibu/op-abgleich"
 import { offenerBetrag } from "@/lib/utils/forderungen"
 
 type KontaktRef = { vorname: string | null; nachname: string | null; firmenname: string | null }
@@ -22,8 +22,10 @@ function kontaktName(k: KontaktRef | null): string {
 
 /**
  * Bank-CSV-Import (KSK/WISO): Datei-Bytes (CP1252) → Parse → mehrstufiger Match →
- * OP-Abgleich gegen offene Miete-Forderungen → bank_umsaetze (Dublettenschutz via
- * import_hash). Erwartet multipart/form-data mit `file` (+ optional `bank_konto_id`).
+ * OP-Abgleich (FIFO-Kaskade) gegen offene Miete-Forderungen → bank_umsaetze
+ * (Dublettenschutz via import_hash). Vorfilter eigene Umbuchungen über Auto-Namen
+ * (firmen + bank_konten) + pflegbare Ignorier-Muster; Schwellen aus bank_einstellungen.
+ * Erwartet multipart/form-data mit `file` (+ optional `bank_konto_id`).
  */
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient()
@@ -38,7 +40,6 @@ export async function POST(request: NextRequest) {
   }
   const bankKontoId = (form?.get("bank_konto_id") as string) || null
 
-  // CP1252 → UTF8 dekodieren, dann parsen.
   const bytes = Buffer.from(await file.arrayBuffer())
   const text = new TextDecoder("windows-1252").decode(bytes)
   const { zeilen, fehler } = parseKskCsv(text)
@@ -46,25 +47,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Keine Umsätze erkannt.", fehler }, { status: 422 })
   }
 
-  // Match-Kontext laden (Objekte/Einheiten/Mieter + offene Miete-Forderungen).
-  const [objekteR, einheitenR, vertraegeR, forderungenR, bestandR] = await Promise.all([
-    supabase.schema("wimus").from("objekte").select("id, kuerzel").eq("mandant_id", active.id),
-    supabase.schema("wimus").from("einheiten").select("id, objekt_id, verwendungszweck_code").eq("mandant_id", active.id),
-    supabase
-      .schema("wimus")
-      .from("mietvertraege")
-      .select("id, einheit_id, grundmiete, mieter:kontakte!mieter_id(vorname, nachname, firmenname), einheit:einheiten!einheit_id(id, objekt_id)")
-      .eq("mandant_id", active.id),
-    supabase
-      .schema("wimus")
-      .from("forderungen")
-      .select("id, mietvertrag_id, betrag, bezahlt_betrag, faellig_am")
-      .eq("mandant_id", active.id)
-      .eq("forderung_typ", "miete")
-      .in("status", ["offen", "teilbezahlt"])
-      .order("faellig_am", { ascending: true }),
-    supabase.schema("wimus").from("bank_umsaetze").select("import_hash").eq("mandant_id", active.id),
-  ])
+  const [objekteR, einheitenR, vertraegeR, forderungenR, bestandR, firmenR, kontenR, ignorierR, einstR] =
+    await Promise.all([
+      supabase.schema("wimus").from("objekte").select("id, kuerzel").eq("mandant_id", active.id),
+      supabase.schema("wimus").from("einheiten").select("id, objekt_id, verwendungszweck_code").eq("mandant_id", active.id),
+      supabase
+        .schema("wimus")
+        .from("mietvertraege")
+        .select("id, einheit_id, grundmiete, mieter:kontakte!mieter_id(vorname, nachname, firmenname), einheit:einheiten!einheit_id(id, objekt_id)")
+        .eq("mandant_id", active.id),
+      supabase
+        .schema("wimus")
+        .from("forderungen")
+        .select("id, mietvertrag_id, betrag, bezahlt_betrag, faellig_am")
+        .eq("mandant_id", active.id)
+        .eq("forderung_typ", "miete")
+        .in("status", ["offen", "teilbezahlt"])
+        .order("faellig_am", { ascending: true }),
+      supabase.schema("wimus").from("bank_umsaetze").select("import_hash").eq("mandant_id", active.id),
+      supabase.schema("wimus").from("firmen").select("name").eq("mandant_id", active.id),
+      supabase.schema("wimus").from("bank_konten").select("bezeichnung").eq("mandant_id", active.id),
+      supabase.schema("wimus").from("bank_ignorier_muster").select("muster").eq("mandant_id", active.id).eq("aktiv", true),
+      supabase.schema("wimus").from("bank_einstellungen").select("auto_schwelle, pruefen_schwelle, name_min").eq("mandant_id", active.id).maybeSingle(),
+    ])
 
   const objekte = (objekteR.data ?? []).filter((o) => o.kuerzel) as { id: string; kuerzel: string }[]
   const einheiten = (einheitenR.data ?? []).filter((e) => e.verwendungszweck_code).map((e) => ({
@@ -73,12 +78,13 @@ export async function POST(request: NextRequest) {
     code: e.verwendungszweck_code as string,
   }))
 
-  // Offene Miete-Forderung je Vertrag (früheste zuerst).
-  const offeneForderungProVertrag = new Map<string, { id: string; betrag: number; bezahlt_betrag: number | null }>()
+  // Offene Miete-Forderungen je Vertrag (FIFO – älteste zuerst).
+  const forderungenProVertrag = new Map<string, ForderungOffen[]>()
   for (const f of forderungenR.data ?? []) {
-    if (f.mietvertrag_id && !offeneForderungProVertrag.has(f.mietvertrag_id)) {
-      offeneForderungProVertrag.set(f.mietvertrag_id, { id: f.id, betrag: f.betrag ?? 0, bezahlt_betrag: f.bezahlt_betrag })
-    }
+    if (!f.mietvertrag_id) continue
+    const arr = forderungenProVertrag.get(f.mietvertrag_id) ?? []
+    arr.push({ id: f.id, betrag: f.betrag ?? 0, bezahlt_betrag: f.bezahlt_betrag })
+    forderungenProVertrag.set(f.mietvertrag_id, arr)
   }
 
   const mieter: MatchKontext["mieter"] = ((vertraegeR.data ?? []) as unknown as Array<{
@@ -88,8 +94,8 @@ export async function POST(request: NextRequest) {
     einheit: { id: string; objekt_id: string } | { id: string; objekt_id: string }[] | null
     mieter: KontaktRef | KontaktRef[] | null
   }>).map((v) => {
-    const f = offeneForderungProVertrag.get(v.id)
-    const offen = f ? offenerBetrag(f) : v.grundmiete ?? null
+    const erste = forderungenProVertrag.get(v.id)?.[0]
+    const offen = erste ? offenerBetrag(erste) : v.grundmiete ?? null
     const einheit = one(v.einheit)
     return {
       mietvertrag_id: v.id,
@@ -100,7 +106,18 @@ export async function POST(request: NextRequest) {
     }
   }).filter((m) => m.name)
 
-  const ctx: MatchKontext = { einheiten, objekte, mieter }
+  // Vorfilter: eigene Namen (firmen + bank_konten) + pflegbare Ignorier-Muster.
+  const kontoinhaber = [
+    ...(firmenR.data ?? []).map((f) => f.name).filter(Boolean),
+    ...(kontenR.data ?? []).map((k) => k.bezeichnung).filter(Boolean),
+  ] as string[]
+  const ignorierMuster = (ignorierR.data ?? []).map((i) => i.muster).filter(Boolean) as string[]
+  const e = einstR.data
+  const schwellen = e
+    ? { auto: Number(e.auto_schwelle), pruefen: Number(e.pruefen_schwelle), nameMin: Number(e.name_min) }
+    : undefined
+
+  const ctx: MatchKontext = { einheiten, objekte, mieter, kontoinhaber, ignorierMuster, schwellen }
   const vorhandene = new Set((bestandR.data ?? []).map((b) => b.import_hash))
 
   const summary = { gesamt: zeilen.length, importiert: 0, dubletten: 0, ignoriert: 0, auto: 0, pruefen: 0, klaeren: 0, fehler }
@@ -117,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     const m = matchUmsatz(z, ctx)
 
-    let zuordnung_status: string = "offen"
+    let zuordnung_status = "offen"
     let forderung_id: string | null = null
     let zugeordnet_am: string | null = null
 
@@ -125,24 +142,31 @@ export async function POST(request: NextRequest) {
       zuordnung_status = "ignoriert"
       summary.ignoriert++
     } else if (z.richtung === "einnahme" && m.mietvertrag_id && m.routing === "auto") {
-      // OP-Abgleich gegen offene Forderung.
-      const f = offeneForderungProVertrag.get(m.mietvertrag_id) ?? null
-      const op = abgleicheEinnahme(z.betrag, f)
-      if (op.forderung_id) {
+      // OP-Abgleich (FIFO-Kaskade) über alle offenen Forderungen des Vertrags.
+      const offene = forderungenProVertrag.get(m.mietvertrag_id) ?? []
+      const v = verteileEinnahme(z.betrag, offene)
+      for (const a of v.allokationen) {
         await supabase
           .schema("wimus")
           .from("forderungen")
           .update({
-            bezahlt_betrag: op.neuer_bezahlt_betrag,
-            status: op.neuer_status,
-            bezahlt_am: op.neuer_status === "bezahlt" ? z.wertstellung : null,
+            bezahlt_betrag: a.neuer_bezahlt_betrag,
+            status: a.neuer_status,
+            bezahlt_am: a.neuer_status === "bezahlt" ? z.wertstellung : null,
           })
-          .eq("id", op.forderung_id)
-        forderung_id = op.forderung_id
-        // verbrauchte Forderung für Folgezeilen sperren
-        if (op.neuer_status === "bezahlt") offeneForderungProVertrag.delete(m.mietvertrag_id)
-        else offeneForderungProVertrag.set(m.mietvertrag_id, { id: f!.id, betrag: f!.betrag, bezahlt_betrag: op.neuer_bezahlt_betrag })
+          .eq("id", a.forderung_id)
       }
+      // Verbrauchte/teilbezahlte Forderungen im Speicher aktualisieren (Folgezeilen).
+      const rest = offene
+        .map((f) => {
+          const a = v.allokationen.find((x) => x.forderung_id === f.id)
+          return a ? { ...f, bezahlt_betrag: a.neuer_bezahlt_betrag, _status: a.neuer_status } : f
+        })
+        .filter((f) => (f as { _status?: string })._status !== "bezahlt")
+        .map((f) => ({ id: f.id, betrag: f.betrag, bezahlt_betrag: f.bezahlt_betrag }))
+      forderungenProVertrag.set(m.mietvertrag_id, rest)
+
+      forderung_id = v.allokationen[0]?.forderung_id ?? null
       zuordnung_status = "zugeordnet"
       zugeordnet_am = new Date().toISOString()
       summary.auto++

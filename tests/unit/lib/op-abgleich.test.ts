@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { abgleicheEinnahme } from "@/lib/fibu/op-abgleich"
+import { abgleicheEinnahme, verteileEinnahme } from "@/lib/fibu/op-abgleich"
 
 describe("abgleicheEinnahme", () => {
   it("vollständige Zahlung → bezahlt", () => {
@@ -42,5 +42,38 @@ describe("abgleicheEinnahme", () => {
     expect(r.art).toBe("keine_forderung")
     expect(r.guthaben).toBe(800)
     expect(r.forderung_id).toBeNull()
+  })
+})
+
+describe("verteileEinnahme (FIFO-Kaskade)", () => {
+  const f = (id: string, betrag: number, bezahlt = 0) => ({ id, betrag, bezahlt_betrag: bezahlt })
+
+  it("eine Forderung vollständig", () => {
+    const r = verteileEinnahme(800, [f("a", 800)])
+    expect(r.allokationen).toHaveLength(1)
+    expect(r.allokationen[0]).toMatchObject({ forderung_id: "a", neuer_status: "bezahlt", verbucht: 800 })
+    expect(r.guthaben).toBe(0)
+  })
+
+  it("Überzahlung bedient nächste Forderung (FIFO)", () => {
+    const r = verteileEinnahme(900, [f("a", 800), f("b", 800)])
+    expect(r.allokationen).toHaveLength(2)
+    expect(r.allokationen[0]).toMatchObject({ forderung_id: "a", neuer_status: "bezahlt", verbucht: 800 })
+    expect(r.allokationen[1]).toMatchObject({ forderung_id: "b", neuer_status: "teilbezahlt", verbucht: 100 })
+    expect(r.guthaben).toBe(0)
+    expect(r.verbucht_gesamt).toBe(900)
+  })
+
+  it("Überzahlung über alle Forderungen → Restguthaben", () => {
+    const r = verteileEinnahme(2000, [f("a", 800)])
+    expect(r.allokationen).toHaveLength(1)
+    expect(r.allokationen[0].neuer_status).toBe("bezahlt")
+    expect(r.guthaben).toBe(1200)
+  })
+
+  it("keine offenen Forderungen → komplettes Guthaben", () => {
+    const r = verteileEinnahme(800, [])
+    expect(r.allokationen).toHaveLength(0)
+    expect(r.guthaben).toBe(800)
   })
 })

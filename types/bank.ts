@@ -28,6 +28,14 @@ export type BankUmsatzRow = {
 
 export type VertragOption = { id: string; label: string }
 
+export type BankEinstellungen = {
+  auto_schwelle: number
+  pruefen_schwelle: number
+  name_min: number
+}
+
+export type IgnorierMuster = { id: string; muster: string; aktiv: boolean }
+
 export const BANK_STATUS_LABELS: Record<string, string> = {
   offen: "Offen / Klären",
   zugeordnet: "Zugeordnet",
