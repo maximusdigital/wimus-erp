@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Building2, FolderKanban, Layers, Receipt } from "lucide-react"
+import { Building2, FolderKanban, Layers, Receipt, SlidersHorizontal, Tags } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -32,6 +32,20 @@ const bereiche = [
     desc: "Betriebskosten-Kostenarten-Katalog (BetrKV, Umlageschlüssel, HKVO).",
     href: "/einstellungen/bk-arten",
     icon: Receipt,
+    aktiv: true,
+  },
+  {
+    title: "Datenfelder",
+    desc: "Eigene Custom-Fields je Entität (Person/Organisation/Vorgang …) – stabiler Schlüssel, filterbar.",
+    href: "/einstellungen/felder",
+    icon: SlidersHorizontal,
+    aktiv: true,
+  },
+  {
+    title: "Kontakttypen",
+    desc: "Typen für Personen & Organisationen (mehrfach zuweisbar). System-Typen geschützt.",
+    href: "/einstellungen/kontakttypen",
+    icon: Tags,
     aktiv: true,
   },
 ]
