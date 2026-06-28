@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0003
 dokument: Design
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0003 — Design
@@ -21,13 +21,13 @@ geaendert: 2026-06-27
   Owner-Avatar; Stalled → Warn-Symbol (wie Pipedrive ⚠ auf der Karte).
 - Mobile (390px): Stage-Auswahl + Kartenliste (kein Drag erzwingen).
 
-> **Tech-Basis Kanban (umgesetzt 2026-06-27):** native HTML5-DnD (`draggable` +
-> `onDragStart`/`onDrop`), KEINE dnd-kit-Dependency — vermeidet neue Lib unter React 19 /
-> Next 16 (webpack), konsistent mit der bestehenden Plantafel. A11y/Mobile über ein
-> Stage-Dropdown je Karte (Spec verlangt ohnehin „kein Drag erzwingen" auf 390px).
-> `components/crm/kanban-board.tsx`. Bei 500+ Karten ist später Spalten-Memoisierung
-> (React.memo + stabile IDs, optional zustand-Slice je Spalte) nachzurüsten — die ursprünglich
-> erwogene dnd-kit-Vorlage `Georgegriff/react-dnd-kit-tailwind-shadcn-ui` bleibt als Referenz.
+> **Tech-Basis Kanban (umgestellt 2026-06-28 auf @dnd-kit/sortable):** Multi-Container-Sortable
+> über den gemeinsamen Hook `lib/hooks/use-kanban-dnd.ts` (identisch mit der ops-Plantafel),
+> `components/crm/kanban-board.tsx`. **Stage-Wechsel** schreibt die Stage (+ `deal_stage_historie`),
+> **manuelle Reihenfolge je Stage** persistent in `crm_deals.board_sort` (Mig. 020, Reorder-
+> Endpoint `/api/crm/deals/reorder`). PointerSensor mit Distanz-Aktivierung → Karten-Link/Dropdown
+> bleiben klickbar; DragOverlay für die Drag-Vorschau. A11y/Mobile (390px): Stage-Dropdown je Karte
+> (kein Drag erzwingen). Die früher gewählte native HTML5-DnD ist abgelöst (s. Decision-Log).
 
 ## 2. Deal-Detailansicht (stark an Pipedrive Bild 4–7)
 

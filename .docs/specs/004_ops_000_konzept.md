@@ -134,6 +134,11 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
   `vorgang_foto.ki_analyse.schaeden[index]` mit `uebernommen:true` + `folge_vorgang_id` markiert;
   Übernahme referenziert `{fotoId,index}` (Vorschlag serverseitig aus Analyse, nicht Client),
   erneute Übernahme → 409. Grund: Reload/Doppelklick darf keinen zweiten Schaden anlegen.
+- 2026-06-28: **Plantafel auf @dnd-kit/sortable** (löst frühere „native HTML5-DnD"-Entscheidung
+  ab — Konsistenz mit CRM 0003, Entscheidung Eigentümer). Gemeinsamer Multi-Container-Hook
+  `lib/hooks/use-kanban-dnd.ts`; **manuelle Reihenfolge je Spalte persistent** in
+  `vorgaenge.board_sort` (Mig. 020) via Reorder-Endpoint; Spaltenwechsel weiter über Status+Verlauf.
+  Mobile/a11y-Fallback (Dropdown je Karte) bleibt.
 
 ## Offene Punkte
 
@@ -166,6 +171,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 02:45 | Plantafel + CRM-Board auf @dnd-kit/sortable (Multi-Container-Hook); manuelle Reihenfolge persistent (board_sort, Mig. 020 + Reorder-Endpoints); Typ-Icons Lucide umgesetzt | 000/200/400/500, plantafel-board, use-kanban-dnd, Mig.020 |
 | 2026-06-28 02:25 | Schaden-Übernahme: Kostenträger aus Richtung (Auszug→mieter/Einzug→vermieter) + idempotent (ki_analyse-Markierung); Typ-Icons → Lucide | 000/200/300/400, schaden-uebernehmen, foto-analyse, vorgang-fotos |
 | 2026-06-28 01:35 | Spec festgeschrieben auf realen Stand (400/500/600 + README-Index) + Bau-Chronik aus git | alle 004 + README |
 | 2026-06-28 01:25 | Schaden-Übernahme aus KI-Abgleich → Folge-Vorgang typ=schaden + vorgang_schaden + Verlauf (e0df43b) | schaden-uebernehmen, vorgang-fotos |

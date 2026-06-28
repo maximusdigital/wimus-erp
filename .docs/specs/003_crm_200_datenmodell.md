@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0003
 dokument: Datenmodell
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0003 — Datenmodell
@@ -67,7 +67,9 @@ stage_id FK, titel, kontakt_id FK NULL (AUSSEN-Person), organisation_id FK NULL
 Mandant!), wert DECIMAL(14,2), waehrung default EUR, erwartetes_abschluss_datum DATE,
 status ENUM (offen/gewonnen/verloren), verloren_grund_id FK NULL, owner_akteur_id (bare UUID),
 custom_values JSONB (Werte zu Custom-Field-Definitionen), in_stage_seit TIMESTAMPTZ,
-abgeschlossen_am TIMESTAMPTZ NULL (gesetzt bei gewonnen/verloren), created_at, updated_at.
+abgeschlossen_am TIMESTAMPTZ NULL (gesetzt bei gewonnen/verloren),
+**board_sort** INT NOT NULL DEFAULT 0 (manuelle Kanban-Reihenfolge je Stage, Mig. 020),
+created_at, updated_at.
 
 > Namensklärung (3 verschiedene Dinge, bewusst getrennt): `firma_id` = Mandant/Buchungskreis
 > (innen); `organisation_id` = externe Geschäftsfirma (außen); `einheit_immobilie_id` =

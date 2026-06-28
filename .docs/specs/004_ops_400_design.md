@@ -13,8 +13,10 @@ geaendert: 2026-06-28
 ## 1. Plantafel (Vorgangs-Kanban)
 
 - Spalten = Status (offen/zugewiesen/in_arbeit/wartet_extern/erledigt/abgenommen), Karten =
-  Vorgänge, **Drag&Drop → Statuswechsel** (native HTML5-DnD wie CRM-Board, kein dnd-kit) +
-  Verlauf-Eintrag. Abgeschlossene Spalten sperren Drag (Reaktivieren explizit).
+  Vorgänge, **Drag&Drop → Statuswechsel + manuelle Reihenfolge** via **@dnd-kit/sortable**
+  (Multi-Container, gemeinsamer Hook `lib/hooks/use-kanban-dnd.ts` mit CRM). Spaltenwechsel
+  schreibt Status + Verlauf; Reihenfolge je Spalte in `vorgaenge.board_sort` (Reorder-Endpoint).
+  Abgeschlossene Karten sind nicht draggable (Reaktivieren explizit). Mobile/a11y: Dropdown je Karte.
 - Karte: Aktenzeichen, Typ-Icon, Titel (aus Typ+Bezug), Objekt/Einheit, Priorität-Badge,
   Owner-Akteur, nächste Fälligkeit, Eskalations-Warnsymbol.
 - Filter oben: Typ, Objekt/Einheit, Akteur („meine Aufträge"), Priorität.

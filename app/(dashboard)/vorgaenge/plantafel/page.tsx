@@ -19,6 +19,7 @@ export default async function VorgangPlantafelPage() {
     .schema("wimus")
     .from("vorgaenge")
     .select(SELECT)
+    .order("board_sort", { ascending: true })
     .order("leistungsdatum", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 

@@ -26,6 +26,9 @@ geaendert: 2026-06-28
    ergänzen (ADD COLUMN IF NOT EXISTS): `ki_analyse` JSONB, `ki_confidence` NUMERIC(3,2),
    `ki_status` TEXT CHECK(auto/pruefen/manuell), `ki_analysiert_am` TIMESTAMPTZ. Reiner ALTER,
    keine neuen Tabellen/Policies. Anwenden nach 018.
+4. **020_board_sort.sql** (Module 004 + 003): `vorgaenge.board_sort` + `crm_deals.board_sort`
+   (INT NOT NULL DEFAULT 0) für die manuelle Kanban-Reihenfolge (@dnd-kit/sortable) + Sortier-
+   Indizes. Additiv, modulübergreifend (Board-Sortierung betrifft Plantafel UND CRM).
 
 ## Idempotenz-Notizen
 

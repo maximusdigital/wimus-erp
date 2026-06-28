@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0003
 dokument: Migration
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0003 — Migration
@@ -15,6 +15,10 @@ geaendert: 2026-06-27
 > organisationen + kontakte.organisation_id) und `013_crm_pipelines.sql` (Schritte 1, 2, 4:
 > alle `crm_`-Tabellen + RLS + Seed je Mandant) eingespielt. Schritt 3 (Stage-Automatik-Bezug
 > Channel-Routing → `crm_pipeline_stages`) und Schritt amoCRM-Import (OP-1) noch offen.
+>
+> **Nachgezogen (2026-06-28):** `020_board_sort.sql` (modulübergreifend mit 004) — additiv
+> `crm_deals.board_sort` INT NOT NULL DEFAULT 0 + Index für die manuelle Kanban-Reihenfolge
+> (@dnd-kit/sortable, Reorder-Endpoint `/api/crm/deals/reorder`).
 
 ## Migrationsreihenfolge (Grobplan)
 

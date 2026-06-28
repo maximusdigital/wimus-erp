@@ -66,6 +66,8 @@ export default async function CrmBoardPage({
     )
     .eq("pipeline_id", aktiv.id)
     .eq("status", "offen")
+    .order("board_sort", { ascending: true })
+    .order("created_at", { ascending: false })
   if (firmaId) dealsQuery = dealsQuery.eq("firma_id", firmaId)
   const { data: dealsRaw } = await dealsQuery
 

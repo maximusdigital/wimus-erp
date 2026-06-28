@@ -43,6 +43,7 @@ faellig_am TIMESTAMPTZ NULL, **owner_akteur_id** UUID NULL (→ akteure), handwe
 (→ kontakte, extern), aktenzeichen (Auto-Trigger), lfd_nr, paperless_id,
 **eskaliert** BOOL DEFAULT false, **eskaliert_am** TIMESTAMPTZ NULL,
 **benachrichtigung_kanal** TEXT NULL (Hook: email/whatsapp/telegram/zammad),
+**board_sort** INT NOT NULL DEFAULT 0 (manuelle Plantafel-Reihenfolge je Status, Mig. 020),
 created_at, updated_at.
 
 > Status-Flow (kanonisch): `offen → zugewiesen → in_arbeit → (wartet_extern) → erledigt →

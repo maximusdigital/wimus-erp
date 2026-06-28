@@ -5,7 +5,7 @@ status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abg
 version: 0.2.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: crm-pipelines
 erstellt: 2026-06-26
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 abhaengt_von: [0001]
 ---
 
@@ -103,6 +103,11 @@ Mieter-Gewinnung (ALFA CAMPUS/LZV), KZV-Anfragen (ALFA APARTMENTS).
 - 2026-06-27 (Impl.): **Kanban via native HTML5-DnD statt dnd-kit.** Keine neue Dependency
   unter React 19 / Next 16 (webpack); konsistent mit der bestehenden Plantafel. A11y/Mobile
   über Stage-Dropdown je Karte (Spec verlangt ohnehin „kein Drag erzwingen" auf 390px).
+- 2026-06-28: **ABGELÖST → @dnd-kit/sortable** (Entscheidung Eigentümer). Beide Boards (CRM +
+  ops-Plantafel) nutzen jetzt `@dnd-kit/core`+`/sortable`+`/utilities` über den gemeinsamen Hook
+  `lib/hooks/use-kanban-dnd.ts`. React 19 / Next 16 (webpack) sind kompatibel (saubere Peer-Deps).
+  Zusätzlich **manuelle Reihenfolge je Stage persistent** in `crm_deals.board_sort` (Mig. 020,
+  `/api/crm/deals/reorder`). Dropdown-Fallback bleibt für Mobile/a11y.
 - 2026-06-27 (Impl.): **Zeitstempel `created_at`/`updated_at`** (Kern-Konvention + Touch-
   Trigger) statt der Grobspec-Begriffe `erstellt_am`/`geaendert_am`. Domänen-Zeitfelder
   (`in_stage_seit`, `faellig_am`, `abgeschlossen_am`) bleiben.
@@ -140,6 +145,7 @@ Mieter-Gewinnung (ALFA CAMPUS/LZV), KZV-Anfragen (ALFA APARTMENTS).
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 02:45 | Kanban auf @dnd-kit/sortable umgestellt (gemeinsamer Hook mit ops); manuelle Reihenfolge persistent (crm_deals.board_sort, Mig. 020 + /deals/reorder) | 000,200,400, kanban-board, Mig.020 |
 | 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: deals.abgeschlossen_am + verloren_gruende.sortierung + mandant_id-Hinweis; termin→meeting | 200,300 |
 | 2026-06-27 01:35 | Board: Mandanten-/Einheit-Filter + Ansicht-Umschalter Kanban/Liste ergänzt | 000_konzept, Code |
 | 2026-06-27 00:30 | MVP implementiert (Mig. 012/013, API, UI, lib+Tests); Spec nachgezogen | alle + Code |
