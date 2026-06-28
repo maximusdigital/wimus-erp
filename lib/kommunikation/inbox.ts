@@ -12,8 +12,11 @@
  */
 
 import type { createAdminClient } from "../supabase/admin"
+import { protokolliere } from "../historie/protokolliere"
 import { leiteBezuege, type BezugEingabe } from "./bezug"
 import type { EingehendeNachricht, Kanal } from "./types"
+
+const KANAL_LABEL: Record<Kanal, string> = { email: "E-Mail", whatsapp: "WhatsApp" }
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -150,6 +153,20 @@ export async function persistiereEingehend(
         ocr_status: istBelegKandidat(a.mime_typ) ? "offen" : "nicht_relevant",
       })),
     )
+  }
+
+  // 7. Historie (Modul 009): fachliche Aktivität „Nachricht empfangen".
+  //    Nur bei zugeordnetem Kontakt (sonst kein Entitäts-Bezug). Blockiert nie.
+  if (kontakt) {
+    await protokolliere(supabase, ctx.mandant_id, {
+      typ: "nachricht_empfangen",
+      modul: "kommunikation",
+      titel: `${KANAL_LABEL[ctx.kanal]} empfangen`,
+      beschreibung: nachricht.betreff ?? nachricht.text?.slice(0, 140) ?? null,
+      payload: { kanal: ctx.kanal, nachricht_id: ins.id, von: nachricht.von_adresse },
+      primaerBezug: { typ: kontakt.ist_mieter ? "mieter" : "kontakt", id: kontakt.id },
+      hierarchie: { einheit_id: kontakt.einheit_id, objekt_id: kontakt.objekt_id },
+    })
   }
 
   return { nachricht_id: ins.id, kontakt_id: kontakt?.id ?? null, neu: true }

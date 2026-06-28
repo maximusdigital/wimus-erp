@@ -62,4 +62,10 @@ export type ProtokolliereInput = {
   payload?: Record<string, unknown> | null
   akteurId?: string | null
   primaerBezug: EntityRef
+  /**
+   * Optionale, vom Aufrufer bereits aufgelöste Hierarchie-IDs (z.B. Kommunikation
+   * kennt einheit/objekt des Mieters schon). Wird mit der aus dem Primär-Bezug
+   * abgeleiteten Hierarchie gemerged (Aufrufer-Werte ergänzen/überschreiben).
+   */
+  hierarchie?: Hierarchie
 }

@@ -29,6 +29,15 @@ describe("historie/bezug – leiteBezuege (0007-Muster)", () => {
     const b = leiteBezuege({ typ: "kontakt", id: "k9" }, {})
     expect(b).toEqual([{ typ: "kontakt", id: "k9", quelle: "primaer" }])
   })
+
+  it("Mieter + übergebene Hierarchie (Kommunikation→Historie) → Einheit/Objekt abgeleitet", () => {
+    // entspricht protokolliere(primaer=mieter, hierarchie={einheit_id, objekt_id})
+    const b = leiteBezuege({ typ: "mieter", id: "k1" }, { einheit_id: "e1", objekt_id: "o1" })
+    const byTyp = Object.fromEntries(b.map((x) => [x.typ, x]))
+    expect(byTyp.mieter).toMatchObject({ id: "k1", quelle: "primaer" })
+    expect(byTyp.einheit).toMatchObject({ id: "e1", quelle: "abgeleitet" })
+    expect(byTyp.objekt).toMatchObject({ id: "o1", quelle: "abgeleitet" })
+  })
 })
 
 describe("historie/stil – Farbe + Icon", () => {

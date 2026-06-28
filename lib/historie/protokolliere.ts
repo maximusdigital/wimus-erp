@@ -89,7 +89,10 @@ export async function protokolliere(
       .single()
     if (error || !akt) return { ok: false, error: error?.message ?? "Aktivität-Insert fehlgeschlagen." }
 
-    const hierarchie = await resolveHierarchie(client, input.primaerBezug)
+    const hierarchie = {
+      ...(await resolveHierarchie(client, input.primaerBezug)),
+      ...(input.hierarchie ?? {}),
+    }
     const bezuege = leiteBezuege(input.primaerBezug, hierarchie)
     if (bezuege.length > 0) {
       const rows = bezuege.map((b) => ({
