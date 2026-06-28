@@ -77,6 +77,7 @@ const mainNav: NavItem[] = [
   { title: "Akteure", href: "/akteure", icon: UserCog },
   { title: "Inventar", href: "/inventar", icon: Package },
   { title: "Buchungen", href: "/buchungen", icon: BedDouble },
+  { title: "Belegung", href: "/belegung", icon: CalendarClock },
   { title: "Finanzen", href: "/finanzen", icon: Wallet },
   { title: "Betriebskosten", href: "/betriebskosten", icon: Calculator },
   { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock },

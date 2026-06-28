@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+
+import { BelegungHinweis } from "@/components/belegung/belegung-hinweis"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import {
@@ -268,6 +270,14 @@ export function BuchungForm({
               </FormItem>
             )}
           />
+
+          <div className="sm:col-span-2">
+            <BelegungHinweis
+              einheitId={einheitId}
+              von={checkin ? checkin.slice(0, 10) : null}
+              bis={checkout ? checkout.slice(0, 10) : null}
+            />
+          </div>
 
           <FormField
             control={form.control}

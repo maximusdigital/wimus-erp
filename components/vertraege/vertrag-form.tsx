@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+
+import { BelegungHinweis } from "@/components/belegung/belegung-hinweis"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import {
@@ -108,6 +110,10 @@ export function VertragForm({
           mieterId: defaultMieterId,
         }),
   })
+
+  const watchEinheitId = form.watch("einheit_id")
+  const watchMietbeginn = form.watch("mietbeginn")
+  const watchMietende = form.watch("mietende")
 
   // mietvertraege speichert nur einheit_id; das Objekt dient hier nur als Filter,
   // um die Einheiten-Auswahl einzugrenzen (lokaler State, kein Formularfeld).
@@ -309,6 +315,14 @@ export function VertragForm({
               </FormItem>
             )}
           />
+
+          <div className="sm:col-span-2">
+            <BelegungHinweis
+              einheitId={watchEinheitId}
+              von={watchMietbeginn || null}
+              bis={watchMietende || null}
+            />
+          </div>
 
           <FormField
             control={form.control}
