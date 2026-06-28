@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Building2, FolderKanban, Layers, Receipt, SlidersHorizontal, Tags } from "lucide-react"
+import { Building2, FolderKanban, Layers, Receipt, SlidersHorizontal, Tags, ScrollText } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -46,6 +46,13 @@ const bereiche = [
     desc: "Typen für Personen & Organisationen (mehrfach zuweisbar). System-Typen geschützt.",
     href: "/einstellungen/kontakttypen",
     icon: Tags,
+    aktiv: true,
+  },
+  {
+    title: "Audit-Log",
+    desc: "Technischer, lückenloser Änderungsverlauf kritischer Tabellen (append-only, DB-Trigger).",
+    href: "/einstellungen/audit",
+    icon: ScrollText,
     aktiv: true,
   },
 ]

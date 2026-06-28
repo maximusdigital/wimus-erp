@@ -29,6 +29,7 @@ import {
   SlidersHorizontal,
   Tags,
   Target,
+  History,
   UserCog,
   TrendingUp,
   Truck,
@@ -82,6 +83,7 @@ const mainNav: NavItem[] = [
   { title: "Betriebskosten", href: "/betriebskosten", icon: Calculator },
   { title: "Fristen & Termine", href: "/fristen", icon: CalendarClock },
   { title: "Dokumente", href: "/dokumente", icon: FolderArchive },
+  { title: "Historie", href: "/historie", icon: History },
 ];
 
 // FiBu (Spec 0002) – Stammdaten/Kontierung.

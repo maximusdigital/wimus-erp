@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { vertragInsertSchema } from "@/lib/validations/vertrag"
+import { protokolliere } from "@/lib/historie/protokolliere"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 
 const SELECT =
   "*, einheit:einheiten(verwendungszweck_code, bezeichnung, objekt:objekte(kuerzel)), mieter:kontakte(vorname, nachname, firmenname)"
@@ -64,5 +66,17 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Historie (Modul 009) – fachliche Aktivität; blockiert die Anlage nie.
+  const akteurId = await getAktuellerAkteur(supabase)
+  await protokolliere(supabase, active.id, {
+    typ: "vertrag_angelegt",
+    modul: "vertrag",
+    titel: "Mietvertrag angelegt",
+    payload: { vertragstyp: data.vertragstyp ?? null, einheit_id: data.einheit_id ?? null },
+    akteurId,
+    primaerBezug: { typ: "mietvertrag", id: data.id },
+  })
+
   return NextResponse.json(data, { status: 201 })
 }
