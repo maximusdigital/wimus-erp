@@ -1,12 +1,17 @@
 ---
 gehoert_zu: 0002
 dokument: Migration
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0002 — Migration
 
 > Version & Status des Moduls stehen in `002_fibu_000_konzept.md`.
+>
+> **Bank-Abgleich (Migration 021, 2026-06-28):** `021_bank_abgleich.sql` legt additiv +
+> idempotent `bank_konten` + `bank_umsaetze` an (RLS `mandant_isolation`, Touch-Trigger,
+> `import_hash` UNIQUE als Dublettenschutz, FK auf objekte/einheiten/mietvertraege/forderungen).
+> Kein neues OP-Modell — Einnahmen verrechnen gegen `forderungen` (typ=miete).
 > SQL als Download/`.txt` (nie Code-Block im Chat), idempotent (IF NOT EXISTS, ON CONFLICT
 > DO NOTHING). Reihenfolge respektiert FK-Abhängigkeiten. Setzt Kern-Schema (0001) voraus.
 

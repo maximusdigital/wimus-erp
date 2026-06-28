@@ -2,7 +2,15 @@
  * Lieferant-Matching (Spec 0002, 30_prozesse Kap. 5 – Einheiten-Zuordnung).
  * Ordnet einem erkannten Lieferantennamen einen Kreditor zu (Name/Alias, fuzzy)
  * → daraus firma_id (Buchungskreis) + Standard-Konto. Rein/testbar.
+ *
+ * String-Distanz kommt aus der zentralen Fuzzy-Engine (`fuzzy.ts` → fuzzball);
+ * hier bleibt nur die Domänen-Logik: Firmen-Normalisierung (Rechtsform-Stripping),
+ * Alias-Auflösung, exakter Treffer vor Fuzzy, Schwelle.
  */
+import { ratio } from "./fuzzy"
+
+/** Mindest-Ähnlichkeit für einen Fuzzy-Treffer (0..1). */
+const SCHWELLE = 0.8
 
 export type LieferantKandidat = {
   id: string
@@ -30,8 +38,9 @@ function norm(s: string): string {
 }
 
 /**
- * Bestes Match für einen Lieferantennamen. Exakter Alias/Name-Treffer vor
- * Teilstring-Treffer. Kein Treffer → null (Beleg bleibt firma-unzugeordnet).
+ * Bestes Match für einen Lieferantennamen. Exakter (normalisierter) Alias/Name-
+ * Treffer hat Vorrang; sonst bester Fuzzy-Treffer (zentrale Engine) ab Schwelle.
+ * Kein Treffer → null (Beleg bleibt firma-unzugeordnet).
  */
 export function matchLieferant(
   name: string | null | undefined,
@@ -41,17 +50,23 @@ export function matchLieferant(
   const n = norm(name)
   if (!n) return null
 
-  let teiltreffer: LieferantKandidat | null = null
+  let best: LieferantKandidat | null = null
+  let bestScore = 0
   for (const k of kandidaten) {
     const namen = [k.name, ...(k.alias ?? [])].map(norm).filter(Boolean)
     // Exakter (normalisierter) Treffer hat Vorrang.
     if (namen.includes(n)) return treffer(k)
-    // Teilstring in beide Richtungen (z. B. "DM" ↔ "dm drogerie markt").
-    if (!teiltreffer && namen.some((m) => m && (n.includes(m) || m.includes(n)))) {
-      teiltreffer = k
+    // Fuzzy-Distanz aus der zentralen Engine (token_set_ratio: subset-/reihenfolgetolerant,
+    // deckt frühere Teilstring-Heuristik „DM" ↔ „dm drogerie markt" mit ab).
+    for (const m of namen) {
+      const s = ratio(n, m)
+      if (s > bestScore) {
+        bestScore = s
+        best = k
+      }
     }
   }
-  return teiltreffer ? treffer(teiltreffer) : null
+  return best && bestScore >= SCHWELLE ? treffer(best) : null
 }
 
 function treffer(k: LieferantKandidat): LieferantTreffer {

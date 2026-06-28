@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0002
 dokument: Prozesse
-geaendert: 2026-06-25
+geaendert: 2026-06-28
 ---
 
 # 0002 — Prozesse
@@ -86,3 +86,33 @@ Eingangsrechnungsprüfung gegen Vertrag · BK-Vorkontierung mit Umlageschlüssel
 Originale unveränderbar; Korrektur = neue Version mit Verweis (`belege.version`/
 `vorgaenger_beleg_id`); vollständiges Audit-Log über Status-Maschine; Verfahrensdokumentation
 (diese Spec als Baustein).
+
+## 11. Bank-Abgleich (WISO-Import → Match → OP)
+
+> **Gebaut 2026-06-28.** Quelle = WISO-CSV (KSK-Format, s. `002_fibu_200_datenmodell.md`). Nur
+> lesen. Code: `lib/fibu/bank-csv.ts` (Parser), `bank-match.ts` (Match-Engine), `op-abgleich.ts`
+> (Forderungs-Verrechnung), `fuzzy.ts` (fuzzball); API `/api/fibu/bank/*`; Cockpit `/finanzen/bank`.
+
+1. **Import:** CSV (CP1252) → `;` splitten, Datum/Betrag deutsch parsen → `bank_umsaetze`
+   (Dubletten via `import_hash` überspringen, `papaparse`). Richtung aus Vorzeichen.
+2. **Mehrstufiger Match je Umsatz:**
+   - **0 Vorfilter:** eigene Umbuchungen aussortieren (Verwendungszweck/Empfänger enthält
+     „Geldtransit"/„GT KSK"/„KSKLB-KSKLB" oder Empfänger = eigener Kontoinhaber) →
+     `zuordnung_status=ignoriert`, kein Mietabgleich.
+   - **1 K1-Match:** Verwendungszweck + Empfänger gegen K1-Objektkennungen (IS17/ThS97/AS125…;
+     Suffix möglich `ThS97Z1` → Objekt ThS97 + Einheit Z1) → objekt_id/einheit_id,
+     `match_methode=k1`, hohe Confidence.
+   - **2 Name-Match:** `empfaenger` gegen Namen aktiver Mietverträge/Mieter; String-Distanz
+     über geprüfte Fuzzy-Lib, Normalisierung aus `lieferant-match.ts` („Nachname, Vorname" ↔
+     „Vorname Nachname") → mietvertrag_id, `match_methode=name`. Fängt unbrauchbare
+     Verwendungszwecke ab (Mieter schreibt nur „Miete" o.Ä.).
+   - **3 Betrag/Wiederkehr:** Betrag ≈ offene Miete-Forderung + monatliche Wiederkehr desselben
+     Absenders → bestätigt wackeligen Name-Match (höhere Confidence).
+   - **4 Routing:** K1+Name+Betrag stimmig → auto · nur Name+Betrag → prüfen · sonst → Klär-Liste.
+3. **OP-Abgleich (Einnahmen):** zugeordnete Einnahme gegen offene `forderung` (typ=miete) des
+   Vertrags → vollständig (beglichen) · Teilzahlung (Rest offen) · Überzahlung (Guthaben).
+   Zahlungseingang stoppt laufende Mahnung (Mahnlauf-Mechanik des Kerns).
+4. **Ausgaben (Minus):** K1-Treffer → Objekt-Kostenbezug; Beleg-Verknüpfung (OCR-Beleg ↔ Umsatz)
+   später. Kein OP-Abgleich.
+5. **Klär-Liste:** nicht zugeordnete Umsätze; Vorschlag (Confidence) → Mensch bestätigt/korrigiert.
+   Manuell bestätigte Absender→Vertrag-Zuordnung als Lerneffekt (künftig auto) — Phase 2.

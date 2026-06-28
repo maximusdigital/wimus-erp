@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { AlertTriangle, ChevronRight, Euro, Gavel, PiggyBank, Receipt } from "lucide-react"
+import { AlertTriangle, ChevronRight, Euro, Gavel, Landmark, PiggyBank, Receipt } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -183,6 +183,23 @@ export default async function FinanzenPage() {
                 <p className="font-medium">Kautionen</p>
                 <p className="text-muted-foreground text-sm">
                   Kautionen erfassen, hinterlegen und abrechnen.
+                </p>
+              </div>
+              <ChevronRight className="text-muted-foreground size-5 shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/finanzen/bank" className="block">
+          <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="flex aspect-square size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <Landmark className="size-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Bank-Abgleich</p>
+                <p className="text-muted-foreground text-sm">
+                  KSK/WISO-CSV importieren, Zahlungen automatisch zuordnen, OP abgleichen.
                 </p>
               </div>
               <ChevronRight className="text-muted-foreground size-5 shrink-0" />

@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0002
 dokument: Datenmodell
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 ---
 
 # 0002 — Datenmodell
@@ -138,6 +138,43 @@ exportiert, fehler, dublette, abgelehnt. Übergänge protokolliert (Akteur + Tim
 belege, fibu_buchungen, fibu_konten strikt mandanten-/firmengetrennt. Akteur kann für
 mehrere Firmen berechtigt sein; Daten bleiben getrennt (externer Beraterblick auf
 einzelne Firma möglich).
+
+## Bank-Abgleich (WISO-Export → OP-Abgleich)
+
+> Status: **gebaut 2026-06-28 (Migration 021).** Quelle = WISO-CSV-Export (KSK Ludwigsburg,
+> Muster 2026-06-28). Bankanbindung bleibt bei WISO (HBCI/FinTS inkl. 90-Tage-TAN); das ERP
+> bindet KEIN eigenes HBCI an, liest nur. Objekt-Kennung = **K1** (bestehend, kein neues
+> `kuerzel`-Feld). Fuzzy-Matching über `fuzzball` (`lib/fibu/fuzzy.ts`); `lieferant-match.ts`
+> auf dieselbe Engine umgestellt.
+
+### Echtes Exportformat (fix)
+
+CP1252/ISO-8859-1, Trennzeichen `;`, CRLF. Header (6 Spalten):
+`Wertstellung;Empfänger/Auftraggeber;Verwendungszweck;Kategorie;Betrag;Stand`.
+Datum `TT.MM.JJJJ HH:MM:SS`, Betrag deutsch `-1128,87` (Komma; Minus=Ausgabe), Stand=Saldo.
+**Keine Partner-IBAN im Export** → Absender-Match über Name, nicht IBAN.
+
+### bank_konten
+mandant_id FK, bezeichnung, iban, bank, aktiv BOOL. (Eigene Konten, wenige.)
+
+### bank_umsaetze
+mandant_id FK, bank_konto_id FK, wertstellung DATE, empfaenger TEXT, verwendungszweck TEXT,
+kategorie_wiso TEXT NULL (informativ, NICHT zur Zuordnung), betrag NUMERIC(12,2), saldo NUMERIC,
+richtung ENUM (einnahme/ausgabe) (aus Vorzeichen), import_hash TEXT UNIQUE
+(mandant+konto+datum+betrag+zweck → Dublettenschutz bei Überschneidungs-Tagen), import_am
+TIMESTAMPTZ, erkanntes_k1 TEXT NULL, objekt_id FK NULL, einheit_id FK NULL, mietvertrag_id FK NULL,
+match_methode TEXT NULL (k1/name/betrag/manuell), match_confidence NUMERIC(3,2) NULL,
+zuordnung_status ENUM (offen/zugeordnet/teilweise/manuell/ignoriert),
+forderung_id FK NULL (→ forderungen, OP-Abgleich), zugeordnet_am, zugeordnet_von_akteur_id FK NULL.
+
+> RLS `mandant_isolation` (wie ganzes wimus-Schema). Namenskollision beachtet: `wimus.buchungen`
+> = KZV (Beds24), `fibu_buchungen` = FiBu → neue Tabelle daher `bank_umsaetze`.
+
+### Datenintegrität Bank-Abgleich
+- **Block (DB-UNIQUE):** `bank_umsaetze.import_hash` (kein Doppelimport bei Überlappungstagen).
+- **OP-Bezug:** zugeordnete Einnahme → `forderungen` (typ=miete) schließen/reduzieren; KEIN
+  eigenes OP-Modell. Mahnlauf-Mechanik (`istMahnfaehig`/`naechsteMahnung`) unberührt;
+  Zahlungseingang stoppt Mahnung.
 
 ## Datenintegrität (FiBu-spezifisch)
 

@@ -2,10 +2,10 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.9.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.11.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 abhaengt_von: [0001]
 ---
 
@@ -81,6 +81,12 @@ nur über definierte Confidence- und Betragsschwellen.
 
 ## In Arbeit
 
+- **Bank-Abgleich (gebaut 2026-06-28):** WISO-CSV-Import (KSK-Format) → mehrstufiger Match
+  (K1-Objektkennung → Mieter-Name via Fuzzy-Lib → Betrag/Confidence) → OP-Abgleich gegen
+  `forderungen` (typ=miete). Bankanbindung bleibt WISO (kein eigenes HBCI). Migration 021
+  (`bank_konten`/`bank_umsaetze`), `lib/fibu/bank-csv|bank-match|op-abgleich|fuzzy.ts`
+  (+24 Unit-Tests), `/api/fibu/bank/{import,konten,umsaetze/[id]/zuordnen}`, Cockpit
+  `/finanzen/bank`. `lieferant-match.ts` auf dieselbe Fuzzy-Engine (fuzzball) umgestellt.
 - Belegzuordnung: `firma_id` jetzt via Lieferant-Match abgeleitet; Rest-Fälle (kein Treffer)
   weiterhin firma_id null → Review (OP-6 teilweise gelöst)
 - EXTF-Export an echte Buchungen anbinden (volles 116-Spalten-Layout, OP-1)
@@ -97,6 +103,35 @@ nur über definierte Confidence- und Betragsschwellen.
   Agenten 4/8/11
 
 ## Entscheidungen (warum es so ist)
+
+- 2026-06-28: **Bankanbindung über WISO, nicht im ERP.** WISO Mein Geld bleibt die
+  Bank-Schnittstelle (HBCI/FinTS inkl. PSD2-90-Tage-TAN); das ERP bindet KEIN eigenes HBCI an,
+  liest nur die WISO-CSV-Exporte. Grund: kein Doppel zu WISO, 0 € laufend, keine
+  PIN/TAN-/PSD2-Last im ERP. Eigene HBCI-Anbindung (python-fints) und Aggregator-APIs (finAPI)
+  bewusst verworfen (lohnt bei wenigen eigenen Konten nicht).
+- 2026-06-28: **Objekt-Kennung = bestehendes K1, kein neues `kuerzel`-Feld.** Der Bank-Abgleich
+  matcht Verwendungszweck/Empfänger gegen K1 (IS17/ThS97/AS125…), das bereits Objektkennung im
+  System ist (`kontierungsregeln`, `objekt_tags`, `belege.k1`). Nichts doppelt.
+- 2026-06-28: **Mehrstufiger Match statt nur Verwendungszweck.** Reihenfolge: Vorfilter
+  (Geldtransit/eigene Umbuchungen raus) → K1 → Mieter-Name (Absender) → Betrag/Wiederkehr →
+  Confidence-Routing. Grund: Mieter geben oft unbrauchbare Verwendungszwecke an; der
+  Absendername ist das verlässlichere Signal (echtes KSK-Muster bestätigt). WISO-Kategorie wird
+  NICHT zur Zuordnung genutzt (nur informativ importiert).
+- 2026-06-28: **Fuzzy-Matching über geprüfte Lib; `lieferant-match.ts` wird umgestellt.**
+  Grundsatz „fertige Lib vor Eigenbau": handgeschriebene Distanzberechnung in `lieferant-match.ts`
+  wird durch eine etablierte Fuzzy-Lib (z.B. `fuzzball`) ersetzt, Domänen-/Normalisierungs-Logik
+  bleibt. Bank-Abgleich nutzt dieselbe Lib. Ergebnis: genau EINE Fuzzy-Implementierung im ERP.
+- 2026-06-28: **OP-Abgleich gegen bestehende `forderungen` (typ=miete), kein neues OP-Modell.**
+  Einnahme → offene Miete-Forderung schließen/reduzieren; Zahlungseingang stoppt Mahnung
+  (Mahnlauf-Mechanik des Kerns). Neue Tabelle `bank_umsaetze` (Namenskollision: `buchungen`=KZV,
+  `fibu_buchungen`=FiBu).
+- 2026-06-28 (Impl.): **`papaparse` war NICHT vorhanden** (Auftragsannahme falsch) → installiert;
+  als Fuzzy-Lib **`fuzzball`** (token_set_ratio) gewählt und als EINZIGE String-Distanz-Engine
+  etabliert (`lib/fibu/fuzzy.ts`); `lieferant-match.ts` darauf umgestellt (Tests grün). CP1252-
+  Dekodierung via `TextDecoder('windows-1252')` in der Import-Route.
+- 2026-06-28 (Impl.): **K1-Auflösung über vorhandenen `parseVerwendungszweck`** + `objekte.kuerzel`
+  / `einheiten.verwendungszweck_code` (real existierende Spalten) — kein neues Mapping. Token
+  `BHS16W3Z1` → Objekt `BHS16` (auch ohne Einheit-Zeile), volle Einheit-Codes → Einheit direkt.
 
 - 2026-06-25: **Invoice Ninja = Ausgangsrechnungen, FiBu-Modul = Eingangsbelege +
   Kontierung.** Klare Abgrenzung, keine doppelte Kontierungslogik. Invoice Ninja (TB16,
@@ -161,6 +196,8 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 0.11.0 | 2026-06-28 | in_arbeit | Bank-Abgleich GEBAUT: Migration 021 (bank_konten/bank_umsaetze), lib/fibu/bank-csv|match|op-abgleich|fuzzy (+16 Tests), Import-/Zuordnen-/Konten-API, Cockpit /finanzen/bank; lieferant-match auf fuzzball umgestellt. Build + 314 Tests grün. |
+| 0.10.0 | 2026-06-28 | in_arbeit | Bank-Abgleich-Spec (vorab): WISO-CSV-Import (KSK-Format), mehrstufiger Match (K1→Mieter-Name via Fuzzy-Lib→Betrag), OP-Abgleich gegen `forderungen`; `bank_konten`/`bank_umsaetze`; `lieferant-match.ts` auf Fuzzy-Lib umstellen. Bau folgt, Report als Feedbackschleife. |
 | 0.9.0 | 2026-06-27 | in_arbeit | Feststellungen-Persistenz: Vorschau speichern (`feststellungen` + Verteilung JSONB), Historie je Firma mit Laden/Löschen (`/api/fibu/feststellungen`). |
 | 0.8.0 | 2026-06-27 | in_arbeit | Konsolidierung umschaltbar Konten↔Berichtspositionen (`konsolidiereNachPosition`, Matrix Position×Einheit, A4-Druck) + Tests. |
 | 0.7.0 | 2026-06-27 | in_arbeit | Reporting-Taxonomie: `/fibu/reporting-taxonomie` (Berichtspositionen, Konto-Präfix-Mapping), GuV-Umschalter Konten↔Positionen, `lib/fibu/taxonomie.ts` + Tests. |
@@ -178,6 +215,8 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 09:10 | v0.11.0: Bank-Abgleich GEBAUT (Mig.021, lib/fibu/bank-csv|match|op-abgleich|fuzzy +16 Tests, Import/Zuordnen/Konten-API, Cockpit); lieferant-match auf fuzzball; papaparse installiert | 000,200,300 + Code |
+| 2026-06-28 16:30 | v0.10.0: Bank-Abgleich-Spec vorab (WISO-CSV-Import, mehrstufiger Match K1/Name/Betrag, OP gegen forderungen, bank_konten/bank_umsaetze, Fuzzy-Lib statt Eigenbau) | 000,200,300 |
 | 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 500_migration auf Realität (mandant_isolation/firmen), Batch-Freigabe aus Backlog | 400,500 |
 | 2026-06-27 11:50 | v0.9.0: Feststellungen-Persistenz (speichern + Historie, /api/fibu/feststellungen) | 000,200 + Code |
 | 2026-06-27 11:35 | v0.8.0: Konsolidierung umschaltbar Konten↔Positionen (konsolidiereNachPosition) + Tests | 000,400 + Code |
