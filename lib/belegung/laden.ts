@@ -24,6 +24,18 @@ function tag(v: string | null): string | null {
 }
 
 /**
+ * Nächster Tag zu einem ISO-Datum (YYYY-MM-DD). Für die INKLUSIVE MV-Ende-Semantik:
+ * ein Mietvertrag belegt bis `mietende` einschließlich → in der halboffenen Engine
+ * `[von, bis)` ist das `bis = mietende + 1 Tag` (Entscheidung 001_erp, 2026-06-28).
+ * KZV-Checkout bleibt halboffen (Checkout-Tag frei).
+ */
+export function naechsterTag(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
  * Lädt alle belegenden Zeiträume einer Einheit aus den drei Quellen.
  * @param supabase RLS-gebundener Server-Client (kein Service-Role!)
  */
@@ -76,11 +88,13 @@ export async function ladeBelegungen(
     mieter: Kontakt | Kontakt[] | null
   }>) {
     if (!m.mietbeginn) continue
+    const mietendeTag = tag(m.mietende)
     belegungen.push({
       quelle: "mietvertrag",
       ref_id: m.id,
       von: tag(m.mietbeginn)!,
-      bis: tag(m.mietende), // offen = unbefristet
+      // INKLUSIV: belegt bis mietende einschließlich → halboffenes bis = mietende + 1 Tag.
+      bis: mietendeTag ? naechsterTag(mietendeTag) : null, // null = unbefristet
       typ: "Mietvertrag",
       label: name(m.mieter) || "Mieter",
     })
