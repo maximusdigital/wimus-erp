@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         .order("faellig_am", { ascending: true }),
       supabase.schema("wimus").from("bank_umsaetze").select("import_hash").eq("mandant_id", active.id),
       supabase.schema("wimus").from("firmen").select("name").eq("mandant_id", active.id),
-      supabase.schema("wimus").from("bank_konten").select("bezeichnung").eq("mandant_id", active.id),
+      supabase.schema("wimus").from("bank_konten").select("bezeichnung, inhaber").eq("mandant_id", active.id),
       supabase.schema("wimus").from("bank_ignorier_muster").select("muster").eq("mandant_id", active.id).eq("aktiv", true),
       supabase.schema("wimus").from("bank_einstellungen").select("auto_schwelle, pruefen_schwelle, name_min").eq("mandant_id", active.id).maybeSingle(),
     ])
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
   // Vorfilter: eigene Namen (firmen + bank_konten) + pflegbare Ignorier-Muster.
   const kontoinhaber = [
     ...(firmenR.data ?? []).map((f) => f.name).filter(Boolean),
-    ...(kontenR.data ?? []).map((k) => k.bezeichnung).filter(Boolean),
+    ...(kontenR.data ?? []).flatMap((k) => [k.bezeichnung, (k as { inhaber?: string | null }).inhaber]).filter(Boolean),
   ] as string[]
   const ignorierMuster = (ignorierR.data ?? []).map((i) => i.muster).filter(Boolean) as string[]
   const e = einstR.data

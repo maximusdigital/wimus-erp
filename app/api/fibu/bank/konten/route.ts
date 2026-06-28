@@ -8,6 +8,7 @@ const schema = z.object({
   bezeichnung: z.string().min(1),
   iban: z.string().optional().nullable(),
   bank: z.string().optional().nullable(),
+  inhaber: z.string().optional().nullable(),
 })
 
 /** Bankkonten des Mandanten (für Import-Zuordnung). */
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       bezeichnung: parsed.data.bezeichnung,
       iban: parsed.data.iban ?? null,
       bank: parsed.data.bank ?? null,
+      inhaber: parsed.data.inhaber ?? null,
     })
     .select("*")
     .single()
