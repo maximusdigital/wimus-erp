@@ -130,6 +130,7 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 02:25 | Vorgangs-Reste in 300/400 auf Verweis → 004 reduziert (Schadens-Staffel, RowActions-Hinweis); kein Doppelinhalt | 300, 400 |
 | 2026-06-27 15:00 | Vorgänge → Modul 004 ausgelagert (Kern auf Bezugspunkte reduziert); akteure (Mensch+KI) als Kern-Erweiterung 017 ergänzt | 000_konzept, 200 |
 | 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 005-Zusatztabellen enumeriert, Migrations-/Tabellenzahl korrigiert; Bugfix vorgaenge.prioritaet kritisch→notfall (DB-CHECK) | 000_konzept, 200, types/vorgang |
 | 2026-06-27 01:30 | OP-3 erledigt: 005-Kern-DDL 1:1 aus Archiv als getrackte Migration 005 ins Repo | 000_konzept, 200, Migration 005 |

@@ -127,6 +127,13 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 - 2026-06-28: **Kein zusätzliches Vision-Modell.** Volumen ~500 Bilder/Monat (<1 €) → keine
   Volumen-Optimierung/Fallback, Qualität vor Sparen. **Vorbehalt:** Modellgüte an 20–30 echten
   Vorher/Nachher-Paaren verifizieren, BEVOR Auto-Confidence-Schwellen scharf gestellt werden.
+- 2026-06-28: **Schaden-Kostenträger aus Übergabe-Richtung** (nicht hart `mieter`): Auszug→`mieter`
+  (Verschulden→Kaution), Einzug→`vermieter` (Bestandsschaden); Override via `kostentraeger`. ENUM
+  `(vermieter/mieter/versicherung/weg)` bleibt — `vermieter` ist das richtige Wort.
+- 2026-06-28: **Schaden-Übernahme idempotent** (Dubletten-Block wie Kern): Vorschlag in
+  `vorgang_foto.ki_analyse.schaeden[index]` mit `uebernommen:true` + `folge_vorgang_id` markiert;
+  Übernahme referenziert `{fotoId,index}` (Vorschlag serverseitig aus Analyse, nicht Client),
+  erneute Übernahme → 409. Grund: Reload/Doppelklick darf keinen zweiten Schaden anlegen.
 
 ## Offene Punkte
 
@@ -159,6 +166,7 @@ Akteur, extern = Organisation/Dienstleister (Kern `organisationen`) bzw. `kontak
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
+| 2026-06-28 02:25 | Schaden-Übernahme: Kostenträger aus Richtung (Auszug→mieter/Einzug→vermieter) + idempotent (ki_analyse-Markierung); Typ-Icons → Lucide | 000/200/300/400, schaden-uebernehmen, foto-analyse, vorgang-fotos |
 | 2026-06-28 01:35 | Spec festgeschrieben auf realen Stand (400/500/600 + README-Index) + Bau-Chronik aus git | alle 004 + README |
 | 2026-06-28 01:25 | Schaden-Übernahme aus KI-Abgleich → Folge-Vorgang typ=schaden + vorgang_schaden + Verlauf (e0df43b) | schaden-uebernehmen, vorgang-fotos |
 | 2026-06-28 01:08 | KI-Bildverarbeitung Übergabe (Claude Vision: Zähler + Vorher/Nachher-Abgleich, JSON+Confidence) (13bdf66) | Mig.019, lib/claude, lib/ops/confidence, foto-analyse |

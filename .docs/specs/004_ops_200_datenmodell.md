@@ -73,6 +73,8 @@ url TEXT NULL, beschreibung TEXT, akteur_id UUID NULL, aufgenommen_am TIMESTAMPT
 > Capture/Upload via Supabase Storage (`vorgang-fotos`); Bytes per Public-URL. KI-Analyse via
 > Claude Vision (Endpoint `/api/vorgaenge/[id]/foto-analyse`) – Routing ≥0.90 auto · 0.75–0.89
 > pruefen · <0.75 manuell, kritische Felder (Zähler→Abrechnung, Schaden→Kaution) nie auto.
+> Abgleich-Schäden in `ki_analyse.schaeden[]` tragen bei Übernahme `uebernommen:true` +
+> `folge_vorgang_id` (Idempotenz-Markierung, verhindert Doppelanlegen).
 
 ## Typ-Erweiterungen (1:1 zu vorgaenge, Migration 018)
 

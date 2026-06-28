@@ -67,6 +67,8 @@ type SchadenVorschlag = {
   schaden_typ: string | null
   schwere: string | null
   neu: boolean
+  uebernommen?: boolean
+  folge_vorgang_id?: string
 }
 type AbgleichErgebnis = { schaeden: SchadenVorschlag[] }
 type SchadenStatus = { state: "busy" | "done" | "error"; href?: string; az?: string; msg?: string }
@@ -146,28 +148,23 @@ export function VorgangFotos({ vorgangId, fotos }: { vorgangId: string; fotos: F
     }
   }
 
-  async function uebernehmeSchaden(index: number, s: SchadenVorschlag) {
+  async function uebernehmeSchaden(index: number) {
+    const fotoId = abgleichTraeger?.id
+    if (!fotoId) return
     setSchadenStatus((m) => ({ ...m, [index]: { state: "busy" } }))
     try {
       const res = await fetch(`/api/vorgaenge/${vorgangId}/schaden-uebernehmen`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ort: s.ort,
-          beschreibung: s.beschreibung,
-          schaden_typ: s.schaden_typ,
-          schwere: s.schwere,
-        }),
+        body: JSON.stringify({ fotoId, index }),
       })
       const j = await res.json().catch(() => null)
-      if (!res.ok) {
+      if (!res.ok && res.status !== 409) {
         setSchadenStatus((m) => ({ ...m, [index]: { state: "error", msg: j?.error ?? "Fehlgeschlagen." } }))
         return
       }
-      setSchadenStatus((m) => ({
-        ...m,
-        [index]: { state: "done", href: `/vorgaenge/${j.id}`, az: j.aktenzeichen ?? undefined },
-      }))
+      // Erfolg (oder bereits übernommen): persistierter Zustand steuert die Anzeige.
+      router.refresh()
     } catch {
       setSchadenStatus((m) => ({ ...m, [index]: { state: "error", msg: "Fehlgeschlagen." } }))
     }
@@ -356,7 +353,7 @@ function SchaedenListe({
 }: {
   analyse: AbgleichErgebnis
   status: Record<number, SchadenStatus>
-  onUebernehmen: (index: number, s: SchadenVorschlag) => void
+  onUebernehmen: (index: number) => void
 }) {
   if (analyse.schaeden.length === 0) {
     return <p className="text-sm text-muted-foreground">Keine neuen Schäden erkannt.</p>
@@ -380,19 +377,19 @@ function SchaedenListe({
                 ) : null}
               </span>
             </span>
-            {st?.state === "done" ? (
+            {s.uebernommen && s.folge_vorgang_id ? (
               <Link
-                href={st.href ?? "#"}
+                href={`/vorgaenge/${s.folge_vorgang_id}`}
                 className="inline-flex shrink-0 items-center gap-1 text-xs text-success hover:underline"
               >
                 <Check className="size-3.5" />
-                <span>{st.az ?? "angelegt"}</span>
+                <span>angelegt</span>
               </Link>
             ) : (
               <button
                 type="button"
                 disabled={st?.state === "busy"}
-                onClick={() => onUebernehmen(i, s)}
+                onClick={() => onUebernehmen(i)}
                 className="inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
                 {st?.state === "busy" ? (

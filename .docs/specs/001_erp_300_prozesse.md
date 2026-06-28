@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0001
 dokument: Prozesse
-geaendert: 2026-06-24
+geaendert: 2026-06-28
 quelle: 20260624_WIMUS_IT_ERP_10_Spezifikation_Docs_V502.docx
 ---
 
@@ -71,9 +71,10 @@ renovierungskosten, hausgeld, citytax.
 
 ### Schadensmanagement (Eskalation nach Betrag)
 
-< 50 EUR Kaution direkt (auto); 50–500 Kaution + Mahnung St.1 (Alert); 500–5.000 Kaution +
-Versicherung (Versicherungsmeldung vorbereiten); 5.000–10.000 Versicherung + Mahnbescheid
-(KI Klageschrift); > 10.000 Anwalt (Alert). Jeder Schaden = Vorgang + Forderung (1:n).
+> **Detail in `004_ops_*`** (Vorgangs-Engine, `vorgang_schaden.abwicklungsstufe` + `lib/ops/schaden`):
+> Betrags-Staffel < 50 / 50–500 / 500–5.000 / 5.000–10.000 / > 10.000 (Kaution → Versicherung →
+> Mahnbescheid → Anwalt). Der **Kern** hält nur den Forderungs-/Kaution-Bezug: jeder Schaden =
+> Vorgang (004) + **Forderung (1:n)**, Verrechnung über die Kaution (s.u.).
 
 ### Kaution als Verrechnungstopf
 

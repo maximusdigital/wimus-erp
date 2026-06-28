@@ -61,10 +61,15 @@ geaendert: 2026-06-28
   liefert `{schaeden:[{ort,beschreibung,schaden_typ,schwere,neu}],confidence}` → Ergebnis am
   jüngsten Nachher-Foto. Vorschläge sind **Entwurf**.
 - **Schaden-Übernahme:** Mensch bestätigt je Vorschlag („Als Schaden anlegen",
-  `POST /api/vorgaenge/[id]/schaden-uebernehmen`) → **Folge-Vorgang `typ=schaden`** (eigener
-  Vorgang, da Übergabe schon Typ `uebergabe` ist) + `vorgang_schaden` (Typ/Schwere, Priorität aus
-  Schwere), Beschreibung im Verlauf, Kostenträger Mieter (→ Kaution). Objekt/Einheit vom Übergabe-
+  `POST /api/vorgaenge/[id]/schaden-uebernehmen` mit `{fotoId,index}`) → **Folge-Vorgang
+  `typ=schaden`** (eigener Vorgang, da Übergabe schon Typ `uebergabe` ist) + `vorgang_schaden`
+  (Typ/Schwere, Priorität aus Schwere), Beschreibung im Verlauf. Objekt/Einheit vom Übergabe-
   Vorgang geerbt; Verlauf-Querverweis in beiden Vorgängen.
+  - **Kostenträger automatisch aus Richtung** (Override via `kostentraeger` möglich):
+    Auszug → `mieter` (Verschulden → Kaution), Einzug → `vermieter` (Bestandsschaden).
+  - **Idempotent:** der Vorschlag wird in `vorgang_foto.ki_analyse.schaeden[index]` mit
+    `uebernommen:true` + `folge_vorgang_id` markiert; erneute Übernahme wird geblockt (409),
+    UI zeigt nach Reload „angelegt" statt Button (Dubletten-Block wie im Kern).
 - **Routing** (`lib/ops/confidence.ts`): ≥0.90 auto · 0.75–0.89 pruefen · <0.75 manuell.
 - Mistral OCR bleibt FiBu/Belege-only (keine Vermischung).
 

@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0001
 dokument: Design
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 quelle: 20260624_WIMUS_IT_ERP_40_DesignSystem_Docs_V104.docx
 ---
 
@@ -122,6 +122,9 @@ Claude Code baut sie einmal, alle Listen nutzen sie identisch.
 | Kontakte | Nachricht senden | Duplizieren, Anrufen, Vorgang anlegen, AZ kopieren | Archivieren (soft) |
 | Vorgänge/Schäden | Status ändern | Duplizieren, Handwerker zuweisen, Anhang, Drucken | Löschen (soft) |
 | Fristen | Erledigt markieren | Verschieben/Snooze, Eskalieren | Löschen (soft) |
+
+> Vorgänge/Schäden: nur RowActions-Eintrag (modulübergreifende Übersicht). Engine, Plantafel,
+> Typ-Sichten und Detail-UI stehen in `004_ops_400_design.md` — Kern führt keine Vorgangs-UI doppelt.
 
 > Icons (Tabler/lucide): Bearbeiten edit, Duplizieren copy, Drucken printer, DMS folder,
 > AZ hash, Freigeben check, Nachricht mail/whatsapp, Anrufen phone, Status

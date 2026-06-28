@@ -38,6 +38,9 @@ export const abgleichAnalyseSchema = z.object({
           .nullish()
           .transform((v) => v ?? null),
         neu: z.boolean().catch(true),
+        // Idempotenz-Markierung (gesetzt bei „Als Schaden anlegen"), optional.
+        uebernommen: z.boolean().optional(),
+        folge_vorgang_id: z.string().optional(),
       })
     )
     .default([]),

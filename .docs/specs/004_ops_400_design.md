@@ -58,5 +58,7 @@ geaendert: 2026-06-28
 
 - Primäraktion Vorgang: Status weiterschalten / Zuweisen. Kebab: Duplizieren, Drucken, DMS.
   Destruktiv: Abbrechen (+ Grund), Löschen (soft).
-- Typ-Icon-Map: schaden ⚠ · reparatur 🔧 · reinigung 🧹 · uebergabe 🔑 · wartung 🛠 · anfrage ✉.
+- Typ-Icon-Map (Lucide, Kern-Set — keine Emoji): schaden `AlertTriangle` · reparatur `Wrench` ·
+  reinigung `Sparkles` · uebergabe `KeyRound` · wartung `Hammer` · anfrage `Mail` ·
+  kuendigung `FileX` · sonstiges `CircleDot`.
 - Charts (Workforce-/Auslastungssicht, später): shadcn-charts (Recharts-basiert), nie Tremor.
