@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Plus, Search } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 
 import { createServerClient } from "@/lib/supabase/server";
+import { CommandPalette } from "@/components/search/command-palette";
+import { SearchTrigger } from "@/components/search/search-trigger";
 import { getActiveProjekt, getProjekte } from "@/lib/projekte";
 import { isPreviewNoAuth } from "@/lib/dev/preview";
 import { CrmSidebar, type SidebarUser } from "@/components/crm-sidebar";
@@ -66,14 +68,8 @@ export default async function DashboardLayout({
               orientation="vertical"
               className="mr-1 h-5 self-center"
             />
-            <div className="relative hidden w-full max-w-sm items-center sm:flex">
-              <Search className="pointer-events-none absolute left-2.5 size-4 text-muted-foreground" />
-              <input
-                type="search"
-                placeholder="Objekte, Einheiten oder Kontakte suchen …"
-                className="h-8 w-full rounded-lg border border-input bg-background py-1 pr-3 pl-8 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                aria-label="Suche"
-              />
+            <div className="hidden w-full max-w-sm items-center sm:flex">
+              <SearchTrigger />
             </div>
             <div className="ml-auto flex items-center gap-1.5">
               <Button
@@ -91,6 +87,7 @@ export default async function DashboardLayout({
           </header>
           <div className="flex flex-1 flex-col">{children}</div>
         </SidebarInset>
+        <CommandPalette />
       </SidebarProvider>
     </ProjektProvider>
   );

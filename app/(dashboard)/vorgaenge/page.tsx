@@ -5,6 +5,10 @@ import { createServerClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { VorgangKarte } from "@/components/vorgaenge/vorgang-karte"
 import { VorgangTabelle } from "@/components/vorgaenge/vorgang-tabelle"
+import { FilterBar } from "@/components/search/filter-bar"
+import { getEntity } from "@/lib/search/registry"
+import { applyOps, buildQueryOps } from "@/lib/search/query-builder"
+import type { FilterInput, FilterWert } from "@/lib/search/types"
 import type { VorgangMitRelationen } from "@/types/vorgang"
 
 export const metadata = {
@@ -17,9 +21,16 @@ const SELECT =
 export default async function VorgaengePage({
   searchParams,
 }: {
-  searchParams: Promise<{ objekt?: string; einheit?: string; status?: string }>
+  searchParams: Promise<{
+    objekt?: string
+    einheit?: string
+    status?: string
+    typ?: string
+    prioritaet?: string
+    q?: string
+  }>
 }) {
-  const { objekt, einheit, status } = await searchParams
+  const sp = await searchParams
   const supabase = await createServerClient()
 
   let query = supabase
@@ -29,9 +40,18 @@ export default async function VorgaengePage({
     .order("leistungsdatum", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 
-  if (objekt) query = query.eq("objekt_id", objekt)
-  if (einheit) query = query.eq("einheit_id", einheit)
-  if (status) query = query.eq("status", status)
+  // Direkte Bezugs-Filter (nicht in der Registry).
+  if (sp.objekt) query = query.eq("objekt_id", sp.objekt)
+  if (sp.einheit) query = query.eq("einheit_id", sp.einheit)
+
+  // Registry-Filter + Freitext über die geteilte Such-Engine (RLS-konform).
+  const filter: Record<string, FilterWert> = {}
+  if (sp.status) filter.status = { op: "eq", value: sp.status }
+  if (sp.typ) filter.typ = { op: "eq", value: sp.typ }
+  if (sp.prioritaet) filter.prioritaet = { op: "eq", value: sp.prioritaet }
+  const input: FilterInput = { suchtext: sp.q, filter }
+  const entity = getEntity("vorgaenge")
+  if (entity) query = applyOps(query, buildQueryOps(entity, input))
 
   const { data, error } = await query
   const vorgaenge = (data ?? []) as unknown as VorgangMitRelationen[]
@@ -59,6 +79,8 @@ export default async function VorgaengePage({
           </Button>
         </div>
       </div>
+
+      <FilterBar entityKey="vorgaenge" />
 
       {error ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
