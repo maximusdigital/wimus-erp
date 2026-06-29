@@ -38,6 +38,9 @@ function client() {
       const ret = () => chain
       chain.select = ret
       chain.eq = ret
+      chain.not = ret
+      chain.order = ret
+      chain.limit = ret
       chain.maybeSingle = async () => ({ data: state.instanz })
       return chain
     },

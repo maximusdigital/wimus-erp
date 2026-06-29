@@ -11,6 +11,7 @@ import type { createAdminClient } from "../supabase/admin"
 import { entschluessele } from "./crypto"
 import { erstelleWhatsappAdapter } from "./adapters/whatsapp"
 import { persistiereAusgehend } from "./inbox"
+import { KOM_CONFIG } from "./config"
 import type { SendeErgebnis } from "./types"
 
 type AdminClient = ReturnType<typeof createAdminClient>
@@ -30,6 +31,34 @@ function fehler(text: string): SendeAntwort {
   return { erfolg: false, extern_id: null, status: "fehler", fehler_text: text, nachricht_id: null }
 }
 
+/**
+ * GreenAPI-Ban-Schutz: hält den Mindestabstand zwischen zwei ausgehenden Sends
+ * je Instanz ein (KOM_CONFIG.waMinSendeAbstandMs). DB-basiert (robust über mehrere
+ * Server-Instanzen): letzten gesendet_am lesen, ggf. die Restzeit warten.
+ * Best-effort — ein Query-Fehler darf den Versand nicht blockieren.
+ */
+async function warteRateLimit(supabase: AdminClient, wa_instanz_id: string): Promise<void> {
+  try {
+    const { data } = await supabase
+      .from("kom_nachrichten")
+      .select("gesendet_am")
+      .eq("wa_instanz_id", wa_instanz_id)
+      .eq("richtung", "ausgehend")
+      .not("gesendet_am", "is", null)
+      .order("gesendet_am", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!data?.gesendet_am) return
+    const seit = Date.now() - new Date(data.gesendet_am).getTime()
+    const rest = KOM_CONFIG.waMinSendeAbstandMs - seit
+    if (rest > 0 && rest <= KOM_CONFIG.waMinSendeAbstandMs) {
+      await new Promise((r) => setTimeout(r, rest))
+    }
+  } catch {
+    /* Rate-Limit best-effort */
+  }
+}
+
 export async function sendeWhatsapp(supabase: AdminClient, input: SendeWhatsappInput): Promise<SendeAntwort> {
   // 1. Instanz + Token laden.
   const { data: inst } = await supabase
@@ -47,7 +76,8 @@ export async function sendeWhatsapp(supabase: AdminClient, input: SendeWhatsappI
   }
   if (!apiToken) return fehler("Kein/ungültiger GreenAPI-Token (KOM_SECRET_KEY gesetzt?)")
 
-  // 2. Senden (Adapter wirft nie → Ergebnis trägt Status).
+  // 2. Rate-Limit (Ban-Schutz) einhalten, dann senden (Adapter wirft nie).
+  await warteRateLimit(supabase, inst.id)
   const adapter = erstelleWhatsappAdapter({
     host: inst.green_api_host ?? "https://api.green-api.com",
     idInstance: inst.green_id_instance,
