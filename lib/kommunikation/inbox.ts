@@ -14,9 +14,30 @@
 import type { createAdminClient } from "../supabase/admin"
 import { protokolliere } from "../historie/protokolliere"
 import { leiteBezuege, type BezugEingabe } from "./bezug"
-import type { EingehendeNachricht, Kanal } from "./types"
+import type { EingehendeNachricht, Kanal, NachrichtStatus } from "./types"
 
 const KANAL_LABEL: Record<Kanal, string> = { email: "E-Mail", whatsapp: "WhatsApp" }
+
+/** Einheit/Objekt eines Mieters über den jüngsten Mietvertrag (best effort). */
+async function mieterEinheitObjekt(
+  supabase: AdminClient,
+  mandant_id: string,
+  mieter_id: string,
+): Promise<{ einheit_id: string | null; objekt_id: string | null }> {
+  const { data: mv } = await supabase
+    .from("mietvertraege")
+    .select("einheit_id, einheit:einheiten!einheit_id(objekt_id)")
+    .eq("mandant_id", mandant_id)
+    .eq("mieter_id", mieter_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const einheit = mv?.einheit as { objekt_id?: string } | { objekt_id?: string }[] | null
+  return {
+    einheit_id: (mv?.einheit_id as string) ?? null,
+    objekt_id: (Array.isArray(einheit) ? einheit[0]?.objekt_id : einheit?.objekt_id) ?? null,
+  }
+}
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -57,22 +78,29 @@ async function findeKontakt(
     .maybeSingle()
   if (!data) return null
   // Einheit/Objekt-Ableitung (aktueller MV) — optional, nur bei Mietern relevant.
-  let einheit_id: string | null = null
-  let objekt_id: string | null = null
-  if (data.ist_mieter) {
-    const { data: mv } = await supabase
-      .from("mietvertraege")
-      .select("einheit_id, einheit:einheiten!einheit_id(objekt_id)")
-      .eq("mandant_id", mandant_id)
-      .eq("mieter_id", data.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    einheit_id = (mv?.einheit_id as string) ?? null
-    const einheit = mv?.einheit as { objekt_id?: string } | { objekt_id?: string }[] | null
-    objekt_id = (Array.isArray(einheit) ? einheit[0]?.objekt_id : einheit?.objekt_id) ?? null
-  }
-  return { id: data.id, einheit_id, objekt_id, ist_mieter: Boolean(data.ist_mieter) }
+  const eo = data.ist_mieter
+    ? await mieterEinheitObjekt(supabase, mandant_id, data.id)
+    : { einheit_id: null, objekt_id: null }
+  return { id: data.id, einheit_id: eo.einheit_id, objekt_id: eo.objekt_id, ist_mieter: Boolean(data.ist_mieter) }
+}
+
+/** Kontakt + Einheit/Objekt-Ableitung über die ID (für ausgehende Nachrichten). */
+async function findeKontaktById(
+  supabase: AdminClient,
+  mandant_id: string,
+  kontakt_id: string,
+): Promise<{ id: string; einheit_id: string | null; objekt_id: string | null; ist_mieter: boolean } | null> {
+  const { data } = await supabase
+    .from("kontakte")
+    .select("id, ist_mieter")
+    .eq("mandant_id", mandant_id)
+    .eq("id", kontakt_id)
+    .maybeSingle()
+  if (!data) return null
+  const eo = data.ist_mieter
+    ? await mieterEinheitObjekt(supabase, mandant_id, data.id)
+    : { einheit_id: null, objekt_id: null }
+  return { id: data.id, einheit_id: eo.einheit_id, objekt_id: eo.objekt_id, ist_mieter: Boolean(data.ist_mieter) }
 }
 
 /**
@@ -170,6 +198,83 @@ export async function persistiereEingehend(
   }
 
   return { nachricht_id: ins.id, kontakt_id: kontakt?.id ?? null, neu: true }
+}
+
+/**
+ * Persistiert eine AUSGEHENDE Nachricht (nach dem Sende-Versuch über den Adapter).
+ * Schreibt `kom_nachrichten` (richtung=ausgehend, Status/extern_id aus dem Sende-
+ * Ergebnis), Bezüge, und bei Erfolg + Kontakt die Historie-Aktivität
+ * `nachricht_gesendet` (Modul 009). Blockiert den Sende-Flow nie (Historie best-effort).
+ */
+export async function persistiereAusgehend(
+  supabase: AdminClient,
+  ctx: EingangsKontext,
+  msg: {
+    an_adresse: string
+    text: string
+    kontakt_id?: string | null
+    extern_id?: string | null
+    status: NachrichtStatus
+    fehler_text?: string | null
+    betreff?: string | null
+    ist_autoreply?: boolean
+  },
+): Promise<{ nachricht_id: string }> {
+  const kontakt = msg.kontakt_id ? await findeKontaktById(supabase, ctx.mandant_id, msg.kontakt_id) : null
+  const konversation_id = await holeOderErstelleKonversation(supabase, ctx, kontakt?.id ?? null, msg.betreff ?? null)
+  const erfolg = msg.status !== "fehler"
+
+  const { data: ins, error } = await supabase
+    .from("kom_nachrichten")
+    .insert({
+      mandant_id: ctx.mandant_id,
+      kanal: ctx.kanal,
+      richtung: "ausgehend",
+      postfach_id: ctx.postfach_id ?? null,
+      wa_instanz_id: ctx.wa_instanz_id ?? null,
+      konversation_id,
+      extern_id: msg.extern_id ?? null,
+      von_adresse: null,
+      an_adresse: msg.an_adresse,
+      betreff: msg.betreff ?? null,
+      text: msg.text,
+      status: msg.status,
+      fehler_text: msg.fehler_text ?? null,
+      ist_autoreply: msg.ist_autoreply ?? false,
+      kontakt_id: kontakt?.id ?? null,
+      gesendet_am: erfolg ? new Date().toISOString() : null,
+    })
+    .select("id")
+    .single()
+  if (error || !ins) throw new Error(`Persistenz ausgehend fehlgeschlagen: ${error?.message}`)
+
+  if (kontakt) {
+    const eingabe: BezugEingabe = {
+      kontakte: [{ kontakt_id: kontakt.id, einheit_id: kontakt.einheit_id, objekt_id: kontakt.objekt_id, ist_mieter: kontakt.ist_mieter }],
+    }
+    const bezuege = leiteBezuege(eingabe)
+    if (bezuege.length > 0) {
+      await supabase.from("kom_nachricht_bezug").upsert(
+        bezuege.map((b) => ({ mandant_id: ctx.mandant_id, nachricht_id: ins.id, ...b })),
+        { onConflict: "nachricht_id,bezug_typ,bezug_id", ignoreDuplicates: true },
+      )
+    }
+  }
+
+  // Historie (009): nur bei erfolgreichem Versand + zugeordnetem Kontakt.
+  if (kontakt && erfolg) {
+    await protokolliere(supabase, ctx.mandant_id, {
+      typ: "nachricht_gesendet",
+      modul: "kommunikation",
+      titel: `${KANAL_LABEL[ctx.kanal]} gesendet`,
+      beschreibung: msg.text?.slice(0, 140) ?? null,
+      payload: { kanal: ctx.kanal, nachricht_id: ins.id, an: msg.an_adresse, ist_autoreply: msg.ist_autoreply ?? false },
+      primaerBezug: { typ: kontakt.ist_mieter ? "mieter" : "kontakt", id: kontakt.id },
+      hierarchie: { einheit_id: kontakt.einheit_id, objekt_id: kontakt.objekt_id },
+    })
+  }
+
+  return { nachricht_id: ins.id }
 }
 
 async function holeOderErstelleKonversation(
