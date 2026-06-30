@@ -51,3 +51,6 @@ next-env.d.ts
 
 # Playwright Auth-State (Secrets)
 tests/e2e/.auth/
+
+# Serena (lokale Code-Intelligence, projektspezifisch)
+/.serena/
