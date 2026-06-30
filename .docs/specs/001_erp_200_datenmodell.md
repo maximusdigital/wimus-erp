@@ -1,7 +1,7 @@
 ---
 gehoert_zu: 0001
 dokument: Datenmodell
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 quelle: 20260624_WIMUS_IT_ERP_21_Datenmodell_Docs_V502.docx
 ---
 
@@ -176,6 +176,41 @@ bereich TEXT[], aktiv BOOL. (+ `akteur_verfuegbarkeit`, `akteur_faehigkeiten`.)
 > Der Kern hält nur die **Bezugspunkte**: `forderungen.vorgang_id` (Schaden→Forderung),
 > `fristen` erzeugen Wartungs-Vorgänge, `akteure` sind die Träger, `ocr_verarbeitungen`/
 > `portal_nachrichten` referenzieren `vorgang_id`. `vorgaenge.massnahme_typ` siehe ALTER unten.
+
+## Belegung & Verfügbarkeit (GEBAUT, Migration 023)
+
+> Status: **GEBAUT (Migration 023, einzuspielen; 326 Tests grün).** ERP = Single Source of Truth
+> für Belegung. Belegung quellenübergreifend: KZV-`buchungen` + reguläre `mietvertraege` + neue
+> `belegung_sperren`. Engine `lib/belegung/verfuegbarkeit.ts`, Loader `lib/belegung/laden.ts`.
+> **Beds24-Block ausgehend: GEPARKT** (kein API-Client/Mapping real vorhanden — eigener Auftrag).
+
+### belegung_sperren (GEBAUT)
+mandant_id FK (RLS), einheit_id FK, von DATE, bis DATE (NULL = offen/unbefristet),
+grund ENUM (renovierung/eigennutzung/leerstand_gewollt/sonstiges), notiz TEXT,
+beds24_geblockt BOOL (Hook, aktuell ohne Live-Call), created_by_akteur_id FK, created_at/updated_at.
+RLS mandant_isolation, Touch-Trigger, idempotent, CHECK(bis≥von). Manuelle Sperren neben Buchung/MV.
+
+### Verfügbarkeits-Logik (GEBAUT)
+`istVerfuegbar(von, bis, belegungen, ausser?)` / `findeKollisionen` / `ueberlappt` —
+halboffene Intervalle `von1<bis2 ∧ von2<bis1`; `bis=null` = offenes Ende; `ausser` nimmt den
+eigenen Eintrag beim Bearbeiten aus. Loader `laden.ts` lädt die 3 Quellen einer Einheit über den
+**RLS-gebundenen Server-Client** (keine Service-Role).
+- **MV-Ende INKLUSIV (Entscheidung 2026-06-28):** anders als KZV (Check-out-Tag frei) ist bei
+  Mietverträgen der `mietende`-Tag der letzte belegte Tag → Loader normalisiert `bis = mietende + 1`
+  (halboffen). KZV-`checkout` bleibt frei.
+
+### Vorab-Check beim Anlegen (GEBAUT, WARNT — kein Hard-Block)
+Wiederverwendbare `belegung-hinweis.tsx` inline in Buchungs-Form (KZV) UND Vertrags-Form (MV):
+zeigt bei Datumswahl frei/Kollision(en) je Quelle; Mensch entscheidet „trotzdem anlegen".
+API `/api/belegung/pruefen`, `/api/belegung/sperren` (+ `/[id]` DELETE). UI `/belegung`
+(`belegung-cockpit.tsx`). Offen: `ausser` im Edit-Flow durchreichen (Engine kann's, Form-Verdrahtung fehlt).
+
+### Beds24-Block (ausgehend) — GEPARKT, eigener Auftrag
+`lib/integrations/beds24.ts` (ausgehend) existiert NICHT real; kein `einheiten→beds24_room_id`-
+Mapping. `beds24_geblockt` ist nur ein Hook-Feld. Bau folgt als separater Auftrag: API-Client
+(V2, Calendar-Block), Feld `einheiten.beds24_room_id` (additiv), Loop-Schutz gegen eingehenden
+Webhook (Echo des eigenen Blocks ignorieren), idempotenter Initial-Sync. Beds24-Fehler darf
+ERP-Speicherung nie blockieren (Retry n8n).
 
 ## Weitere in Migration 005 gebaute Tabellen (Nachtrag 2026-06-27)
 

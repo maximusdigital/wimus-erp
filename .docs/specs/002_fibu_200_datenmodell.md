@@ -141,11 +141,11 @@ einzelne Firma möglich).
 
 ## Bank-Abgleich (WISO-Export → OP-Abgleich)
 
-> Status: **gebaut 2026-06-28 (Migration 021).** Quelle = WISO-CSV-Export (KSK Ludwigsburg,
-> Muster 2026-06-28). Bankanbindung bleibt bei WISO (HBCI/FinTS inkl. 90-Tage-TAN); das ERP
-> bindet KEIN eigenes HBCI an, liest nur. Objekt-Kennung = **K1** (bestehend, kein neues
-> `kuerzel`-Feld). Fuzzy-Matching über `fuzzball` (`lib/fibu/fuzzy.ts`); `lieferant-match.ts`
-> auf dieselbe Engine umgestellt.
+> Status: **GEBAUT (Migration 021, 2026-06-28).** Build + 314 Tests grün; SQL einzuspielen.
+> Quelle = WISO-CSV-Export (KSK Ludwigsburg, fix). Bankanbindung bleibt WISO (kein eigenes HBCI);
+> ERP liest nur. Objekt-Kennung = K1 real über `objekte.kuerzel` + `einheiten.verwendungszweck_code`
+> (existieren, via `parseVerwendungszweck` aufgelöst — kein neues Feld). Fuzzy: EINE Engine
+> `lib/fibu/fuzzy.ts` (`fuzzball.token_set_ratio`), `lieferant-match.ts` darauf umgestellt.
 
 ### Echtes Exportformat (fix)
 
@@ -172,9 +172,24 @@ forderung_id FK NULL (→ forderungen, OP-Abgleich), zugeordnet_am, zugeordnet_v
 
 ### Datenintegrität Bank-Abgleich
 - **Block (DB-UNIQUE):** `bank_umsaetze.import_hash` (kein Doppelimport bei Überlappungstagen).
-- **OP-Bezug:** zugeordnete Einnahme → `forderungen` (typ=miete) schließen/reduzieren; KEIN
-  eigenes OP-Modell. Mahnlauf-Mechanik (`istMahnfaehig`/`naechsteMahnung`) unberührt;
-  Zahlungseingang stoppt Mahnung.
+- **OP-Bezug (GEBAUT, Migration 021/022):** zugeordnete Einnahme → `forderungen` (typ=miete),
+  **FIFO-Kaskade** via reine Funktion `verteileEinnahme(betrag, forderungen[])` in
+  `lib/fibu/op-abgleich.ts`: älteste zuerst, Überzahlung bedient nächste Forderung, Rest →
+  Guthaben (Kontokorrent). Import-/Zuordnen-Route führen In-Memory-Stand für Folgezeilen
+  desselben Imports mit (kein Doppelverbuchen). Nutzt `betrag/bezahlt_betrag/status/bezahlt_am`
+  1:1 — KEIN neues OP-Modell, Mahnlauf unberührt.
+- **Confidence-Schwellen (GEBAUT, Migration 022):** Tabelle `bank_einstellungen` (mandant_id PK,
+  auto_schwelle/pruefen_schwelle/name_min; Defaults 0.90/0.75/0.82). Import-Route lädt sie →
+  `ctx.schwellen` (Fallback = Code-Defaults). API `/api/fibu/bank/einstellungen` (GET/PUT-Upsert)
+  + Settings-UI. Ohne Code-Änderung justierbar (DB-Zeile statt Hardcode).
+- **Vorfilter eigene Umbuchungen (GEBAUT, Migration 022):** BEIDES — (a) Auto-Quelle:
+  Import-Route lädt eigene Namen aus `firmen.name` + `bank_konten.bezeichnung` (+ künftig
+  `bank_konten.inhaber`, s.u.) → `kontoinhaber`; (b) pflegbare Liste `bank_ignorier_muster`
+  (mandant_id, muster, aktiv) + API `/api/fibu/bank/ignorier` (GET/POST/DELETE) + Settings-UI.
+  Default-Muster (Geldtransit/GT KSK/KSKLB/Umbuchung) greifen immer, ergänzt um Mandanten-Muster.
+- **`bank_konten.inhaber` (geplant, additiv):** explizites Textfeld für den echten Inhabernamen
+  fürs Vorfilter-Matching (`bezeichnung` ist nur ein Label). Vorfilter nutzt `inhaber` falls
+  gesetzt, sonst Fallback `bezeichnung` + `firmen.name`. NULLable.
 
 ## Datenintegrität (FiBu-spezifisch)
 

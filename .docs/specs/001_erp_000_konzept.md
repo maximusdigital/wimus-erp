@@ -2,10 +2,10 @@
 id: 0001
 titel: ERP-Kern
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 5.1.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 5.3.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: erp-kern
 erstellt: 2026-06-23
-geaendert: 2026-06-27
+geaendert: 2026-06-28
 abhaengt_von: []
 ---
 
@@ -28,6 +28,12 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 ## Steht (gebaut & läuft)
 
+- **Belegungs-Engine (Migration 023, 2026-06-28; SQL einzuspielen):** quellenübergreifende
+  Verfügbarkeit (`lib/belegung/verfuegbarkeit.ts` + `laden.ts`) über buchungen/mietvertraege/
+  belegung_sperren; Vorab-Check beim Anlegen (warnt, kein Hard-Block) in KZV- + MV-Form; UI
+  `/belegung`. MV-Ende inklusiv (Loader bis=mietende+1), KZV-Checkout frei. 326 Tests grün.
+  Beds24-Block ausgehend noch geparkt (s. In Arbeit).
+
 - Phase 0 Fundament: CLAUDE.md, DB-Schema, Auth+MFA, Mandanten, RLS, Seed
 - Phase 1 Core Immobilien: Objekte, Einheiten, Kontakte, Verträge, Dashboard
 - Cutover public→wimus abgeschlossen (App läuft auf `wimus`); Org-Modell Workspace→Firma→Projekt
@@ -42,6 +48,12 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 ## In Arbeit
 
+- **Beds24-Block ausgehend (geparkt, eigener Auftrag):** ausgehender API-Client + roomId-Mapping
+  + Loop-Schutz + Initial-Sync — kommt als separater Bau-Auftrag (Belegungs-Engine selbst steht).
+- ~~Belegungs-Engine (gebaut, s. Steht)~~ — zentrale Verfügbarkeitsprüfung
+  über `buchungen` + `mietvertraege` + neue `belegung_sperren`; Vorab-Check beim Anlegen
+  (warnen bei Kollision); synchroner Beds24-Kalender-Block (ausgehend). Datenmodell s.
+  `001_erp_200_datenmodell.md`, Prozess s. `001_erp_300_prozesse.md`.
 - Phase 2 Finanzen (extern): OP-Management, CAMT/finAPI, Invoice Ninja, Zammad
   (nativer Teil Mahnwesen/Forderungen/Fristen/BK steht, s. „Steht")
 - Modulübergreifende UI-Konventionen + Datenintegrität (001_erp_400_design/20_datenmodell) als
@@ -56,6 +68,18 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 - Gesonderte Fachmodule wo Umfang es rechtfertigt (FiBu = 0002 bereits ausgegliedert)
 
 ## Entscheidungen (warum es so ist)
+
+- 2026-06-28: **Belegungs-Engine gebaut (Migration 023):** quellenübergreifend, Vorab-Check
+  warnt; MV-Ende INKLUSIV (Loader bis=mietende+1) vs. KZV-Checkout frei. Beds24-Block ausgehend
+  geparkt (kein realer API-Client/Mapping) → eigener Auftrag.
+- 2026-06-28: **ERP = Single Source of Truth für Belegung; Beds24 wird geblockt.** Belegung ist
+  quellenübergreifend (KZV-`buchungen` + reguläre `mietvertraege` + neue `belegung_sperren` für
+  Renovierung/Eigennutzung/Leerstand). Zentrale Engine `lib/belegung/verfuegbarkeit.ts`
+  (`istVerfuegbar`) prüft alle Quellen auf Overlap. Beim Anlegen (KZV-Buchung UND regulärer MV)
+  → Vorab-Check → bei Kollision **warnen** (Mensch entscheidet, kein Hard-Block). ERP-Belegung
+  wird **synchron nach Beds24 geblockt** (ausgehender API-Call, neu — bisher nur eingehender
+  Webhook). Grund: zwei Systeme dürfen nicht um die Wahrheit konkurrieren (Doppelbuchungs-Schutz).
+  Beds24-Fehler darf ERP-Speicherung nie blockieren (Block-Retry via n8n).
 
 - 2026-06-24: Drei vereinheitlichte BK-Kerne statt verstreuter Einzellogik — Grund: alle
   Betriebskosten (Strom/Gas/Müll/Hausmeister/WEG-extern/Grundsteuer) durch EINE
@@ -114,6 +138,8 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
+| 5.3.0 | 2026-06-28 | in_arbeit | Belegungs-Engine GEBAUT (Migration 023): quellenübergreifende Verfügbarkeit + Vorab-Check (warnt) + UI, MV-Ende inklusiv, 326 Tests grün. Beds24-Block ausgehend geparkt (eigener Auftrag). |
+| 5.2.0 | 2026-06-28 | in_arbeit | Belegungs-Engine-Spec (vorab): quellenübergreifende Verfügbarkeit (buchungen+mietvertraege+belegung_sperren), Vorab-Check beim Anlegen (warnen), synchroner Beds24-Block (ausgehend). Bau folgt, Report als Feedbackschleife. |
 | 5.1.0 | 2026-06-27 | in_arbeit | Spec-Sync-Bauwelle: `organisationen` (012), `ocr_verarbeitungen` (014) gebaut; Mietanpassung-Dublette aufgelöst (016, `mietpreiserhoehungen` kanonisch); RowActions/Test-Setup als umgesetzt nachgezogen |
 | 5.0.2 | 2026-06-24 | freigegeben | V502 Spez+Datenmodell: BK-Kerne, Fristen, Forderungen, Mietrecht, OCR, Verwaltungsverträge |
 | 5.0.1 | 2026-06-24 | freigegeben | V501 Architektur: 12 Phasen, Channel-Routing, 27 Module, 13 Agenten |
@@ -130,7 +156,8 @@ Fachmodule (z.B. FiBu-Belegerkennung 0002) setzen auf diesem Kern auf und verwei
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
-| 2026-06-28 02:25 | Vorgangs-Reste in 300/400 auf Verweis → 004 reduziert (Schadens-Staffel, RowActions-Hinweis); kein Doppelinhalt | 300, 400 |
+| 2026-06-28 12:00 | v5.3.0: Belegungs-Engine GEBAUT nachgezogen (Migration 023, MV-Ende inklusiv, Vorab-Check warnt); Beds24-Block ausgehend geparkt | 000,200 |
+| 2026-06-28 17:15 | v5.2.0: Belegungs-Engine-Spec vorab (Verfügbarkeit über 3 Quellen, belegung_sperren, Kollisionswarnung, synchroner Beds24-Block ausgehend) | 000,200,300 |
 | 2026-06-27 15:00 | Vorgänge → Modul 004 ausgelagert (Kern auf Bezugspunkte reduziert); akteure (Mensch+KI) als Kern-Erweiterung 017 ergänzt | 000_konzept, 200 |
 | 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 005-Zusatztabellen enumeriert, Migrations-/Tabellenzahl korrigiert; Bugfix vorgaenge.prioritaet kritisch→notfall (DB-CHECK) | 000_konzept, 200, types/vorgang |
 | 2026-06-27 01:30 | OP-3 erledigt: 005-Kern-DDL 1:1 aus Archiv als getrackte Migration 005 ins Repo | 000_konzept, 200, Migration 005 |

@@ -40,6 +40,21 @@ Jeder Bau-Auftrag (Prompt in `.docs/prompts/`) wird in diesen Schritten abgearbe
    Punkte, Version). Der Index ersetzt NICHT die Spec — er ist die Landkarte, die Spec das Detail;
    nach dem Index gezielt in die relevante Spec springen (statt alle Specs zu scannen → Token).
    Bei markierten ‹…›-Stellen: gegen reales `wimus`-Schema verifizieren, nicht raten.
+1b. **KOMPLEXITÄT EINSCHÄTZEN (Right-sized process)** — nicht jede Änderung braucht das volle
+   Zeremoniell. Vor dem Bauen den Umfang einschätzen:
+   - **TRIVIAL → Fast-Path:** ≤3 bestehende Dateien, <10 Zeilen, reiner Style-/Config-/Text-Tweak,
+     KEIN neues öffentliches Verhalten / keine neue API / kein Schema-Change / keine Migration.
+     Dann: direkt bauen (Schritt 3–6), KEIN Vorab-Spec/kein eigener Prompt nötig; im Report unter
+     „Gebaut" knapp vermerken (1–2 Zeilen genügen). Spart Overhead, wo er nichts bringt.
+   - **NORMAL → voller Pfad:** 4+ Dateien, neue Komponente/Service, neues öffentliches Verhalten/
+     API, Schema-Change/Migration, oder querschnittliche Wirkung. Dann läuft der volle Zyklus mit
+     Spec + Prompt + Report wie gehabt.
+   - **Im Zweifel = NORMAL.** Lieber einmal zu viel den vollen Pfad als eine Schema-/API-Änderung
+     ohne Spec durchrutschen lassen.
+   - **WICHTIG — die harten Leitplanken gelten IMMER, auch im Fast-Path:** Git-Sicherung, grüne
+     Tests (Schritt 4), Review-Subagent bei Code-Änderungen (Schritt 5), kein Raten, nichts
+     doppeln. Der Fast-Path spart NUR das Spec-/Prompt-Zeremoniell — NIE die Qualitätssicherung.
+     Eine Migration ist NIE Fast-Path (immer voller Pfad + /pg/query-Guardrail).
 2. **SICHERN** — Git-Sicherung vorab (Commit/Tag des Ist-Stands), bevor Änderungen beginnen.
 3. **ENTWICKELN** — bauen wie in der Spec; vorhandene Entitäten/Helfer referenzieren, nichts
    doppeln; Migrationen idempotent; sequenziell (ein Feature nach dem anderen).

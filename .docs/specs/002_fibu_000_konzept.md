@@ -2,7 +2,7 @@
 id: 0002
 titel: FiBu — Belegerkennung, Kontierung & Reporting
 status: in_arbeit          # entwurf | in_arbeit | freigegeben | umgesetzt | abgelöst
-version: 0.11.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
+version: 0.12.0             # springt nur am Meilenstein; lebt NUR in dieser Datei
 modul: fibu
 erstellt: 2026-06-25
 geaendert: 2026-06-28
@@ -30,6 +30,14 @@ nur über definierte Confidence- und Betragsschwellen.
 
 > Stand 2026-06-26 (Details + Testzahlen in `002_fibu_600_tests.md`).
 
+- **Bank-Abgleich (Migration 021, 2026-06-28; SQL noch einzuspielen):** WISO-CSV-Import
+  (KSK-Format, `bank-csv.ts`/papaparse/CP1252) → mehrstufiger Match (`bank-match.ts`: Vorfilter
+  Geldtransit/eigene Umbuchung → K1 via `parseVerwendungszweck` + `objekte.kuerzel`/
+  `einheiten.verwendungszweck_code` → Mieter-Name Fuzzy → Betrag-Bestätiger → Confidence-Routing)
+  → OP-Abgleich (`op-abgleich.ts`: Einnahme → `forderungen` typ=miete, FIFO/Über→Guthaben).
+  Tabellen `bank_konten`/`bank_umsaetze` (import_hash UNIQUE). API `/api/fibu/bank/*`, UI
+  `/finanzen/bank`. **EINE Fuzzy-Engine** `lib/fibu/fuzzy.ts` (fuzzball); `lieferant-match.ts`
+  darauf umgestellt. Build + 314 Tests grün.
 - OCR-Basis im Kern (Mistral OCR, Confidence-Strategie, `ocr_verarbeitungen`)
 - **Stammdaten-Layer:** Migration `010_fibu_stammdaten.sql` eingespielt — Firmen-Erweiterung
   (rechtsform_typ/besteuerungsart/kontenrahmen_ref), `gesellschafter`, `beteiligungen`,
@@ -81,12 +89,6 @@ nur über definierte Confidence- und Betragsschwellen.
 
 ## In Arbeit
 
-- **Bank-Abgleich (gebaut 2026-06-28):** WISO-CSV-Import (KSK-Format) → mehrstufiger Match
-  (K1-Objektkennung → Mieter-Name via Fuzzy-Lib → Betrag/Confidence) → OP-Abgleich gegen
-  `forderungen` (typ=miete). Bankanbindung bleibt WISO (kein eigenes HBCI). Migration 021
-  (`bank_konten`/`bank_umsaetze`), `lib/fibu/bank-csv|bank-match|op-abgleich|fuzzy.ts`
-  (+24 Unit-Tests), `/api/fibu/bank/{import,konten,umsaetze/[id]/zuordnen}`, Cockpit
-  `/finanzen/bank`. `lieferant-match.ts` auf dieselbe Fuzzy-Engine (fuzzball) umgestellt.
 - Belegzuordnung: `firma_id` jetzt via Lieferant-Match abgeleitet; Rest-Fälle (kein Treffer)
   weiterhin firma_id null → Review (OP-6 teilweise gelöst)
 - EXTF-Export an echte Buchungen anbinden (volles 116-Spalten-Layout, OP-1)
@@ -117,7 +119,7 @@ nur über definierte Confidence- und Betragsschwellen.
   Confidence-Routing. Grund: Mieter geben oft unbrauchbare Verwendungszwecke an; der
   Absendername ist das verlässlichere Signal (echtes KSK-Muster bestätigt). WISO-Kategorie wird
   NICHT zur Zuordnung genutzt (nur informativ importiert).
-- 2026-06-28: **Fuzzy-Matching über geprüfte Lib; `lieferant-match.ts` wird umgestellt.**
+- 2026-06-28: **Fuzzy-Matching über geprüfte Lib; `lieferant-match.ts` umgestellt (ERLEDIGT 09:25).**
   Grundsatz „fertige Lib vor Eigenbau": handgeschriebene Distanzberechnung in `lieferant-match.ts`
   wird durch eine etablierte Fuzzy-Lib (z.B. `fuzzball`) ersetzt, Domänen-/Normalisierungs-Logik
   bleibt. Bank-Abgleich nutzt dieselbe Lib. Ergebnis: genau EINE Fuzzy-Implementierung im ERP.
@@ -125,13 +127,6 @@ nur über definierte Confidence- und Betragsschwellen.
   Einnahme → offene Miete-Forderung schließen/reduzieren; Zahlungseingang stoppt Mahnung
   (Mahnlauf-Mechanik des Kerns). Neue Tabelle `bank_umsaetze` (Namenskollision: `buchungen`=KZV,
   `fibu_buchungen`=FiBu).
-- 2026-06-28 (Impl.): **`papaparse` war NICHT vorhanden** (Auftragsannahme falsch) → installiert;
-  als Fuzzy-Lib **`fuzzball`** (token_set_ratio) gewählt und als EINZIGE String-Distanz-Engine
-  etabliert (`lib/fibu/fuzzy.ts`); `lieferant-match.ts` darauf umgestellt (Tests grün). CP1252-
-  Dekodierung via `TextDecoder('windows-1252')` in der Import-Route.
-- 2026-06-28 (Impl.): **K1-Auflösung über vorhandenen `parseVerwendungszweck`** + `objekte.kuerzel`
-  / `einheiten.verwendungszweck_code` (real existierende Spalten) — kein neues Mapping. Token
-  `BHS16W3Z1` → Objekt `BHS16` (auch ohne Einheit-Zeile), volle Einheit-Codes → Einheit direkt.
 
 - 2026-06-25: **Invoice Ninja = Ausgangsrechnungen, FiBu-Modul = Eingangsbelege +
   Kontierung.** Klare Abgrenzung, keine doppelte Kontierungslogik. Invoice Ninja (TB16,
@@ -196,7 +191,8 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Version | Datum | Status | Inhalt / zugehöriger Stand |
 |---------|-------|--------|----------------------------|
-| 0.11.0 | 2026-06-28 | in_arbeit | Bank-Abgleich GEBAUT: Migration 021 (bank_konten/bank_umsaetze), lib/fibu/bank-csv|match|op-abgleich|fuzzy (+16 Tests), Import-/Zuordnen-/Konten-API, Cockpit /finanzen/bank; lieferant-match auf fuzzball umgestellt. Build + 314 Tests grün. |
+| 0.12.0 | 2026-06-28 | in_arbeit | Bank-Abgleich-Ausbau GEBAUT (Migration 022, eingespielt): FIFO-Kaskade verteileEinnahme + Guthaben, konfigurierbare Schwellen (bank_einstellungen), Vorfilter beide Quellen (Auto + bank_ignorier_muster), 318 Tests grün. Geplant: bank_konten.inhaber. |
+| 0.11.0 | 2026-06-28 | in_arbeit | Bank-Abgleich GEBAUT (Migration 021, Nachtlauf): Import/Match/OP, eine Fuzzy-Engine (fuzzball, lieferant-match umgestellt), K1 real über objekte.kuerzel/einheiten.verwendungszweck_code, FIFO-OP, 314 Tests grün. SQL 021 einzuspielen. |
 | 0.10.0 | 2026-06-28 | in_arbeit | Bank-Abgleich-Spec (vorab): WISO-CSV-Import (KSK-Format), mehrstufiger Match (K1→Mieter-Name via Fuzzy-Lib→Betrag), OP-Abgleich gegen `forderungen`; `bank_konten`/`bank_umsaetze`; `lieferant-match.ts` auf Fuzzy-Lib umstellen. Bau folgt, Report als Feedbackschleife. |
 | 0.9.0 | 2026-06-27 | in_arbeit | Feststellungen-Persistenz: Vorschau speichern (`feststellungen` + Verteilung JSONB), Historie je Firma mit Laden/Löschen (`/api/fibu/feststellungen`). |
 | 0.8.0 | 2026-06-27 | in_arbeit | Konsolidierung umschaltbar Konten↔Berichtspositionen (`konsolidiereNachPosition`, Matrix Position×Einheit, A4-Druck) + Tests. |
@@ -215,7 +211,8 @@ nur über definierte Confidence- und Betragsschwellen.
 
 | Datum/Zeit | Vorgang | Betroffen |
 |------------|---------|-----------|
-| 2026-06-28 09:10 | v0.11.0: Bank-Abgleich GEBAUT (Mig.021, lib/fibu/bank-csv|match|op-abgleich|fuzzy +16 Tests, Import/Zuordnen/Konten-API, Cockpit); lieferant-match auf fuzzball; papaparse installiert | 000,200,300 + Code |
+| 2026-06-28 12:00 | v0.12.0: Bank-Ausbau nachgezogen (Migration 022: FIFO-Kaskade, Schwellen-Tabelle, Vorfilter beide Quellen); inhaber-Feld geplant | 000,200 |
+| 2026-06-28 09:45 | v0.11.0: Bank-Abgleich GEBAUT nachgezogen (Migration 021, fuzzy.ts, K1 real, FIFO-OP, konfigurierbare Schwellen); Fuzzy-Umstellung erledigt | 000,200 |
 | 2026-06-28 16:30 | v0.10.0: Bank-Abgleich-Spec vorab (WISO-CSV-Import, mehrstufiger Match K1/Name/Betrag, OP gegen forderungen, bank_konten/bank_umsaetze, Fuzzy-Lib statt Eigenbau) | 000,200,300 |
 | 2026-06-27 12:30 | 3-Wege-Abgleich A-Funde: 500_migration auf Realität (mandant_isolation/firmen), Batch-Freigabe aus Backlog | 400,500 |
 | 2026-06-27 11:50 | v0.9.0: Feststellungen-Persistenz (speichern + Historie, /api/fibu/feststellungen) | 000,200 + Code |
