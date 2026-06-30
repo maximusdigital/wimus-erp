@@ -3,6 +3,9 @@ import { z } from "zod"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { verteileEinnahme, type ForderungOffen } from "@/lib/fibu/op-abgleich"
+import { protokolliereZahlungEingegangen } from "@/lib/fibu/historie"
+import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 
 type Context = { params: Promise<{ id: string }> }
 
@@ -45,6 +48,7 @@ export async function POST(request: NextRequest, { params }: Context) {
 
   let forderung_id: string | null = parsed.data.forderung_id ?? null
   let zugeordnet_am: string | null = null
+  let vertragId: string | null = parsed.data.mietvertrag_id ?? null
 
   // OP-Abgleich (FIFO-Kaskade) bei Einnahme: alle offenen Forderungen des Vertrags
   // (bzw. die explizit gewählte) verrechnen; Überzahlung bedient die nächste.
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest, { params }: Context) {
     let q = supabase
       .schema("wimus")
       .from("forderungen")
-      .select("id, betrag, bezahlt_betrag")
+      .select("id, betrag, bezahlt_betrag, mietvertrag_id")
       .eq("forderung_typ", "miete")
       .in("status", ["offen", "teilbezahlt"])
       .order("faellig_am", { ascending: true })
@@ -80,6 +84,7 @@ export async function POST(request: NextRequest, { params }: Context) {
       }
       forderung_id = v.allokationen[0]?.forderung_id ?? forderung_id
       zugeordnet_am = new Date().toISOString()
+      if (!vertragId) vertragId = (offene ?? []).find((f) => f.mietvertrag_id)?.mietvertrag_id ?? null
     }
   }
 
@@ -100,6 +105,29 @@ export async function POST(request: NextRequest, { params }: Context) {
     .select("*")
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Historie (Modul 009): Einnahme einer Forderung/OP zugeordnet → Aktivität.
+  // Komplett gekapselt: weder Mandant-Auflösung noch Emitter dürfen den bereits
+  // persistierten Zuordnungs-Vorgang nachträglich kippen (blockiert nie).
+  if (umsatz.richtung === "einnahme" && forderung_id) {
+    try {
+      const active = await getActiveMandant(await getUserMandanten())
+      if (active) {
+        await protokolliereZahlungEingegangen(supabase, active.id, {
+          mietvertragId: vertragId,
+          einheitId: parsed.data.einheit_id ?? null,
+          objektId: parsed.data.objekt_id ?? null,
+          betrag: umsatz.betrag,
+          datum: umsatz.wertstellung,
+          forderungId: forderung_id,
+          quelle: "manuell",
+          akteurId: await getAktuellerAkteur(supabase),
+        })
+      }
+    } catch {
+      /* Historie best-effort – die Zuordnung selbst ist bereits gespeichert. */
+    }
+  }
 
   return NextResponse.json(data, { status: 200 })
 }

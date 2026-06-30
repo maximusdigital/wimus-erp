@@ -6,6 +6,8 @@ import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { parseKskCsv } from "@/lib/fibu/bank-csv"
 import { matchUmsatz, type MatchKontext } from "@/lib/fibu/bank-match"
 import { verteileEinnahme, type ForderungOffen } from "@/lib/fibu/op-abgleich"
+import { protokolliereZahlungEingegangen } from "@/lib/fibu/historie"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 import { offenerBetrag } from "@/lib/utils/forderungen"
 
 type KontaktRef = { vorname: string | null; nachname: string | null; firmenname: string | null }
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
   const ctx: MatchKontext = { einheiten, objekte, mieter, kontoinhaber, ignorierMuster, schwellen }
   const vorhandene = new Set((bestandR.data ?? []).map((b) => b.import_hash))
 
+  const akteurId = await getAktuellerAkteur(supabase)
   const summary = { gesamt: zeilen.length, importiert: 0, dubletten: 0, ignoriert: 0, auto: 0, pruefen: 0, klaeren: 0, fehler }
 
   for (const z of zeilen) {
@@ -201,6 +204,19 @@ export async function POST(request: NextRequest) {
       summary.fehler.push(`${z.wertstellung} ${z.betrag}: ${error.message}`)
     } else {
       summary.importiert++
+      // Historie (Modul 009): Zahlung auto-zugeordnet → Aktivität (blockiert nie).
+      if (zuordnung_status === "zugeordnet" && m.mietvertrag_id) {
+        await protokolliereZahlungEingegangen(supabase, active.id, {
+          mietvertragId: m.mietvertrag_id,
+          einheitId: m.einheit_id,
+          objektId: m.objekt_id,
+          betrag: z.betrag,
+          datum: z.wertstellung,
+          forderungId: forderung_id,
+          quelle: "bank",
+          akteurId,
+        })
+      }
     }
   }
 

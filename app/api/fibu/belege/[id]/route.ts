@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { buchungAusBeleg } from "@/lib/fibu/buchung"
+import { protokolliereBelegVerbucht } from "@/lib/fibu/historie"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 import type { Beleg } from "@/types/beleg"
 
 type Context = { params: Promise<{ id: string }> }
@@ -91,6 +93,15 @@ export async function PATCH(request: NextRequest, { params }: Context) {
       .select(SELECT)
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Historie (Modul 009): Beleg verbucht (Freigabe Mensch) → Aktivität (blockiert nie).
+    await protokolliereBelegVerbucht(supabase, beleg.mandant_id, {
+      belegId: id,
+      betrag: beleg.brutto,
+      konto: beleg.soll_konto,
+      art: "mensch",
+      k1: beleg.k1,
+      akteurId: await getAktuellerAkteur(supabase),
+    })
     return NextResponse.json(data)
   }
 

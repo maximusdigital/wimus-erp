@@ -7,6 +7,8 @@ import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { verarbeiteBeleg } from "@/lib/fibu/beleg-pipeline"
 import { buchungAusBeleg } from "@/lib/fibu/buchung"
 import { matchLieferant, type LieferantKandidat } from "@/lib/fibu/lieferant-match"
+import { protokolliereBelegVerbucht } from "@/lib/fibu/historie"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 import { mistralOcr, mistralExtrahiere } from "@/lib/integrations/mistral"
 import type { Kontierungsregel } from "@/lib/utils/fibu"
 import type { Beleg } from "@/types/beleg"
@@ -135,6 +137,16 @@ export async function POST(request: NextRequest) {
   if (entwurf.auto_buchbar) {
     const buchung = buchungAusBeleg(belegRow as Beleg, { akteur_typ: "ki" })
     await supabase.from("fibu_buchungen").insert(buchung)
+    // Historie (Modul 009): Beleg verbucht (KI) → Aktivität (blockiert nie).
+    const b = belegRow as Beleg
+    await protokolliereBelegVerbucht(supabase, active.id, {
+      belegId: b.id,
+      betrag: b.brutto,
+      konto: b.soll_konto,
+      art: "ki",
+      k1: b.k1,
+      akteurId: await getAktuellerAkteur(supabase),
+    })
   }
 
   return NextResponse.json(belegRow, { status: 201 })

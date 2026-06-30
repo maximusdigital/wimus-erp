@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { mahnungInsertSchema } from "@/lib/validations/mahnung"
+import { protokolliereMahnungVersandt } from "@/lib/fibu/historie"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 
 const SELECT = "*, vertrag:mietvertraege(aktenzeichen)"
 
@@ -65,5 +67,15 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Historie (Modul 009): manuell erstellte Mahnung → Aktivität (blockiert nie).
+  await protokolliereMahnungVersandt(supabase, active.id, {
+    mietvertragId: data.mietvertrag_id ?? null,
+    mahnstufe: data.stufe,
+    betrag: data.gesamtforderung,
+    forderungId: null,
+    akteurId: await getAktuellerAkteur(supabase),
+  })
+
   return NextResponse.json(data, { status: 201 })
 }

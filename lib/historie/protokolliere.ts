@@ -4,8 +4,8 @@
  * n:m-Bezüge über die Hierarchie ab (`aktivitaet_bezug`). Blockiert NIE den
  * auslösenden Vorgang: Fehler werden geschluckt + als {ok:false} gemeldet.
  */
-import { leiteBezuege } from "./bezug"
-import type { EntityRef, Hierarchie, ProtokolliereInput } from "./types"
+import { bezuegeAusHierarchie, leiteBezuege } from "./bezug"
+import type { Bezug, EntityRef, Hierarchie, ProtokolliereInput } from "./types"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DbClient = any
@@ -89,11 +89,18 @@ export async function protokolliere(
       .single()
     if (error || !akt) return { ok: false, error: error?.message ?? "Aktivität-Insert fehlgeschlagen." }
 
-    const hierarchie = {
-      ...(await resolveHierarchie(client, input.primaerBezug)),
-      ...(input.hierarchie ?? {}),
+    // Primär-Bezug optional: fehlt er, ist die Aktivität „nur Mandant" (nur zentraler
+    // Feed) — etwaige Hierarchie-IDs werden trotzdem als abgeleitete Bezüge gespeichert.
+    let bezuege: Bezug[] = []
+    if (input.primaerBezug) {
+      const hierarchie: Hierarchie = {
+        ...(await resolveHierarchie(client, input.primaerBezug)),
+        ...(input.hierarchie ?? {}),
+      }
+      bezuege = leiteBezuege(input.primaerBezug, hierarchie)
+    } else if (input.hierarchie) {
+      bezuege = bezuegeAusHierarchie(input.hierarchie)
     }
-    const bezuege = leiteBezuege(input.primaerBezug, hierarchie)
     if (bezuege.length > 0) {
       const rows = bezuege.map((b) => ({
         aktivitaet_id: akt.id,

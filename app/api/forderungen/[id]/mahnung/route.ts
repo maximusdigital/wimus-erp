@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { naechsteMahnung } from "@/lib/utils/mahnlauf"
+import { protokolliereMahnungVersandt } from "@/lib/fibu/historie"
+import { getAktuellerAkteur } from "@/lib/historie/akteur"
 
 type Context = { params: Promise<{ id: string }> }
 
@@ -74,6 +76,15 @@ export async function POST(_request: NextRequest, { params }: Context) {
   if (updateFehler) {
     return NextResponse.json({ error: updateFehler.message }, { status: 500 })
   }
+
+  // Historie (Modul 009): Mahnung ausgelöst → Aktivität (blockiert nie).
+  await protokolliereMahnungVersandt(supabase, active.id, {
+    mietvertragId: forderung.mietvertrag_id ?? null,
+    mahnstufe: vorschlag.stufe,
+    betrag: vorschlag.gesamt,
+    forderungId: id,
+    akteurId: await getAktuellerAkteur(supabase),
+  })
 
   return NextResponse.json(
     { ok: true, mahnung_id: mahnung.id, stufe: vorschlag.stufe },

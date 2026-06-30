@@ -35,3 +35,26 @@ export function leiteBezuege(primaer: EntityRef, h: Hierarchie): Bezug[] {
 
   return [...out.values()]
 }
+
+/**
+ * Bezüge OHNE Primär-Bezug: nur aus der Hierarchie, alle als 'abgeleitet'.
+ * Für „nur Mandant"-Aktivitäten, die dennoch an bekannten Eltern (Objekt/Einheit)
+ * hängen sollen (dezentral sichtbar), aber keine Entität am Ereignis selbst haben.
+ */
+export function bezuegeAusHierarchie(h: Hierarchie): Bezug[] {
+  const out = new Map<string, Bezug>()
+  const add = (typ: Bezug["typ"], id?: string | null) => {
+    if (!id) return
+    const k = `${typ}:${id}`
+    if (!out.has(k)) out.set(k, { typ, id, quelle: "abgeleitet" })
+  }
+  add("mietvertrag", h.mietvertrag_id)
+  add("mieter", h.mieter_id)
+  add("kontakt", h.kontakt_id)
+  add("einheit", h.einheit_id)
+  add("objekt", h.objekt_id)
+  add("vorgang", h.vorgang_id)
+  add("organisation", h.organisation_id)
+  add("buchung", h.buchung_id)
+  return [...out.values()]
+}

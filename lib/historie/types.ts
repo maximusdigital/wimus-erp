@@ -61,7 +61,13 @@ export type ProtokolliereInput = {
   beschreibung?: string | null
   payload?: Record<string, unknown> | null
   akteurId?: string | null
-  primaerBezug: EntityRef
+  /**
+   * Primär-Bezug (Entität am Ereignis). Optional: manche Aktivitäten haben real
+   * keinen Entitäts-Bezug (z.B. ein verbuchter Lieferanten-Beleg ohne Objekt) und
+   * sind „nur Mandant" — sie erscheinen dann nur im zentralen Feed. Fehlt der
+   * Primär-Bezug, werden etwaige `hierarchie`-IDs als abgeleitete Bezüge gespeichert.
+   */
+  primaerBezug?: EntityRef
   /**
    * Optionale, vom Aufrufer bereits aufgelöste Hierarchie-IDs (z.B. Kommunikation
    * kennt einheit/objekt des Mieters schon). Wird mit der aus dem Primär-Bezug
