@@ -57,7 +57,9 @@ Jeder Bau-Auftrag (Prompt in `.docs/prompts/`) wird in diesen Schritten abgearbe
      Eine Migration ist NIE Fast-Path (immer voller Pfad + /pg/query-Guardrail).
 2. **SICHERN** — Git-Sicherung vorab (Commit/Tag des Ist-Stands), bevor Änderungen beginnen.
 3. **ENTWICKELN** — bauen wie in der Spec; vorhandene Entitäten/Helfer referenzieren, nichts
-   doppeln; Migrationen idempotent; sequenziell (ein Feature nach dem anderen).
+   doppeln; Migrationen idempotent; sequenziell (ein Feature nach dem anderen). Für Code-Suche/
+   Navigation/Editieren die **Serena-MCP-Tools** (find_symbol etc.) bevorzugen statt Grep/Read —
+   s. Pflichtregeln „Code-Navigation".
 4. **TESTEN** — `npm run test:run` + `npm run build`. **Rote Tests werden gemeldet, NIE
    auskommentiert/übersprungen.** Kein Commit ohne grün.
 5. **REVIEW (Subagent)** — vor dem Commit prüft ein SEPARATER Review-Subagent (eigene Instanz via
@@ -208,6 +210,19 @@ CREATE POLICY "mandant_isolation" ON objekte
   Service-Role-Key als Voll-SQL-Zugang über HTTP (DB-Generalschlüssel). Solange `/pg/` nicht hinter
   VPN/intern liegt (Max prüft, s. Backlog), den Service-Role-Key strikt geheim halten (nur server-/
   skriptseitig) und den Endpoint nicht breiter nutzen als nötig.
+
+### Code-Navigation & Editieren: Serena-MCP-Tools bevorzugen
+- **Für Code-Suche/Navigation/Editieren die Serena-MCP-Tools nutzen, NICHT Grep/Read/ganze
+  Datei lesen** — `find_symbol` (Symbol finden), `find_referencing_symbols` (wer referenziert),
+  `get_symbols_overview` (Datei-Struktur ohne Volltext), `replace_symbol_body` /
+  `insert_after_symbol` (gezielt editieren). Spart Kontext: nicht ganze Dateien einlesen, sondern
+  gezielt das relevante Symbol. Claude Code neigt dazu, die eingebauten Grep/Read-Tools zu
+  bevorzugen — bei Code-Arbeit BEWUSST Serena wählen.
+- **Ausnahme:** Reine Doku/Specs/Markdown (`.docs/**`) + Konfig — da sind normale Read/Edit ok
+  (Serena ist für Code-Symbole, nicht für Prosa). Erstkontakt mit einem unbekannten Bereich:
+  `get_symbols_overview` statt Datei-Volltext.
+- Falls Serena für einen Bereich nicht greift (kein Symbol-Treffer), normal auf Read/Grep
+  zurückfallen — nicht blockieren.
 
 ### Code-Qualität
 - `npm run build` nach JEDEM Feature – Fehler sofort fixen
