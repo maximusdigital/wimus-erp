@@ -54,3 +54,6 @@ tests/e2e/.auth/
 
 # Serena (lokale Code-Intelligence, projektspezifisch)
 /.serena/
+
+# Editor (lokale Workspace-Datei)
+/erp.wimus.de.code-workspace
