@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { Building2, ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { DetailZusatz } from "@/components/shared/detail-zusatz"
 import { findDemoEinheit, DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
 import { Button } from "@/components/ui/button"
@@ -288,6 +289,8 @@ export default async function EinheitDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <DetailZusatz feldEntitaet="einheit" bezugTyp="einheit" bezugId={id} hatUntergeordnete />
     </div>
   )
 }

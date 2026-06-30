@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ChevronLeft, Pencil } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { DetailZusatz } from "@/components/shared/detail-zusatz"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -387,6 +388,8 @@ export default async function VorgangDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <DetailZusatz feldEntitaet="vorgang" bezugTyp="vorgang" bezugId={id} />
     </div>
   )
 }

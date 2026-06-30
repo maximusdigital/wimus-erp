@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { DetailZusatz } from "@/components/shared/detail-zusatz"
 import { findDemoKontakt } from "@/lib/dev/demo-kontakte"
 import { DEMO_VERTRAEGE } from "@/lib/dev/demo-vertraege"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
@@ -251,6 +252,12 @@ export default async function KontaktDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <DetailZusatz
+        feldEntitaet={kontakt.kontakt_typ === "firma" ? "organisation" : "person"}
+        bezugTyp="kontakt"
+        bezugId={kontakt.id}
+      />
     </div>
   )
 }

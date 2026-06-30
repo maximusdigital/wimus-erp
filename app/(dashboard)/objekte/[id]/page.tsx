@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ChevronLeft, Pencil, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { DetailZusatz } from "@/components/shared/detail-zusatz"
 import { findDemoObjekt } from "@/lib/dev/demo-objekte"
 import { DEMO_EINHEITEN } from "@/lib/dev/demo-einheiten"
 import { isPreviewNoAuth } from "@/lib/dev/preview"
@@ -292,6 +293,8 @@ export default async function ObjektDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <DetailZusatz feldEntitaet="objekt" bezugTyp="objekt" bezugId={id} hatUntergeordnete />
     </div>
   )
 }
