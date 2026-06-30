@@ -24,6 +24,7 @@ Live-Hinweis = Migration eingespielt + verifiziert.
 | **007 kommunikation** | 0.4.0 | in_arbeit | WA Empfang+Sendeweg gebaut (nicht live, Deploy unhealthy #17) | 000/200/300 | 001 |
 | **008 felder** | 0.2.0 | in_arbeit | Felder 027 ✅ | 000/200/300 | 001, 006 |
 | **009 historie** | 0.2.0 | in_arbeit | Audit 028 ✅ | 000/200/300 | 001, 007 |
+| **010 berechtigungen** | 0.1.0 | entwurf | nein (Spec) | 000/200/300 | 001 |
 
 > Hinweis 003/004/005: 003 = crm (Kanban-Pipelines, v0.2.0), 004 = ops (Vorgangs-Engine, v0.4.1,
 > Kanban Migration 020 gebaut), 005 = automation (noch Backlog #7, nicht gebaut). 003/004 haben

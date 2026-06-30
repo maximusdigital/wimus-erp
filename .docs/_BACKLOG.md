@@ -19,6 +19,11 @@
 
 | Prio | Datum/Zeit (MESZ) | Idee | Eintrag |
 |------|------------|------|---------|
+| P1 | 2026-06-29 14:40 | ARCHITEKTUR-KNOTEN (beim 010-Bau entdeckt, 14:50 präzisiert): NICHT zwei konkurrierende Welten, sondern: Workspace→Firma→Projekt ist die BESCHLOSSENE Org-Struktur (erp-kern-Spec 000: „dreistufige Org-Hierarchie", „Org-Modell live") und app-seitig in Benutzung (Workspace-UI/API real). ABER: (a) als Migration NICHT getrackt — die „fehlende Migration 004" (V501-Fundament ~50 Tab. live-only, analog zu 005-Nachzug ins Repo holen); (b) Fachtabellen hängen noch an mandanten (Alt-Wurzel Phase 0), NICHT an projekt_id. Vor 010-Scope (der auf firma/projekt zielen MUSS, nicht mandant): erst 004 nachtracken + entscheiden wie objekte→projekt verdrahtet/mandant→projekt überführt wird. Eigene Vorab-Spec. 010-Spec liegt fertig, pausiert bis dahin. ENTSCHEIDUNG 14:55 (Max): mandant ABLÖSEN, projekt wird Wurzel (deckt sich mit Architektur TB01 „Multi-Projekt: RLS+projekt_id, Im Schema"). Mapping 1:1 auf Marken-Ebene: 4 Mandanten=4 Marken (WIMUS Hausverwaltung→WHV, ALFA APARTMENTS→AAP, ALFA CAMPUS→ACA, ALFA DEVELOPMENT→???). ABER Seed-006-INKONSISTENZ: ALFA DEVELOPMENT fehlt als Top-Projekt; stattdessen liegen dessen Bauvorhaben MFHSO+ABHS21A fälschlich auf Top-Level. FIX in Migration: ALFA DEVELOPMENT als 4. Marken-Top-Projekt anlegen, MFHSO+ABHS21A als ebene-1-Unterprojekte darunter (analog AAP→Touristen/Monteure). Dann mappt 1:1 sauber. Phasen-Strategie (umkehrbar): A Tracking 004 nachholen → B projekt_id additiv+nullable an Fachtabellen, Backfill aus mandant → C RLS modulweise mandant→projekt (Negativ-Tests) → D mandant_id droppen (Point of no Return, ganz am Ende). GRÖSSTE Migration im Projekt (~80 Tab., live, echte Daten). UPDATE 15:40 (DDL-Extraktion Report 1535): ÜBERRASCHUNG — projekt-Welt ist VIEL weiter als gedacht, KEIN leeres Gerüst. Viele neuere Module hängen BEREITS an firma_id (belege, fibu_buchungen/konten, kontierungsregeln, lieferanten, crm_deals/leads, beteiligungen) bzw. projekt_id (abteilungen, citytax_saetze, kommunikationskanaele, pipelines, vorlagen, kpi_werte, landingpages, funnels, projekt_channels) bzw. workspace_id (akteure, channels). NUR die ALTEN 002-Kerntabellen (objekte/einheiten/mietvertraege/vorgaenge/buchungen/kontakte/…) hängen noch an mandant_id. #21 ist also NICHT ~80-Tab-Umbau, sondern LÜCKE schließen zwischen zwei koexistierenden Welten — deutlich kleiner. Phase A ERLEDIGT: Migration 004_org_hierarchie.sql gebaut (idempotent, Live-Ist nachgezeichnet: workspaces/firmen/projekte inkl. CHECK-Wertelisten/RLS/Trigger; projektmanager-FK konditional). projekte hat bereits Spalten marke + pfad (materialisierter Pfad!) — hilft Scope-Vererbung. Nächste Phasen: B objekte etc. an projekt_id + Backfill aus mandant→marke-Projekt; C RLS umstellen; D mandant droppen. | #21 |
+| P3 | 2026-06-29 14:20 | Berechtigungen: Spaltenmasken (CLS) für hochsensible Felder (Reisepass/Meldeschein, IBAN, Mieter-Bankdaten) — maskierte Anzeige (z.B. letzte 4 Stellen) für Nutzer mit eingeschränktem Recht statt Klartext. Bewusst NICHT im Kernmodell (Feld-/Spaltenebene = Komplexität); nur für die wenigen wirklich sensiblen Felder, falls realer Bedarf. Nach 010 Stufe 2. | #20 |
+| P3 | 2026-06-29 14:00 | Berechtigungen: „Teilen/Weiterleiten" (Datensatz an Dritte raus — Vorgang an Handwerker, Beleg an StB, Dokument extern) als SEPARATES orthogonales Recht, NICHT in der Stufen-Leiter kein/lesen/schreiben/freigeben (DSGVO-Trennung: Approval ≠ Teilen). Nach 010 Stufe 1–2. | #19 |
+| — | 2026-06-29 12:10 | → IN BAU: 009/008 Stufe 2 — HistorieTab + Custom-Field-Werte auf 4 Kern-Detailseiten (objekte/einheiten/kontakte/vorgaenge). Aus #14 (HistorieTab) + 008-Detail-UI überführt → _LOG. Rest von #14 (weitere Lieferanten, Audit-Rollen, Retention) bleibt offen. | Prompt 1210 |
+| P3 | 2026-06-29 11:35 | 009 FiBu-Lieferant Folge-Entscheidungen (aus Report): (a) kanonischen Mahnungs-Pfad festlegen, falls manuelle Maske künftig Mahnlauf-Endpoint nachzieht (sonst Doppel-Log); (b) „nur Mandant"-Lieferantenbelege ohne K1 — optional an firma_id/Buchungskreis hängen (neuer Bezugstyp organisation/firma) statt nur Mandant; (c) [aus Stufe-2-Report 1225] Firmen-Kontakte: Historie-Bezug künftig organisation statt Sammeltyp kontakt? — nur falls 009-Bezugsmodell person/organisation trennt. Alle nicht-blockierend. | #18 |
 | P2 | 2026-06-29 10:40 | 007 Sendeweg-Folgepunkte: Consumer (Reply-UI/Autoreply) als Aufrufer von sendeWhatsapp, Retry-Job für status=fehler, KOM_SECRET_KEY in Deploy-Env, .env.local-Token-Cleanup nach Live-Test | #16 |
 | P1 | 2026-06-29 10:40 | erp.m81s.de UNHEALTHY (Root 500, Webhook-Routen 404) — Live-Build hängt/kaputt, blockiert Empfang+Versand komplett; Deploy-Heilung nötig | #17 |
 | P3 | 2026-06-29 00:30 | Deploy-Zugang/Weg für Claude Code klären: Auto-Deploy bei Push aktiv (Status quo reicht meist), CC hat keinen Deploy-Zugang; ggf. Coolify-Deploy-Webhook mit Guardrail wie /pg/query | #15 |
@@ -248,13 +253,17 @@ auf die Engine: schrittweise, im Modul-Konzept planen.
 
 ## 14. Modul 009 Stufe 2 — Lieferanten + Detailseiten + Rollen-Restriktion Audit (P2)
 > Aus 009-Report: Fundament gebaut (Migration 028), folgende Verdrahtung geparkt.
+> **Teil-Stand 2026-06-29:** FiBu-Lieferant (Teil 1) GEBAUT (Commit e99a90d). HistorieTab-Einhängen
+> + Custom-Field-Detail-UI IN BAU (Prompt 1210). Beide → _LOG. Hier verbleiben nur die nicht
+> durchgestrichenen Punkte.
 
+- ~~**FiBu-Lieferanten** (zahlung_eingegangen/mahnung_versandt/beleg_verbucht)~~ — GEBAUT
+  2026-06-29 (Commit e99a90d, Report 1135).
 - **Weitere Aktivitäts-Lieferanten verdrahten** (Service `protokolliere()` steht, nur Aufrufe):
-  Priorität FiBu (zahlung_eingegangen/mahnung_versandt/beleg_verbucht) → Kommunikation
-  (nachricht_gesendet/empfangen, kommt mit 007) → Belegung (sperre_gesetzt/buchung_angelegt).
-- **HistorieTab in Detailseiten einhängen** (`<HistorieTab bezugTyp bezugId>` fertig): objekte/
-  einheiten/kontakte/vorgaenge/[id] — sinnvoll GEMEINSAM mit den 008-Custom-Field-Detail-
-  Verdrahtungen (gleiche Seiten, ein Aufwasch).
+  Kommunikation (nachricht_gesendet/empfangen, mit 007) → Belegung (sperre_gesetzt/
+  buchung_angelegt) → Zugang/Schloss. (FiBu s.o. erledigt.)
+- ~~**HistorieTab in Detailseiten einhängen** (objekte/einheiten/kontakte/vorgaenge)~~ — IN BAU
+  2026-06-29 (Prompt 1210, gemeinsam mit 008-Custom-Field-Detail-UI).
 - **Rollen-Restriktion Audit-Ansicht (SICHERHEIT):** `/einstellungen/audit` ist aktuell nur
   Mandanten-RLS + authentifiziert — d.h. JEDER authentifizierte Nutzer des Mandanten sieht das
   Audit-Log. „Nur Verwalter/Admin" braucht den Rollen-Layer (real noch nicht vorhanden). Vor
