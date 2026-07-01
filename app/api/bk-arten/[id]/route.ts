@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { requireAdminApi } from "@/lib/berechtigungen/istAdmin"
 import { bkArtInsertSchema } from "@/lib/validations/bk-art"
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   const json = await request.json().catch(() => null)
   const parsed = bkArtInsertSchema.safeParse(json)
@@ -36,6 +39,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   const supabase = await createServerClient()
   const { error } = await supabase.from("bk_arten").delete().eq("id", id)

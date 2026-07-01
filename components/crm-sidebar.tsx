@@ -158,7 +158,7 @@ function NavMenu({ items }: { items: NavItem[] }) {
   );
 }
 
-export function CrmSidebar({ user }: { user: SidebarUser }) {
+export function CrmSidebar({ user, istAdmin = false }: { user: SidebarUser; istAdmin?: boolean }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -209,12 +209,14 @@ export function CrmSidebar({ user }: { user: SidebarUser }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Verwaltung</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <NavMenu items={settingsNav} />
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {istAdmin ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Verwaltung</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <NavMenu items={settingsNav} />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
 
         <SidebarGroup>
           <SidebarGroupLabel>Bald verfügbar</SidebarGroupLabel>

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { requireAdminApi } from "@/lib/berechtigungen/istAdmin"
 import { updateDef, deleteDef } from "@/lib/felder/definition"
 
 type Context = { params: Promise<{ id: string }> }
 
 export async function PATCH(request: NextRequest, { params }: Context) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   const supabase = await createServerClient()
   const body = await request.json().catch(() => null)
@@ -23,6 +26,8 @@ export async function PATCH(request: NextRequest, { params }: Context) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Context) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   const supabase = await createServerClient()
   const res = await deleteDef(supabase, id)

@@ -7,6 +7,7 @@ import { CommandPalette } from "@/components/search/command-palette";
 import { SearchTrigger } from "@/components/search/search-trigger";
 import { getActiveProjekt, getProjekte } from "@/lib/projekte";
 import { isPreviewNoAuth } from "@/lib/dev/preview";
+import { istAdmin } from "@/lib/berechtigungen/istAdmin";
 import { CrmSidebar, type SidebarUser } from "@/components/crm-sidebar";
 import { ProjektProvider } from "@/components/providers/projekt-provider";
 import { ProjektTheme } from "@/components/layout/projekt-theme";
@@ -48,6 +49,7 @@ export default async function DashboardLayout({
 
   const projekte = await getProjekte();
   const activeProjekt = await getActiveProjekt(projekte);
+  const admin = await istAdmin();
 
   const email = user?.email ?? "vorschau@wimus.de";
   const name =
@@ -60,7 +62,7 @@ export default async function DashboardLayout({
     <ProjektProvider projekt={activeProjekt} projekte={projekte}>
       <ProjektTheme projekt={activeProjekt} projekte={projekte} />
       <SidebarProvider>
-        <CrmSidebar user={sidebarUser} />
+        <CrmSidebar user={sidebarUser} istAdmin={admin} />
         <SidebarInset>
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-sm">
             <SidebarTrigger className="-ml-1" />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { requireAdminApi } from "@/lib/berechtigungen/istAdmin"
 import { getWorkspaceId } from "@/lib/firmen"
 import { workspaceUpdateSchema } from "@/lib/validations/workspace"
 
@@ -8,6 +9,8 @@ export const runtime = "nodejs"
 
 /** Den (einzigen) Workspace aktualisieren. */
 export async function PATCH(request: NextRequest) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const json = await request.json().catch(() => null)
   const parsed = workspaceUpdateSchema.safeParse(json)
   if (!parsed.success) {

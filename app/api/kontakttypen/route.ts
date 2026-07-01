@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { requireAdminApi } from "@/lib/berechtigungen/istAdmin"
 import { activeMandantId } from "@/lib/crm/server"
 import { listTypen, createTyp } from "@/lib/felder/typen"
 
@@ -17,6 +18,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const supabase = await createServerClient()
   const mandant_id = await activeMandantId()
   if (!mandant_id) return NextResponse.json({ error: "Kein aktiver Mandant." }, { status: 400 })

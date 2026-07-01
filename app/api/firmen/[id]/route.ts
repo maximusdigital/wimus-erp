@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { requireAdminApi } from "@/lib/berechtigungen/istAdmin"
 import { firmaInsertSchema } from "@/lib/validations/firma"
 
 export const runtime = "nodejs"
@@ -9,6 +10,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   const json = await request.json().catch(() => null)
   const parsed = firmaInsertSchema.safeParse(json)
@@ -44,6 +47,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const { id } = await params
   const supabase = createAdminClient()
 

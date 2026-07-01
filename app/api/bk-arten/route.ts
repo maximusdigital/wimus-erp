@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { createServerClient } from "@/lib/supabase/server"
+import { requireAdminApi } from "@/lib/berechtigungen/istAdmin"
 import { getActiveMandant, getUserMandanten } from "@/lib/mandanten"
 import { bkArtInsertSchema } from "@/lib/validations/bk-art"
 
@@ -18,6 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const supabase = await createServerClient()
 
   // Aktiven Mandanten ermitteln (RLS erlaubt Insert nur für eigene Mandanten).
