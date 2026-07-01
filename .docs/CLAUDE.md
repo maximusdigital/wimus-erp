@@ -113,8 +113,11 @@ geparkt. Lieber Teil sauber fertig + Rest geparkt als etwas erzwingen.
   `004_ops` (Vorgänge/Plantafel), `005_automation` (geplant), `006_suche`, `007_kommunikation`,
   `008_felder` (Custom Fields + Kontaktmodell), `009_historie` (Audit + Aktivität).
 - **Projekt-Doku:** `_INDEX.md` (Landkarte) · `_LOG.md` (Changelog, Teil A chronologisch +
-  Teil B nach Modul) · `_BACKLOG.md` (offene Ideen P1/P2/P3) · `_NOTE_*.md` (Schnipsel). Konzept-
-  Claude pflegt alle drei `_`-Dateien; Claude Code fasst sie NICHT an (wie `.docs/specs/**`).
+  Teil B nach Modul) · `_BACKLOG.md` (offene Ideen P1/P2/P3). Konzept-Claude pflegt diese
+  `_`-Dateien; Claude Code fasst sie NICHT an (wie `.docs/specs/**`).
+  **KEINE `_NOTE_*`-Streudateien** (Karpathy-Schema): Erkenntnisse/Chronik leben in der jeweiligen
+  Spec (Decision-Log / offene Punkte / Änderungshistorie im `*_000_konzept.md`), NICHT in
+  separaten Notiz-Dateien daneben. Prozess-/Konventionswissen gehört in CLAUDE.md selbst.
 - Alte Word-Specs sind nach `.docs/ALT/` archiviert (nur Referenz, nicht maßgeblich).
 - UI-Konventionen: `001_erp_400_design.md` (Shadcn + **Recharts/shadcn-charts** + WIMUS Custom).
 

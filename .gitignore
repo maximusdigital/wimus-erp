@@ -57,3 +57,11 @@ tests/e2e/.auth/
 
 # Editor (lokale Workspace-Datei)
 /erp.wimus.de.code-workspace
+
+# DB-Backups / Dumps (enthalten PRODUKTIVDATEN — NIE ins Repo/GitHub!)
+*.dump
+*.dump.gz
+*.sql.gz
+*.backup
+.docs/sql/
+/backups/

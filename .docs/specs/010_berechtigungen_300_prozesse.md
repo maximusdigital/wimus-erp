@@ -48,6 +48,53 @@ geaendert: 2026-06-29
 > 010 NICHT scharfgeschaltet — die Zeilen dienen der Vollständigkeit. ‹Im Bau: externe Rollen
 > aus der RLS-Durchsetzung von Stufe 2 ausnehmen, separat behandeln›.
 
+## 1b. Verwaltungs-UI — zwei Matrizen (schnelles, übersichtliches Management)
+
+> Kernanforderung Max (2026-06-29): schnelles + übersichtliches Rechte-Management über
+> Checkbox-Matrizen. Da drei Dimensionen (Benutzer × Scope × Rolle) nicht in EINE 2D-Matrix
+> passen, ZWEI Ansichten, die zusammen alles abdecken. Rollen BLEIBEN (die 12) — sie sind die
+> Rechtebündelung, damit die Zuweisungs-Matrix mit simplen Checks auskommt (Zelle = Rolle an/aus,
+> KEIN Einzelrecht-Salat).
+
+### Matrix A — Rollen-Rechte (Rolle × Bereich, selten geändert)
+= die Tabelle aus Abschnitt 1, editierbar. Zeilen = Rollen, Spalten = Bereiche, Zelle = Stufe
+(Dropdown kein/lesen/schreiben/freigeben). Nur superadmin/admin. Definiert EINMALIG, was eine
+Rolle kann. Read-only-Referenz neben Matrix B, damit beim Zuweisen klar ist, was man vergibt.
+
+### Matrix B — Benutzer-Zuweisung (Benutzer × Rolle, das tägliche Management)
+Die „Schnell-Matrix". Zeilen = Benutzer, Spalten = die 12 Rollen, **Zelle = Checkbox** (hat Rolle
+ja/nein). Ein Haken = eine Zeile in `benutzer_rollen`; Haken raus = Zeile weg.
+
+```
+Scope: [ Firma VVG ▾ ]          (Umschalter oben — global / Firma / Projekt / Objekt)
+
+                 super  verwalter  buchhalter  hausmeister  reinigung  …
+ Anna Müller        ☐        ☑          ☑            ☐           ☐
+ Ben Schmidt        ☐        ☑          ☐            ☐           ☐
+ Clara Weiß         ☐        ☐          ☐            ☑           ☑
+```
+
+- **Scope-Umschalter oben** löst die dritte Dimension: Die Häkchen gelten für den gewählten Scope.
+  Scope wechseln → Matrix zeigt die Rollen für den anderen Scope. Hält die Matrix flach + schnell
+  erfassbar. Umschalter setzt `scope_typ`/`scope_id` der geschriebenen Zeilen. HEUTE Scopes =
+  mandant/gesellschaft/objekt; nach #21 Phase C = firma/projekt (Matrix generisch gegen scope_typ
+  bauen, damit sie den Umbau überlebt — NICHT auf mandant hartverdrahten).
+- **Checkbox statt Dropdown** (bewusst): Weil die Rolle die Stufen schon bündelt, ist die Zuweisung
+  binär (hat Rolle / hat nicht). Kein Stufen-Selektor auf dieser Ebene → maximal schnell.
+- Ein Benutzer kann mehrere Rollen je Scope haben (mehrere Häkchen/Zeile) UND Rollen über mehrere
+  Scopes (Umschalter) — deckt „1 Benutzer, mehrere Firmen/Projekte" ab (n:m, Modell trägt es).
+
+**Schnell-Features (der eigentliche Effizienzgewinn):**
+- Spaltenkopf-Klick → „alle/keine" für diese Rolle (Bulk je Rolle).
+- Zeilen-Kopieren „Anna wie Ben" → übernimmt alle Häkchen eines Benutzers auf einen anderen.
+- Benutzer-Filter/Suche (bei vielen MA).
+- Dirty-State + EIN Speichern (Häkchen sammeln, ein API-Call — nicht pro Klick schreiben).
+- Tooltip je Rollen-Spalte: zeigt die Rechte der Rolle (aus Matrix A) beim Hovern.
+
+> **Datenmodell-Bezug:** Matrix B schreibt/löscht `benutzer_rollen(benutzer_id, rolle_id,
+> scope_typ, scope_id, gueltig_von/bis)`. Optionales Gültigkeits-Feld je Zuweisung = Vertretung/
+> Befristung (s. Härtung H1). Keine Modelländerung nötig — reine UI auf dem bestehenden Schema.
+
 ## 2. Effektiv-Recht-Auflösung (Ablauf)
 
 ```
@@ -66,6 +113,39 @@ hat_recht(bereich, minstufe, mandant, objekt?):
   dann greift erlaubte_objekte.
 - **Tabellen ohne objekt/mandant-Direktbezug** (Kindtabellen): über Elternkette wie in der
   bestehenden RLS (Migration 002 macht das bereits vor — Muster übernehmen).
+
+## 2b. Admin-Bereich absichern (der Verwaltungs-Bereich selbst)
+
+> Max 2026-06-29: Der Admin-/Berechtigungs-Bereich darf NUR mit entsprechendem Recht zugänglich
+> sein. Wer die Rechte verwaltet, kontrolliert das ganze System — das ist der sensibelste Bereich
+> überhaupt und muss doppelt (RLS + App) geschützt sein.
+
+- **Bereich `berechtigungen`** ist die Zugangskontrolle für die Rechte-Verwaltung selbst. In der
+  Rollen-Matrix (Abschnitt 1) hat NUR `superadmin`=freigeben und `mandant_admin`=schreiben; ALLE
+  anderen Rollen = `kein` (implizit, nicht eingetragen). Damit sieht/ändert kein normaler Nutzer
+  die Berechtigungen.
+- **UI-Schutz (`/einstellungen/berechtigungen` + Matrix A/B):** Die Route + beide Matrizen prüfen
+  beim Laden `hat_recht('berechtigungen','lesen')` (Ansicht) bzw. `'schreiben'`/`'freigeben'`
+  (Ändern von Zuweisungen/Rollen-Rechten). Ohne Recht: Route nicht erreichbar (Redirect/403),
+  Menüpunkt ausgeblendet.
+- **Server-/API-Schutz:** Jede API-Route, die `benutzer_rollen` oder `rolle_rechte` schreibt, ruft
+  serverseitig `hat_recht('berechtigungen','schreiben')` — NICHT nur die UI ausgrauen (die
+  service_role-Routen umgehen RLS, s. A5). Rechte-Vergabe ist der kritischste Schreibpfad.
+- **Eskalations-Schutz (wichtig):** Wer `berechtigungen`=schreiben hat, könnte sich selbst
+  superadmin geben. `mandant_admin` (schreiben) darf daher NUR innerhalb seines Scopes zuweisen
+  und NICHT die Rolle `superadmin` oder `global`-Scope vergeben — das bleibt `superadmin`
+  (freigeben) vorbehalten. ‹Im Bau: beim Zuweisen prüfen, dass der Zuweisende mind. die Stufe/den
+  Scope hat, den er vergibt — kein Rechte-Eskalations-Pfad›.
+
+### Admin-Zuweisung Max (Kein-Lockout + volle Adminrechte)
+> Max 2026-06-29: „für mich alle Adminrechte hinterlegen".
+- Max erhält die Rolle **`superadmin`** mit Scope **`global`** (= alle Bereiche freigeben, alle
+  Firmen/Projekte/Objekte). Das ist zugleich der Kein-Lockout-Anker (Anti-Lockout H2) UND die
+  vollständige Admin-Berechtigung.
+- **Wird beim Stufe-1-Bau geseedet**, NICHT jetzt: CC ermittelt Max' reale `benutzer_id` aus der DB
+  (`benutzer` via email), legt die `benutzer_rollen`-Zeile (superadmin, scope_typ='global',
+  scope_id=null, gueltig_von=now, gueltig_bis=null) idempotent an. `benutzer_id` NICHT raten — wenn
+  nicht eindeutig ermittelbar, als Rückfrage parken.
 
 ## 3. Stufe-1-Bauumfang (erster Auftrag) — KEINE RLS-Umstellung
 

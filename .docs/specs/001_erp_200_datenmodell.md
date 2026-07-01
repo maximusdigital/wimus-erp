@@ -168,6 +168,43 @@ mandant_id FK, typ ENUM (mensch/ki/extern), name, kontakt_id FK NULL, benutzer_i
 organisation_id FK NULL, ki_modell TEXT NULL, ki_konfidenz_schwelle NUMERIC(3,2) NULL,
 bereich TEXT[], aktiv BOOL. (+ `akteur_verfuegbarkeit`, `akteur_faehigkeiten`.)
 
+## Tags (Kern-Querschnitt, freie Quer-Kennzeichnung)
+
+> Generisches, typenloses Label-System QUER über ALLE Bausteine. Ein Tag = freier Text (wie ein
+> Hashtag), hängt an JEDEM Datensatz (Objekt, Einheit, Buchung, Vorgang, Kontakt, Projekt, Firma,
+> Mietvertrag, …). n:m. Aus Backlog #22 in den Kern (001) überführt — KEIN eigenes Modul.
+>
+> **Abgrenzung:** Tags sind KEINE Org-Dimension. `mandant_id`/`firma_id`/`projekt_id` bleiben harte
+> FKs (Struktur, RLS, KLR). Tags sind lose, frei, NIE sicherheitstragend, NIE kostenverteilend —
+> kein Kostenstellen-/Kostenträger-Ersatz. Auch kein Custom-Field-Ersatz (008 = typisierte Werte;
+> Tag = nur ein Label ohne Wert). Polymorphes Muster wie `custom_field_werte`/`aktivitaet_bezug`.
+
+### tags
+mandant_id FK (RLS-Wurzel — Mandanten bleiben Isolationswurzel, NICHT workspace), label TEXT
+(freier Hashtag), farbe TEXT NULL (UI-Chip), aktiv BOOL, created_at/updated_at.
+- **UNIQUE(mandant_id, lower(label))** — case-insensitive eindeutig je Mandant; „Wasserschaden" ==
+  „wasserschaden" == EIN Tag (Anzeige behält Original-Schreibweise). Label zentral hier →
+  Umbenennen propagiert automatisch (Zuordnungen zeigen nur auf tag_id).
+
+### tag_zuordnung (polymorphe n:m-Verknüpfung)
+tag_id FK → tags (ON DELETE CASCADE), bezug_typ TEXT (FREIER String: objekt/einheit/buchung/
+vorgang/kontakt/projekt/firma/mietvertrag/… — KEINE Whitelist, jede Tabelle taggbar, auch künftige),
+bezug_id UUID (polymorph, KEIN FK), created_at. **UNIQUE(tag_id, bezug_typ, bezug_id)** (ein Tag nur
+einmal pro Datensatz). Index (bezug_typ, bezug_id) für „welche Tags hat dieser Datensatz?".
+
+> **RLS:** `tags` über eigene mandant_id (Muster wie alle Kerntabellen). `tag_zuordnung` über das
+> Eltern-Tag (EXISTS auf tags.mandant_id, Muster wie `custom_field_werte`). tag_zuordnung hat
+> bewusst KEIN updated_at (Zuordnungen werden erstellt/gelöscht, nicht editiert).
+
+> **Bewusst NICHT:** kein Tag-Typ/keine Kategorie (typenlos), kein Wert je Tag, keine bezug_typ-
+> Whitelist, kein FK auf bezug_id (polymorph → Verwaisung bei Löschen des Ziels per Cleanup-Job
+> tolerieren), keine Tag-Hierarchie (flach). Filter (Mehrfach-Tag, querüber) + Tag-Summen im
+> Finanzteil (informativ, KEINE KLR-Dimension) gehören zur UI/Auswertung — überschneidet sich mit
+> der Projekt-Erfolgsrechnung-Auswertung (#21-B5), dort nicht doppeln.
+>
+> Migration: eigene idempotente `‹NNN›_tags.sql` (CREATE IF NOT EXISTS, RLS, Indizes, GRANTS; KEIN
+> Seed — Tags entstehen zur Laufzeit). Unabhängig von #21, jederzeit baubar.
+
 ## Vorgänge → Modul 004 (ops)
 
 > **Ausgelagert (2026-06-27):** Das Vorgangs-Datenmodell (`vorgaenge` + `vorgang_verlauf`/

@@ -15,7 +15,7 @@ Live-Hinweis = Migration eingespielt + verifiziert.
 
 | Modul | Version | Status | Live? | Specs | Hängt ab von |
 |-------|---------|--------|-------|-------|--------------|
-| **001 erp-kern** | 5.3.0 | in_arbeit | Belegung 023 ✅ | 000/200/300 | — |
+| **001 erp-kern** | 5.3.0 | in_arbeit | Belegung 023 ✅, Tags 030 ✅ | 000/200/300 | — |
 | **002 fibu** | 0.12.0 | in_arbeit | Bank 021+022 ✅ | 000/200/300 | 001 |
 | **003 crm** | 0.2.0 | in_arbeit | (real prüfen) | 000–600 | 001 |
 | **004 ops** | 0.4.1 | in_arbeit | Kanban 020 ✅ | 000–600 | 001 |
@@ -24,7 +24,7 @@ Live-Hinweis = Migration eingespielt + verifiziert.
 | **007 kommunikation** | 0.4.0 | in_arbeit | WA Empfang+Sendeweg gebaut (nicht live, Deploy unhealthy #17) | 000/200/300 | 001 |
 | **008 felder** | 0.2.0 | in_arbeit | Felder 027 ✅ | 000/200/300 | 001, 006 |
 | **009 historie** | 0.2.0 | in_arbeit | Audit 028 ✅ | 000/200/300 | 001, 007 |
-| **010 berechtigungen** | 0.1.0 | entwurf | nein (Spec) | 000/200/300 | 001 |
+| **010 berechtigungen** | 0.1.0 | entwurf | nein (Spec) | 000/100/200/300 | 001 |
 
 > Hinweis 003/004/005: 003 = crm (Kanban-Pipelines, v0.2.0), 004 = ops (Vorgangs-Engine, v0.4.1,
 > Kanban Migration 020 gebaut), 005 = automation (noch Backlog #7, nicht gebaut). 003/004 haben
@@ -66,11 +66,14 @@ Vier Module folgen demselben „eine Schicht, alle docken an"-Muster:
 | `CLAUDE.md` | Regelwerk für Claude Code (Arbeitszyklus, Migrationsweg, Permissions) |
 | `.docs/specs/MMM_kuerzel_DDD_name.md` | Modul-Specs (000 Konzept / 200 Datenmodell / 300 Prozesse) |
 | `.docs/prompts/` ↔ `.docs/reports/` | Bau-Aufträge ↔ Rückmeldungen |
-| `_NOTE_*.md` | Doku-Schnipsel (englischer Begriff, kein Datum) |
+
+> KEINE `_NOTE_*`-Streudateien (Karpathy-Schema): Erkenntnisse/Chronik leben in der Spec
+> (Decision-Log/offene Punkte/Historie im `*_000_konzept.md`), Prozesswissen in CLAUDE.md.
 
 ## Änderungshistorie (dieser Index)
 
 | Datum/Zeit (MESZ) | Vorgang |
 |-------------------|---------|
+| 2026-06-29 21:50 | Tags (030) live → 001 Live-Stand ergänzt. Modul 010 um 100_architektur erweitert (Engine-Tiefe: 3 Auflösungspfade, explizite Projekt-Freischaltung, Anti-Lockout). NOTES aus Doku-Landkarte gestrichen (Karpathy: keine Streu-NOTES mehr). |
 | 2026-06-29 09:50 | 003=crm präzisiert (aus CLAUDE.md); CLAUDE.md Schritt 1 + Spec-System um _INDEX ergänzt (CC steigt mit Index ein). |
 | 2026-06-29 09:45 | _INDEX.md angelegt (Karpathy-style Modul-Landkarte). Stand: 001 v5.3.0, 002 v0.12.0, 006 v0.2.0, 007 v0.4.0, 008 v0.2.0, 009 v0.2.0. 003/004/005 als Repo-only markiert. |

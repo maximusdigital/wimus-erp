@@ -153,6 +153,37 @@ Funktionsbereiche, grob entlang der Module:
 - **Audit-Bereich:** „wer darf das Audit-Log sehen" wird selbst über dieses System geregelt
   (löst Backlog #14-Punkt „Rollen-Restriktion Audit-Ansicht").
 
+## RLS-Härtung & Nutzen (Pflicht-Punkte vor Phase C)
+
+> Beim Umstellen der RLS von mandant auf firma/projekt (010 Stufe 2 = #21 Phase C) sind ein paar
+> Härtungen die Sicherheitsleine. H2+H3 sind PFLICHT VOR dem Scharfschalten, H1+H4 wertvolle
+> Ergänzungen. Mehrere davon sind im Modell schon angelegt, hier gebündelt + als Pflicht markiert.
+
+- **H1 — Befristete Rechte (Engine muss gueltig_von/bis PRÜFEN).** `benutzer_rollen` hat die Felder
+  schon; die Engine-Funktionen MÜSSEN sie auswerten (`now() between gueltig_von and
+  coalesce(gueltig_bis,'infinity')`). Nutzen: Vertretung im Urlaub, StB-Zugriff nur zur
+  Abschlusszeit, Praktikant bis Vertragsende — Rechte, die von selbst ablaufen (sicherer als
+  manueller Entzug, der vergessen wird). Kleiner Aufwand, großer Praxiswert. (Steht in der
+  Auflösung Abschnitt 2 Schritt 1 — hier als bewusster Nutzen markiert.)
+- **H2 — Superadmin-Bypass in JEDER Engine-Funktion (PFLICHT, Anti-Lockout).** `erlaubte_*`/
+  `hat_recht` müssen einen expliziten Kurzschluss haben: Rolle superadmin (global) → alles erlaubt,
+  OHNE durch die Matrix zu laufen. Sonst kann ein Bug in der Rechte-Matrix ODER eine kaputte Policy
+  den Admin aussperren — bei self-hosted ohne einfachen Ausweg. Das ist die Sicherheitsleine beim
+  RLS-Umbau. (Ergänzt den Kein-Lockout-Seed um die Durchsetzungs-Ebene.)
+- **H3 — Negativ-Tests je umgestellter Tabelle (PFLICHT).** Der gefährliche Fehler ist NICHT „sieht
+  zu wenig" (fällt auf), sondern „sieht zu VIEL" (Leak, fällt nicht auf). Für JEDE in Stufe 2
+  umgestellte Tabelle ein Test „Benutzer mit Scope Firma A sieht Daten von Firma B NICHT". Ohne
+  diesen Test wird die Tabelle nicht scharfgeschaltet. (Abschnitt 4 fordert Negativ-Tests generell
+  — hier je Tabelle in Stufe 2 verbindlich.)
+- **H4 — hat_recht() konsequent auch in App/API (Defense in Depth + UX).** RLS schützt die
+  DB-Zeile; die UI soll zusätzlich Buttons/Felder ausblenden, die der Nutzer eh nicht darf (kein
+  „Speichern", das dann an RLS scheitert). Zwei Schichten (App-Check + RLS-Check) — und
+  service_role-API-Routen MÜSSEN selbst prüfen (umgehen RLS). (Steht verstreut — hier als Prinzip.)
+
+> **Bewusst NICHT (kein Über-Engineering):** Spaltenmasken/CLS = Backlog #20 (nur die paar sensiblen
+> Felder, später). Gruppen = Stufe 3 (erst wenn Benutzerzahl es erzwingt). ABAC-Vollausbau
+> („nur PLZ 70xxx") = YAGNI. Scope + RBAC reicht für ~27 Einheiten.
+
 ## Modul-Bezug
 
 - **001 erp-kern:** liefert die Hierarchie (mandanten/gesellschaften/objekte/einheiten) +
@@ -166,4 +197,6 @@ Funktionsbereiche, grob entlang der Module:
 
 | Datum/Zeit (MESZ) | Vorgang | Dateien |
 |-------------------|---------|---------|
+| 2026-06-29 22:00 | Admin-Bereich-Absicherung ergänzt (Max): Prozesse 2b — Bereich `berechtigungen` schützt die Rechte-Verwaltung selbst (UI+Server+RLS doppelt), Eskalations-Schutz (mandant_admin kann nicht superadmin/global vergeben), Max = superadmin/global (volle Adminrechte + Kein-Lockout, benutzer_id im Bau real ermitteln). | 300 |
+| 2026-06-29 21:20 | Matrix-UI + RLS-Härtung ergänzt (Max): Prozesse 1b = zwei Verwaltungs-Matrizen (A Rolle×Bereich editierbar; B Benutzer×Rolle Checkbox-Schnellmatrix mit Scope-Umschalter + Bulk-Features, n:m 1 Benutzer→mehrere Firmen/Projekte). Konzept: Abschnitt „RLS-Härtung" H1 befristete Rechte (Engine muss gueltig prüfen), H2 Superadmin-Bypass PFLICHT (Anti-Lockout), H3 Negativ-Tests je Tabelle PFLICHT, H4 hat_recht in App/API. Über-Engineering (CLS/Gruppen/ABAC) bewusst abgegrenzt. | 000/300 |
 | 2026-06-29 14:00 | v0.1.0 Erstentwurf: RBAC Bereich×Stufe×Scope auf vorhandenem rollen/benutzer_rollen-Fundament; 3-Stufen-Rollout; Vertretung über gueltig_von/bis; DSGVO-Matrix-Export; keine Feldebene; Teilen→Backlog. | 000/200/300 |
