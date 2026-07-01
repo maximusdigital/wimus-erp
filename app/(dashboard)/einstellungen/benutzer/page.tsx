@@ -1,8 +1,9 @@
 import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, Plus } from "lucide-react"
 
 import { createServerClient } from "@/lib/supabase/server"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   Table,
@@ -53,11 +54,17 @@ export default async function BenutzerVerwaltungPage() {
           <ChevronLeft className="size-4" />
           Zurück zu Einstellungen
         </Link>
-        <div className="mt-2">
-          <h1 className="text-xl font-semibold tracking-tight">Benutzer</h1>
-          <p className="text-sm text-muted-foreground">
-            {benutzer.length} Benutzer · Stammdaten &amp; Aktiv-Status verwalten (Rollen: nur ansehen)
-          </p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Benutzer</h1>
+            <p className="text-sm text-muted-foreground">
+              {benutzer.length} Benutzer · Stammdaten &amp; Aktiv-Status verwalten (Rollen: nur ansehen)
+            </p>
+          </div>
+          <Button render={<Link href="/einstellungen/benutzer/neu" />}>
+            <Plus />
+            <span>Neuer Benutzer</span>
+          </Button>
         </div>
       </div>
 
